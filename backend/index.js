@@ -1,4 +1,5 @@
-﻿require("dotenv").config();
+﻿console.log("[DEBUG-START] DB_PASSWORD:", JSON.stringify(process.env.DB_PASSWORD));
+require("dotenv").config({ path: process.env.NODE_ENV === "test" ? ".env.test" : ".env" });
 const express = require("express");
 const cors = require("cors");
 const http = require("http");

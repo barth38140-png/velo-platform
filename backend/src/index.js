@@ -22,6 +22,15 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
 let server = null;
+const db = require('./db');
+let configDbPool = null;
+try {
+  // some controllers/routes use the legacy config pool (backend/config/db.js)
+  configDbPool = require('../config/db');
+} catch (e) {
+  // ignore if not present in this environment
+  configDbPool = null;
+}
 
 function start(port = PORT) {
   return new Promise((resolve, reject) => {
@@ -33,8 +42,21 @@ function start(port = PORT) {
 function stop() {
   return new Promise((resolve, reject) => {
     if (!server) return resolve();
-    server.close(err => (err ? reject(err) : resolve()));
-    server = null;
+    server.close(async err => {
+      if (err) return reject(err);
+      server = null;
+      try {
+        if (db && db.pool && typeof db.pool.end === 'function') {
+          await db.pool.end();
+        }
+        if (configDbPool && typeof configDbPool.end === 'function') {
+          await configDbPool.end();
+        }
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
   });
 }
 

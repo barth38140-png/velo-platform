@@ -39,6 +39,15 @@ async function createBooking(req, res) {
       return res.status(400).json({ error: "invalid_client_id", detail_reason_for_400: "client_not_found" });
     }
 
+    // Idempotence: check if booking already exists for same listing, client, start_date, end_date
+    const checkBooking = await db.query(
+      `SELECT * FROM bookings WHERE listing_id = $1 AND client_id = $2 AND start_date = $3 AND end_date = $4`,
+      [listing_id, client_id, start_date, end_date]
+    );
+    if (checkBooking.rowCount > 0) {
+      // Already exists, return it (idempotent)
+      return res.status(200).json(checkBooking.rows[0]);
+    }
     const q = `INSERT INTO bookings (listing_id, client_id, start_date, end_date, status)
                VALUES ($1,$2,$3,$4,$5) RETURNING *`;
     const params = [listing_id, client_id, start_date, end_date, status];
@@ -49,8 +58,26 @@ async function createBooking(req, res) {
     return res.status(201).json(rows[0]);
   } catch (err) {
     console.error("createBooking ERROR:", err && err.stack ? err.stack : err);
+    if (err) {
+      console.error("[DEBUG SQL ERROR]", {
+        code: err.code,
+        detail: err.detail,
+        table: err.table,
+        column: err.column,
+        constraint: err.constraint,
+        message: err.message
+      });
+    }
     if (err && err.code === "23503") return res.status(400).json({ error: "foreign_key_violation", detail: err.detail, detail_reason_for_400: "fk_violation" });
-    return res.status(500).json({ error: "internal_error" });
+    return res.status(500).json({
+      error: "internal_error",
+      sql_error: err && err.message,
+      sql_code: err && err.code,
+      sql_detail: err && err.detail,
+      sql_table: err && err.table,
+      sql_column: err && err.column,
+      sql_constraint: err && err.constraint
+    });
   }
 }
 async function getBookings(req, res) {

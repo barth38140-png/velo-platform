@@ -1,4 +1,7 @@
-﻿/* query-users-columns.js */
+﻿(function(){
+  require("dotenv").config({ path: process.env.NODE_ENV === "test" ? ".env.test" : ".env" });
+})();
+/* query-users-columns.js */
 (async ()=>{
   const { Pool } = require('pg');
   const pool = new Pool({

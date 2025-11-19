@@ -1,4 +1,7 @@
-﻿/* query-bookings-columns-safe.js */
+﻿(function(){
+  require("dotenv").config({ path: process.env.NODE_ENV === "test" ? ".env.test" : ".env" });
+})();
+/* query-bookings-columns-safe.js */
 (async ()=>{
   const { Pool } = require('pg');
   const pool = new Pool({
