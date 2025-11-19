@@ -1,0 +1,205 @@
+.my-offers {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.my-offers h2 {
+  font-size: 1.8rem;
+  margin-bottom: 30px;
+  color: #1f2937;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 10px 16px;
+  border: 2px solid #d1d5db;
+  background: white;
+  color: #4b5563;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.filter-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.filter-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.offers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.offer-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.offer-card.accepted {
+  border-left: 4px solid #10b981;
+}
+
+.offer-card.rejected {
+  border-left: 4px solid #ef4444;
+}
+
+.offer-card.pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.offer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 15px;
+  gap: 10px;
+}
+
+.offer-header h3 {
+  font-size: 1.3rem;
+  color: #1f2937;
+  margin: 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.accepted {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.offer-body {
+  margin: 15px 0;
+}
+
+.offer-body .client-name {
+  color: #4b5563;
+  margin: 0 0 10px 0;
+}
+
+.repair-description {
+  color: #4b5563;
+  margin: 10px 0;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.offer-terms {
+  display: flex;
+  gap: 20px;
+  margin: 15px 0;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.offer-terms span {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.offer-terms .price,
+.offer-terms .duration {
+  flex: 1;
+}
+
+.offer-message {
+  margin-top: 15px;
+  padding: 12px;
+  background: #f3f4f6;
+  border-left: 3px solid #2563eb;
+  border-radius: 4px;
+}
+
+.offer-message strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #1f2937;
+}
+
+.offer-message p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.offer-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.btn-accept,
+.btn-reject {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-accept {
+  background: #10b981;
+  color: white;
+}
+
+.btn-accept:hover {
+  background: #059669;
+}
+
+.btn-reject {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-reject:hover {
+  background: #dc2626;
+}
+
+.error {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border-left: 4px solid #c33;
+}

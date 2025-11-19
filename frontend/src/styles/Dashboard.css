@@ -1,0 +1,175 @@
+.dashboard {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.dashboard-header {
+  background: linear-gradient(to right, #667eea, #764ba2);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header h1 {
+  margin: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.user-info button {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.user-info button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.dashboard-content {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 20px;
+  padding: 20px;
+}
+
+.dashboard-nav {
+  flex-shrink: 0;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-btn {
+  padding: 12px;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  text-align: left;
+}
+
+.nav-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.nav-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.dashboard-main {
+  flex: 1;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tab-content h2 {
+  margin-top: 0;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.dashboard-main button[type="submit"] {
+  padding: 12px 24px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.dashboard-main button[type="submit"]:hover {
+  opacity: 0.9;
+}
+
+.repairs-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.repair-card {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.repair-card h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.repair-card p {
+  margin: 8px 0;
+  color: #666;
+}
+
+.profile-info {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.profile-info p {
+  margin: 12px 0;
+  font-size: 16px;
+}
+
+.error {
+  color: #d32f2f;
+  padding: 12px;
+  background: #ffebee;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
