@@ -1,4 +1,16 @@
-﻿@node_modules
+﻿node_modules/
+coverage/
+backups/
+.env
+.env.test
+.env.*.bak
+*.dump
+server.log
+*.log
+/.env.bak
+.idea/
+dist/
+/.DS_Store@node_modules
 .env
 .env.backup
 .env.protected
