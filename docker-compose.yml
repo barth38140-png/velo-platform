@@ -45,7 +45,8 @@ services:
     build: ./frontend
     container_name: velo_platform_frontend
     environment:
-      VITE_API_URL: http://backend:3010/api
+      # Serve a relative API URL to clients; Vite dev server will proxy /api to the backend.
+      VITE_API_URL: /api
       DEV_ALLOW_DOCKER: 'true'
     ports:
       - "3000:3000"

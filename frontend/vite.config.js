@@ -13,9 +13,11 @@ export default defineConfig({
       : ['localhost', '127.0.0.1'],
     proxy: {
       '/api': {
-        // In dev we expect backend on port 3010 inside compose; when running locally adjust env.
-        target: process.env.VITE_API_URL || 'http://localhost:3010',
-        changeOrigin: true
+        // Proxy API requests to the backend service inside Docker by default.
+        // Use an absolute target only for proxying; the client should use a relative base (`/api`).
+        target: process.env.VITE_PROXY_TARGET || 'http://backend:3010',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
