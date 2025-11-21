@@ -54,3 +54,36 @@ Run commands used during development:
 # build, then run single-shot Cypress (recommended for CI):
 docker-compose up --build --abort-on-container-exit cypress
 ```
+
+Development workflows
+---------------------
+
+Lightweight dev compose (recommended for a reproducible containerized dev environment):
+
+```powershell
+# start frontend + backend with bind-mounts for hot-reload
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+Notes:
+- The dev compose uses `frontend/Dockerfile.dev` which installs dependencies once and expects your source tree to be bind-mounted for fast edits.
+- Vite will accept requests from other containers if `DEV_ALLOW_DOCKER` is set to `true` in the environment. The compose files set this for the frontend when running in Compose so E2E tests from the `cypress` service work reliably.
+
+Run frontend locally (fast iteration):
+
+```powershell
+cd frontend
+npm install
+npm run dev
+# point the frontend to the backend with env var if needed
+$env:VITE_API_URL='http://localhost:3010'
+```
+
+CI wait helper
+--------------
+
+Use the included script to wait for a service to be ready before running tests in CI:
+
+```powershell
+./scripts/wait-for.sh http://frontend:3000 60
+```
