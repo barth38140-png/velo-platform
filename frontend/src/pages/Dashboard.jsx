@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { repairService, repairerService, locationService } from '../services/api';
+import { repairService } from '../services/api';
+import { socket } from '../services/socket';
 import { ExploreRepairs } from './ExploreRepairs';
 import { MyOffers } from './MyOffers';
 import { OffersReceived } from './OffersReceived';
@@ -14,6 +16,42 @@ export function Dashboard() {
   const [activeTab, setActiveTab] = useState(user?.role === 'repairer' ? 'explore' : 'repairs');
   const [repairs, setRepairs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [realtimeMsg, setRealtimeMsg] = useState('');
+  const toastTimeout = useRef();
+    // Socket.io: connexion et gestion des notifications temps réel
+    useEffect(() => {
+      if (!user) return;
+      socket.auth = { token: localStorage.getItem('token') };
+      socket.connect();
+
+      // Notification pour nouvelle offre
+      socket.on('new_offer', (data) => {
+        setRealtimeMsg('📩 Nouvelle offre reçue sur une de vos demandes !');
+        clearTimeout(toastTimeout.current);
+        toastTimeout.current = setTimeout(() => setRealtimeMsg(''), 5000);
+      });
+      // Notification pour changement de statut
+      socket.on('status_update', (data) => {
+        setRealtimeMsg(`🔔 Statut mis à jour : ${data.status}`);
+        clearTimeout(toastTimeout.current);
+        toastTimeout.current = setTimeout(() => setRealtimeMsg(''), 5000);
+      });
+      // Notification pour nouveau message
+      socket.on('new_message', (data) => {
+        setRealtimeMsg('💬 Nouveau message reçu !');
+        clearTimeout(toastTimeout.current);
+        toastTimeout.current = setTimeout(() => setRealtimeMsg(''), 5000);
+      });
+
+      return () => {
+        socket.off('new_offer');
+        socket.off('status_update');
+        socket.off('new_message');
+        socket.disconnect();
+        clearTimeout(toastTimeout.current);
+      };
+    }, [user]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -32,11 +70,12 @@ export function Dashboard() {
 
   const loadRepairs = async () => {
     setLoading(true);
+    setError('');
     try {
       const response = await repairService.getMyRepairs();
       setRepairs(response.data.repairs || []);
     } catch (err) {
-      setError('Failed to load repairs');
+      setError('Échec du chargement des demandes');
     } finally {
       setLoading(false);
     }
@@ -45,6 +84,7 @@ export function Dashboard() {
   const handleCreateRepair = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     try {
       await repairService.createRepair(
         formData.title,
@@ -55,9 +95,10 @@ export function Dashboard() {
         formData.location
       );
       setFormData({ title: '', description: '', bikeType: '', location: '' });
+      setSuccess('Demande créée avec succès !');
       loadRepairs();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create repair');
+      setError(err.response?.data?.error || 'Échec de la création de la demande');
     }
   };
 
@@ -67,12 +108,12 @@ export function Dashboard() {
   };
 
   return (
-    <div className="dashboard">
+    <div className="dashboard modern-dashboard">
       <header className="dashboard-header">
-        <h1>Velo Platform Dashboard</h1>
+        <h1>🚲 Velo Platform</h1>
         <div className="user-info">
-          <span>{user?.name} ({user?.role})</span>
-          <button onClick={handleLogout}>Logout</button>
+          <span className="user-name">{user?.name} <span className="user-role">({user?.role})</span></span>
+          <button className="logout-btn" onClick={handleLogout}>Logout</button>
         </div>
       </header>
 
@@ -84,19 +125,19 @@ export function Dashboard() {
                 className={`nav-btn ${activeTab === 'repairs' ? 'active' : ''}`}
                 onClick={() => setActiveTab('repairs')}
               >
-                My Repairs
+                <span>🛠️ Mes demandes</span>
               </button>
               <button
                 className={`nav-btn ${activeTab === 'create' ? 'active' : ''}`}
                 onClick={() => setActiveTab('create')}
               >
-                Create Repair
+                <span>➕ Nouvelle demande</span>
               </button>
               <button
                 className={`nav-btn ${activeTab === 'offers' ? 'active' : ''}`}
                 onClick={() => setActiveTab('offers')}
               >
-                Offers Received
+                <span>📩 Offres reçues</span>
               </button>
             </>
           ) : (
@@ -105,13 +146,13 @@ export function Dashboard() {
                 className={`nav-btn ${activeTab === 'explore' ? 'active' : ''}`}
                 onClick={() => setActiveTab('explore')}
               >
-                Explore Repairs
+                <span>🔎 Demandes à explorer</span>
               </button>
               <button
                 className={`nav-btn ${activeTab === 'my-offers' ? 'active' : ''}`}
                 onClick={() => setActiveTab('my-offers')}
               >
-                My Offers
+                <span>💼 Mes offres</span>
               </button>
             </>
           )}
@@ -119,41 +160,49 @@ export function Dashboard() {
             className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => setActiveTab('profile')}
           >
-            Profile
+            <span>👤 Profil</span>
           </button>
         </nav>
 
         <main className="dashboard-main">
-          {error && <div className="error">{error}</div>}
+
+          {error && <div className="error-toast">{error}</div>}
+          {success && <div className="success-toast">{success}</div>}
+          {realtimeMsg && <div className="success-toast">{realtimeMsg}</div>}
 
           {activeTab === 'repairs' && (
             <div className="tab-content">
-              <h2>My Repair Requests</h2>
+              <h2>Mes demandes de réparation</h2>
               {loading ? (
-                <p>Loading...</p>
+                <div className="spinner"><div className="loader"></div> Chargement...</div>
               ) : repairs.length > 0 ? (
                 <div className="repairs-list">
                   {repairs.map(repair => (
                     <div key={repair.id} className="repair-card">
-                      <h3>{repair.title}</h3>
+                      <div className="repair-card-header">
+                        <h3>{repair.title}</h3>
+                        <span className={`status-badge status-${repair.status?.toLowerCase()}`}>{repair.status}</span>
+                      </div>
                       <p>{repair.description}</p>
-                      <p><strong>Type:</strong> {repair.bike_type}</p>
-                      <p><strong>Status:</strong> {repair.status}</p>
+                      <div className="repair-meta">
+                        <span className="meta-type">🚲 {repair.bike_type}</span>
+                        <span className="meta-location">📍 {repair.location_address || repair.location || 'N/A'}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p>No repair requests yet</p>
+                <p className="empty-list">Aucune demande pour l’instant</p>
               )}
             </div>
           )}
 
           {activeTab === 'create' && (
             <div className="tab-content">
-              <h2>Create Repair Request</h2>
-              <form onSubmit={handleCreateRepair}>
+              <h2>Nouvelle demande de réparation</h2>
+              <form onSubmit={handleCreateRepair} className="modern-form">
                 <div className="form-group">
-                  <label>Title</label>
+                  <label>Titre</label>
                   <input
                     type="text"
                     value={formData.title}
@@ -171,7 +220,7 @@ export function Dashboard() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Bike Type</label>
+                  <label>Type de vélo</label>
                   <input
                     type="text"
                     value={formData.bikeType}
@@ -180,7 +229,7 @@ export function Dashboard() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Location</label>
+                  <label>Localisation</label>
                   <input
                     type="text"
                     value={formData.location}
@@ -188,7 +237,7 @@ export function Dashboard() {
                     required
                   />
                 </div>
-                <button type="submit">Create Repair Request</button>
+                <button type="submit" className="submit-btn" disabled={loading}>{loading ? 'Création...' : 'Créer la demande'}</button>
               </form>
             </div>
           )}
