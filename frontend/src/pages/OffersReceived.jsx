@@ -8,6 +8,7 @@ export function OffersReceived() {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [processingOfferId, setProcessingOfferId] = useState(null);
   const [filter, setFilter] = useState('all');
   const [selectedOffer, setSelectedOffer] = useState(null);
 
@@ -21,13 +22,18 @@ export function OffersReceived() {
     setLoading(true);
     try {
       const response = await repairOfferService.getClientOffers();
+      console.log('Données reçues du backend :', response.data);
       let filtered = response.data.offers || [];
-      
+
       if (filter !== 'all') {
         filtered = filtered.filter(offer => offer.status === filter);
       }
+      console.log('Offres après filtrage :', filtered);
+      console.log('État avant setOffers :', offers);
       setOffers(filtered);
+      console.log('État après setOffers :', filtered);
     } catch (err) {
+      console.error('Erreur lors du chargement des offres :', err);
       setError('Failed to load offers');
     } finally {
       setLoading(false);
@@ -36,12 +42,13 @@ export function OffersReceived() {
 
   const handleAcceptOffer = async (offerId) => {
     try {
+      console.log('Tentative d\'acceptation de l\'offre avec ID :', offerId);
       await repairOfferService.acceptOffer(offerId);
+      console.log('Offre acceptée avec succès, rechargement des offres...');
       await loadReceivedOffers();
       setSelectedOffer(null);
     } catch (err) {
-      // Surface server error message when available for easier debugging
-      console.error('acceptOffer error:', err);
+      console.error('Erreur lors de l\'acceptation de l\'offre :', err);
       setError(err.response?.data?.error || 'Failed to accept offer');
     }
   };
@@ -64,7 +71,7 @@ export function OffersReceived() {
     <div className="offers-received">
       <h2>Offers Received</h2>
       
-      {error && <div className="error">{error}</div>}
+      {error && <div className="error-toast">{error}</div>}
       
       <div className="filter-tabs">
         {['all', 'pending', 'accepted', 'rejected'].map(status => (
@@ -79,7 +86,7 @@ export function OffersReceived() {
       </div>
 
       {loading ? (
-        <p>Loading offers...</p>
+        <div className="spinner"><div className="loader"></div> Chargement des offres...</div>
       ) : offers.length > 0 ? (
         <div className="offers-grid">
           {offers.map(offer => (
@@ -99,11 +106,23 @@ export function OffersReceived() {
                 <div className="offer-quote">
                   <div className="quote-item">
                     <span className="label">Quoted Price</span>
-                    <span className="value">€{parseFloat(offer.price || offer.offered_price || 0).toFixed(2)}</span>
+                    <span className="value">
+                      {(() => {
+                        const rawPrice = (offer.price ?? offer.offered_price ?? offer.offered_price);
+                        const num = Number(rawPrice);
+                        return Number.isFinite(num) ? `€${num.toFixed(2)}` : '—';
+                      })()}
+                    </span>
                   </div>
                   <div className="quote-item">
                     <span className="label">Estimated Duration</span>
-                    <span className="value">{offer.duration || offer.estimated_duration_hours || 0} hours</span>
+                    <span className="value">
+                      {(() => {
+                        const rawDur = (offer.duration ?? offer.estimated_duration_hours);
+                        const d = Number(rawDur);
+                        return Number.isFinite(d) ? `${d} hours` : '—';
+                      })()}
+                    </span>
                   </div>
                 </div>
                 
@@ -119,15 +138,25 @@ export function OffersReceived() {
                 <div className="offer-actions">
                   <button 
                     className="btn-accept"
-                    onClick={() => handleAcceptOffer(offer.id)}
+                    onClick={async () => {
+                      setProcessingOfferId(offer.id);
+                      await handleAcceptOffer(offer.id);
+                      setProcessingOfferId(null);
+                    }}
+                    disabled={processingOfferId === offer.id}
                   >
-                    Accept Offer
+                    {processingOfferId === offer.id ? 'Traitement...' : 'Accepter'}
                   </button>
                   <button 
                     className="btn-reject"
-                    onClick={() => handleRejectOffer(offer.id)}
+                    onClick={async () => {
+                      setProcessingOfferId(offer.id);
+                      await handleRejectOffer(offer.id);
+                      setProcessingOfferId(null);
+                    }}
+                    disabled={processingOfferId === offer.id}
                   >
-                    Reject
+                    {processingOfferId === offer.id ? 'Traitement...' : 'Refuser'}
                   </button>
                 </div>
               ) : offer.status === 'accepted' ? (

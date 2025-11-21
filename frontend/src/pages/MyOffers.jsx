@@ -8,6 +8,7 @@ export function MyOffers() {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [processing, setProcessing] = useState(false);
   const [filter, setFilter] = useState('all'); // all, pending, accepted, rejected
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export function MyOffers() {
     <div className="my-offers">
       <h2>My Repair Offers</h2>
       
-      {error && <div className="error">{error}</div>}
+      {error && <div className="error-toast">{error}</div>}
       
       <div className="filter-tabs">
         {['all', 'pending', 'accepted', 'rejected'].map(status => (
@@ -52,7 +53,7 @@ export function MyOffers() {
       </div>
 
       {loading ? (
-        <p>Loading offers...</p>
+        <div className="spinner"><div className="loader"></div> Chargement des offres...</div>
       ) : offers.length > 0 ? (
         <div className="offers-list">
           {offers.map(offer => (
@@ -72,10 +73,16 @@ export function MyOffers() {
                 
                 <div className="offer-terms">
                   <span className="price">
-                    <strong>Quote:</strong> €{parseFloat(offer.offered_price).toFixed(2)}
+                    <strong>Quote:</strong> {(() => {
+                      const p = Number(offer.offered_price ?? offer.price);
+                      return Number.isFinite(p) ? `€${p.toFixed(2)}` : '—';
+                    })()}
                   </span>
                   <span className="duration">
-                    <strong>Duration:</strong> {offer.estimated_duration_hours}h
+                    <strong>Duration:</strong> {(() => {
+                      const d = Number(offer.estimated_duration_hours ?? offer.duration);
+                      return Number.isFinite(d) ? `${d}h` : '—';
+                    })()}
                   </span>
                 </div>
                 
