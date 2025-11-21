@@ -19,6 +19,13 @@ export default defineConfig({
         changeOrigin: true,
         secure: false
       }
+      ,
+      '/socket.io': {
+        target: process.env.VITE_PROXY_TARGET || 'http://backend:3010',
+        ws: true,
+        changeOrigin: true,
+        secure: false
+      }
     }
   }
 })
