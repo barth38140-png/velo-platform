@@ -1,0 +1,14 @@
+FROM node:20-bullseye-slim
+WORKDIR /app
+
+# Install dependencies once (cache in image). For dev we keep it lightweight.
+COPY package.json package-lock.json* ./
+RUN npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+# Copy minimal files (the full source will typically be bind-mounted by compose)
+COPY . .
+
+EXPOSE 3000
+
+# Run Vite dev server. In compose we will mount the working tree so changes apply instantly.
+CMD ["npm", "run", "dev", "--", "--host"]
