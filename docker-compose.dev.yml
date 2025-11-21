@@ -6,7 +6,9 @@ services:
       dockerfile: Dockerfile.dev
     container_name: velo_platform_frontend_dev
     environment:
-      VITE_API_URL: http://backend:3010/api
+      # Use relative API path so the browser sends requests to the dev server
+      # which will proxy /api to the backend service inside Docker.
+      VITE_API_URL: /api
     ports:
       - "3000:3000"
     volumes:
