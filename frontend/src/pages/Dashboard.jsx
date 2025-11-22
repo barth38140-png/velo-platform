@@ -29,6 +29,29 @@ export function Dashboard() {
   const [mapResetCounter, setMapResetCounter] = useState(0);
   const toastTimeout = useRef();
 
+  const generateTitle = (f = formData) => {
+    try {
+      const bike = (f.bikeType || '').trim();
+      const affected = (f.affectedParts || '').trim();
+      const desc = (f.description || '').trim();
+      const parts = [];
+      if (bike) parts.push(bike);
+      if (affected) parts.push(affected);
+      else if (desc) {
+        const first = desc.split(/[\.\n]/)[0].trim();
+        parts.push(first.length > 60 ? first.slice(0,57) + '...' : first);
+      }
+      let title = parts.length ? parts.join(' — ') : 'Demande de réparation';
+      if (f.locationAddress) {
+        const shortAddr = String(f.locationAddress).split(',')[0];
+        if (shortAddr) title += ` à ${shortAddr}`;
+      }
+      return title;
+    } catch (e) {
+      return 'Demande de réparation';
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
     socket.auth = { token: localStorage.getItem('token') };
@@ -102,8 +125,9 @@ export function Dashboard() {
     setLoading(true);
     setError('');
     try {
+      const autoTitle = generateTitle(formData);
       const res = await repairService.createRepair(
-        formData.title,
+        autoTitle,
         formData.description,
         formData.bikeType,
         formData.locationLat,
@@ -259,7 +283,7 @@ export function Dashboard() {
                 <div className="step-panel">
                   <label className="label">Localisation</label>
                   <div className="location-row">
-                    <MapPicker showConfirm={false} showAddress={false} showSearch={false} resetTrigger={mapResetCounter} initialPosition={{ lat: 48.8566, lng: 2.3522 }} onChange={(pos) => setFormData(f => ({ ...f, locationLat: pos.lat, locationLng: pos.lng, locationAddress: pos.address }))} />
+                    <MapPicker showConfirm={false} showAddress={false} showSearch={false} showCoords={false} resetTrigger={mapResetCounter} initialPosition={{ lat: 48.8566, lng: 2.3522 }} onChange={(pos) => setFormData(f => ({ ...f, locationLat: pos.lat, locationLng: pos.lng, locationAddress: pos.address }))} />
                   </div>
                   <input
                     type="text"
@@ -316,14 +340,14 @@ export function Dashboard() {
               <h2>Nouvelle demande de réparation</h2>
               <form onSubmit={handleCreateRepair} className="modern-form">
                 <div className="form-group">
-                  <label>Titre</label>
+                  <label>Titre (généré automatiquement)</label>
                   <input
                     type="text"
                     data-cy="repair-title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
+                    value={generateTitle(formData)}
+                    readOnly
                   />
+                  <small className="micro">Le titre est rempli automatiquement à partir du type, du problème et de la localisation.</small>
                 </div>
                 <div className="form-group">
                   <label>Description</label>
@@ -395,7 +419,7 @@ export function Dashboard() {
                 </div>
                 <div className="form-group">
                   <label>Localisation</label>
-                  <MapPicker showConfirm={false} showAddress={false} showSearch={false} resetTrigger={mapResetCounter} initialPosition={{ lat: 48.8566, lng: 2.3522 }} onChange={(pos) => setFormData(f => ({ ...f, locationLat: pos.lat, locationLng: pos.lng, locationAddress: pos.address }))} />
+                  <MapPicker showConfirm={false} showAddress={false} showSearch={false} showCoords={false} resetTrigger={mapResetCounter} initialPosition={{ lat: 48.8566, lng: 2.3522 }} onChange={(pos) => setFormData(f => ({ ...f, locationLat: pos.lat, locationLng: pos.lng, locationAddress: pos.address }))} />
                   <input
                     type="text"
                     data-cy="repair-location"

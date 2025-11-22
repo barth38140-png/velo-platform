@@ -24,7 +24,7 @@ function ClickHandler({ onSelect }) {
   return null;
 }
 
-export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.3522 }, onChange, resetTrigger, showConfirm = true }) {
+export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.3522 }, onChange, resetTrigger, showConfirm = true, showAddress = true, showSearch = true, showCoords = true }) {
   const [marker, setMarker] = useState(initialPosition);
   const [address, setAddress] = useState('');
   const [loadingAddr, setLoadingAddr] = useState(false);
@@ -113,18 +113,20 @@ export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.352
 
   return (
     <div className="map-picker">
-      <div className="map-search">
-        <input data-cy="map-search-input" ref={searchRef} placeholder="Rechercher une adresse..." value={query} onChange={(e) => setQuery(e.target.value)} />
-        {results && results.length > 0 && (
-          <ul className="map-search-results" data-cy="map-search-results">
-            {results.slice(0, 8).map((r, i) => (
-              <li key={i} data-cy={`map-search-result-${i}`} onClick={() => onSelectSearch(r)}>
-                {r.display_name}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {showSearch && (
+        <div className="map-search">
+          <input data-cy="map-search-input" ref={searchRef} placeholder="Rechercher une adresse..." value={query} onChange={(e) => setQuery(e.target.value)} />
+          {results && results.length > 0 && (
+            <ul className="map-search-results" data-cy="map-search-results">
+              {results.slice(0, 8).map((r, i) => (
+                <li key={i} data-cy={`map-search-result-${i}`} onClick={() => onSelectSearch(r)}>
+                  {r.display_name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
       <MapContainer center={[marker.lat, marker.lng]} zoom={13} style={{ height: 300, width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -135,8 +137,12 @@ export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.352
       </MapContainer>
 
       <div className="map-picker-meta">
-        <div className="coords">Lat: {marker.lat.toFixed(6)}, Lng: {marker.lng.toFixed(6)}</div>
-        <div className="address">{loadingAddr ? 'Recherche d\'adresse...' : (address || 'Adresse non trouvée')}</div>
+        {showCoords && (
+          <div className="coords">Lat: {marker.lat.toFixed(6)}, Lng: {marker.lng.toFixed(6)}</div>
+        )}
+        {showAddress && (
+          <div className="address">{loadingAddr ? 'Recherche d\'adresse...' : (address || 'Adresse non trouvée')}</div>
+        )}
         {showConfirm && (
           <button data-cy="map-pick-confirm" type="button" className="btn primary" onClick={() => onChange && onChange({ lat: marker.lat, lng: marker.lng, address })}>Confirmer la position</button>
         )}
