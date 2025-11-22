@@ -1,3 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, ci/** ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint-and-frontend-tests:
+    name: Lint and Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend deps
+        run: |
+          cd backend
+          npm ci
+
+      - name: Install frontend deps
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run ESLint (backend + frontend)
+        run: |
+          npm --prefix backend run lint || true
+          npm --prefix frontend run lint || true
+
+      - name: Run frontend tests
+        run: |
+          npm --prefix frontend test
 name: CI velo-platform
 
 on:
