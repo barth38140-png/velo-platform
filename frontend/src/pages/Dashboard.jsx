@@ -77,87 +77,24 @@ export function Dashboard() {
     };
   }, [user]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  const handlePhotosSelected = (files) => {
-    const arr = Array.from(files || []);
-    const previews = arr.map(f => ({ name: f.name, url: URL.createObjectURL(f), fileSize: f.size, file: f }));
-    try { photoPreviews.forEach(p => URL.revokeObjectURL(p.url)); } catch (e) {}
-    setPhotoPreviews(previews);
-    setFormData(prev => ({ ...prev, photos: arr }));
-  };
-
-  const [step, setStep] = useState(1);
-
-  const nextStep = () => setStep(s => Math.min(3, s + 1));
-  const prevStep = () => setStep(s => Math.max(1, s - 1));
-
   const useMyLocation = () => {
-    if (!navigator.geolocation) return setError('Géolocalisation non supportée');
+    if (!navigator.geolocation) { setError('Géolocalisation non supportée'); return; }
     setLoading(true);
     navigator.geolocation.getCurrentPosition(async (pos) => {
       try {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        // reverse geocode
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-          <div className="repair-form-shell">
-            <h2 className="repair-title">Nouvelle demande — rapide</h2>
-            <p className="repair-sub">Seuls les éléments essentiels sont demandés : type, problème, localisation.</p>
-
-            <form onSubmit={handleCreateRepair} className="modern-form">
-              <div className="step-panel">
-                <label className="label">Type de vélo</label>
-                <select data-cy="repair-bike-type" value={formData.bikeType} onChange={(e) => setFormData({ ...formData, bikeType: e.target.value })} required style={{padding:10, borderRadius:8, width:'100%'}}>
-                  <option value="">Sélectionner le type</option>
-                  <option value="VTC">VTC</option>
-                  <option value="VTT">VTT</option>
-                  <option value="Ville">Ville</option>
-                  <option value="Electrique">Électrique</option>
-                </select>
-
-                <label className="label" style={{marginTop:12}}>Problème principal</label>
-                <div className="issue-icons" style={{marginBottom:12}}>
-                  <button type="button" className={`issue-btn ${formData.problem==='pneu'?'active':''}`} onClick={() => setFormData(f => ({ ...f, problem: 'pneu' }))}>🔧 Pneu</button>
-                  <button type="button" className={`issue-btn ${formData.problem==='freins'?'active':''}`} onClick={() => setFormData(f => ({ ...f, problem: 'freins' }))}>🛠️ Freins</button>
-                  <button type="button" className={`issue-btn ${formData.problem==='chaine'?'active':''}`} onClick={() => setFormData(f => ({ ...f, problem: 'chaine' }))}>🔗 Chaîne</button>
-                  <button type="button" className={`issue-btn ${formData.problem==='autre'?'active':''}`} onClick={() => setFormData(f => ({ ...f, problem: 'autre' }))}>⚙️ Autre</button>
-                </div>
-
-                <label className="label">Localisation</label>
-                <div className="location-row">
-                  <MapPicker showConfirm={false} showAddress={true} showSearch={false} showCoords={false} resetTrigger={mapResetCounter} initialPosition={{ lat: 48.8566, lng: 2.3522 }} onChange={(pos) => setFormData(f => ({ ...f, locationLat: pos.lat, locationLng: pos.lng, locationAddress: pos.address }))} />
-                </div>
-                <input
-                  type="text"
-                  data-cy="repair-location"
-                  placeholder="Adresse (optionnel)"
-                  value={formData.locationAddress || formData.location}
-                  onChange={(e) => setFormData({ ...formData, locationAddress: e.target.value })}
-                />
-                <div className="location-actions">
-                  <button type="button" className="btn tertiary" onClick={useMyLocation}>Utiliser ma position</button>
-                  <small className="micro">Localisation précise aide le mécanicien à estimer le déplacement.</small>
-                </div>
-
-                <div style={{display:'flex', justifyContent:'center', marginTop:18}}>
-                  <button data-cy="repair-submit" type="submit" className="btn primary" style={{padding:'12px 22px', fontSize:16}} disabled={loading || !formData.bikeType || !formData.problem}>{loading ? 'Création...' : 'Envoyer ma demande'}</button>
-                </div>
-              </div>
-            </form>
-          </div>
-              </button>
-              <button
-                className={`nav-btn ${activeTab === 'my-offers' ? 'active' : ''}`}
-                onClick={() => setActiveTab('my-offers')}
-              >
-                <span>💼 Mes offres</span>
-              </button>
-            </>
-          )}
+        const data = await res.json();
+        const addr = data.display_name || '';
+        setFormData(f => ({ ...f, locationLat: lat, locationLng: lng, locationAddress: addr }));
+      } catch (e) {
+        setError('Impossible de récupérer l\'adresse');
+      } finally {
+        setLoading(false);
+      }
+    }, (err) => { setLoading(false); setError('Autorisation géolocalisation refusée'); });
+  };
           <button
             className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => setActiveTab('profile')}
