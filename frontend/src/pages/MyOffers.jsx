@@ -9,7 +9,7 @@ export function MyOffers() {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [processing, setProcessing] = useState(false);
+  // processing state removed (unused)
   const [filter, setFilter] = useState('all'); // all, pending, accepted, rejected
 
   useEffect(() => {
@@ -20,16 +20,14 @@ export function MyOffers() {
 
   useEffect(() => {
     // Reload offers when server notifies of offer changes
-    const handleOfferUpdate = (data) => {
-      loadMyOffers();
-    };
+    const handleOfferUpdate = () => { loadMyOffers(); };
     try {
       socket.on('offer_update', handleOfferUpdate);
-    } catch (e) {
-      // socket may not be available in test env
+    } catch {
+      /* socket not available */
     }
     return () => {
-      try { socket.off('offer_update', handleOfferUpdate); } catch (e) {}
+      try { socket.off('offer_update', handleOfferUpdate); } catch { /* ignore */ }
     };
   }, []);
 
@@ -43,7 +41,7 @@ export function MyOffers() {
         filtered = filtered.filter(offer => offer.status === filter);
       }
       setOffers(filtered);
-    } catch (err) {
+    } catch {
       setError('Failed to load offers');
     } finally {
       setLoading(false);

@@ -11,7 +11,7 @@ export function OffersReceived() {
   const [error, setError] = useState('');
   const [processingOfferId, setProcessingOfferId] = useState(null);
   const [filter, setFilter] = useState('all');
-  const [selectedOffer, setSelectedOffer] = useState(null);
+  // selectedOffer removed (not used)
 
   useEffect(() => {
     if (user?.role === 'client') {
@@ -21,22 +21,16 @@ export function OffersReceived() {
 
   useEffect(() => {
     // Reload offers when server notifies of changes (accept/reject)
-    const onStatusUpdate = (data) => {
-      console.log('[socket] status_update received in OffersReceived', data);
-      loadReceivedOffers();
-    };
-    const onOfferUpdate = (data) => {
-      console.log('[socket] offer_update received in OffersReceived', data);
-      loadReceivedOffers();
-    };
+    const onStatusUpdate = () => { loadReceivedOffers(); };
+    const onOfferUpdate = () => { loadReceivedOffers(); };
     try {
       socket.on('status_update', onStatusUpdate);
       socket.on('offer_update', onOfferUpdate);
-    } catch (e) {
-      // socket may not be available in some environments
+    } catch {
+      /* socket not available */
     }
     return () => {
-      try { socket.off('status_update', onStatusUpdate); socket.off('offer_update', onOfferUpdate); } catch (e) {}
+      try { socket.off('status_update', onStatusUpdate); socket.off('offer_update', onOfferUpdate); } catch { /* ignore */ }
     };
   }, []);
 
@@ -62,7 +56,6 @@ export function OffersReceived() {
     try {
       await repairOfferService.acceptOffer(offerId);
       await loadReceivedOffers();
-      setSelectedOffer(null);
     } catch (err) {
       console.error('Erreur lors de l\'acceptation de l\'offre :', err);
       setError(err.response?.data?.error || 'Failed to accept offer');
@@ -73,8 +66,7 @@ export function OffersReceived() {
     try {
       await repairOfferService.rejectOffer(offerId);
       await loadReceivedOffers();
-      setSelectedOffer(null);
-    } catch (err) {
+    } catch {
       setError('Failed to reject offer');
     }
   };

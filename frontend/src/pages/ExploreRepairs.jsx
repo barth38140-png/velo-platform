@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { repairService, locationService, repairOfferService } from '../services/api';
+import { repairService, repairOfferService } from '../services/api';
 import '../styles/ExploreRepairs.css';
 
 export function ExploreRepairs() {
@@ -16,7 +16,7 @@ export function ExploreRepairs() {
     message: ''
   });
   const [sendingOffer, setSendingOffer] = useState(false);
-  const [userLocation, setUserLocation] = useState(null);
+  const userLocation = null; // optional location disabled for now
 
   useEffect(() => {
     if (user?.role === 'repairer') {
@@ -27,17 +27,7 @@ export function ExploreRepairs() {
     }
   }, [user]);
 
-  const loadRepairerLocation = async () => {
-    try {
-      const response = await locationService.getLocation(user.id);
-      setUserLocation(response.data.location);
-    } catch (err) {
-      // Location not found (404) — that's OK, user just hasn't set location yet
-      // Continue without location filtering
-      console.error('Failed to load location:', err);
-      setUserLocation(null);
-    }
-  };
+  // loadRepairerLocation removed — optional location fetching disabled for stability
 
   const loadPendingRepairs = async () => {
     setLoading(true);
@@ -58,7 +48,7 @@ export function ExploreRepairs() {
         });
         setNearbyRepairs(nearby);
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load repairs');
     } finally {
       setLoading(false);

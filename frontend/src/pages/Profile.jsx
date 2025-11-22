@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authService, repairerService } from '../services/api';
 import '../styles/Profile.css';
 
 export function Profile() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -65,12 +67,12 @@ export function Profile() {
               is_available: repairerRes.data.profile.is_available !== false
             });
           }
-        } catch (err) {
+        } catch {
           // Repairer profile may not exist yet
-          console.error('Failed to load repairer profile:', err);
+          console.error('Failed to load repairer profile:');
         }
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load profile');
     } finally {
       setLoading(false);
@@ -93,7 +95,7 @@ export function Profile() {
       // For now, this is a placeholder
       setSuccess('Profile would be updated here');
       setIsEditing(false);
-    } catch (err) {
+    } catch {
       setError('Failed to save profile');
     }
   };
@@ -111,7 +113,7 @@ export function Profile() {
       setSuccess('Repairer profile updated successfully!');
       setIsEditing(false);
       await loadProfile();
-    } catch (err) {
+    } catch {
       setError('Failed to save repairer profile');
     }
   };

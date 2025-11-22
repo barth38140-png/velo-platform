@@ -25,7 +25,9 @@ export function Dashboard() {
   const toastTimeout = useRef();
 
   useEffect(() => {
-    return () => { try { clearTimeout(toastTimeout.current); } catch (e) {} };
+    return () => {
+      if (toastTimeout.current) clearTimeout(toastTimeout.current);
+    };
   }, []);
 
   const generateTitle = (f = formData) => {
@@ -51,12 +53,12 @@ export function Dashboard() {
         const data = await res.json();
         const addr = data.display_name || '';
         setFormData(f => ({ ...f, locationLat: lat, locationLng: lng, locationAddress: addr }));
-      } catch (e) {
+      } catch {
         setError('Impossible de récupérer l\'adresse');
       } finally {
         setLoading(false);
       }
-    }, (err) => { setLoading(false); setError('Autorisation géolocalisation refusée'); });
+    }, () => { setLoading(false); setError('Autorisation géolocalisation refusée'); });
   };
 
   const handleCreateRepair = async (e) => {
@@ -79,7 +81,7 @@ export function Dashboard() {
       toastTimeout.current = setTimeout(() => setSuccess(''), 3000);
       setFormData({ bikeType: '', problem: '', locationLat: null, locationLng: null, locationAddress: '' });
       setMapResetCounter(c => c + 1);
-      try { const r = await repairService.getMyRepairs(); setRepairs(r.data.repairs || []); } catch (e) {}
+      try { const r = await repairService.getMyRepairs(); setRepairs(r.data.repairs || []); } catch { /* ignore */ }
     } catch (err) {
       setError(err?.response?.data?.message || err.message || 'Erreur');
     } finally {

@@ -4,7 +4,7 @@ afterEach(() => {
   try {
     vi.restoreAllMocks();
     vi.useRealTimers();
-  } catch (e) {
+  } catch {
     // ignore if not needed
   }
 });

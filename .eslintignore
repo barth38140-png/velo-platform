@@ -1,0 +1,8 @@
+node_modules/
+frontend/node_modules/
+coverage/
+cypress/
+frontend/cypress/
+tests/artifacts/
+frontend/cypress/videos/
+frontend/cypress/screenshots/

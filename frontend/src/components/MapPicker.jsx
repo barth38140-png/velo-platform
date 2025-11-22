@@ -76,7 +76,7 @@ export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.352
         if (!res.ok) return;
         const data = await res.json();
         setResults(data || []);
-      } catch (e) {
+      } catch {
         // ignore
       }
     }, 350);
@@ -92,7 +92,7 @@ export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.352
       const display = data.display_name || '';
       setAddress(display);
       if (onChange) onChange({ lat, lng, address: display });
-    } catch (e) {
+    } catch {
       setAddress('');
       if (onChange) onChange({ lat, lng, address: '' });
     } finally {
@@ -106,7 +106,9 @@ export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.352
     setMarker(initialPosition);
     setQuery('');
     setResults([]);
-    try { if (searchRef && searchRef.current) searchRef.current.value = ''; } catch (e) {}
+    if (searchRef && searchRef.current) {
+      try { searchRef.current.value = ''; } catch { /* ignore DOM access errors */ }
+    }
     fetchAddress(initialPosition.lat, initialPosition.lng);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetTrigger]);

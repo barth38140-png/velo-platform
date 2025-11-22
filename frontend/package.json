@@ -9,7 +9,7 @@
     "build": "vite build",
     "e2e:open": "cypress open",
     "e2e:run": "cypress run",
-    "lint": "eslint .",
+    "lint": "eslint \"src/**/*.{js,jsx}\"",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest --watch",

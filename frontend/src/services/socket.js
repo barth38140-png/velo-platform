@@ -11,19 +11,12 @@ export const socket = io({
   transports: ['websocket'],
 });
 
-// Helpful client-side logs to debug connection issues during demo
-try {
-  // debug: socket path configured
-} catch (e) {
-  /* ignore */
-}
-
 socket.on('connect', () => {
   // socket connected
 });
 socket.on('connect_error', (err) => {
   console.error('[socket] connect_error', err && err.message ? err.message : err);
 });
-socket.on('disconnect', (reason) => {
+socket.on('disconnect', () => {
   // socket disconnected
 });
