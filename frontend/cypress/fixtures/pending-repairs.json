@@ -1,0 +1,14 @@
+{
+  "repairs": [
+    {
+      "id": 12345,
+      "title": "Frein avant",
+      "description": "Frein avant grince fortement.",
+      "bike_type": "VTC",
+      "location_lat": 45.7640,
+      "location_lng": 4.8357,
+      "location_address": "Lyon, France",
+      "status": "pending"
+    }
+  ]
+}

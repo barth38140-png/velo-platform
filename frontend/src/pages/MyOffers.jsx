@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { socket } from '../services/socket';
 import { useAuth } from '../context/AuthContext';
 import { repairOfferService } from '../services/api';
 import '../styles/MyOffers.css';
@@ -16,6 +17,21 @@ export function MyOffers() {
       loadMyOffers();
     }
   }, [user, filter]);
+
+  useEffect(() => {
+    // Reload offers when server notifies of offer changes
+    const handleOfferUpdate = (data) => {
+      loadMyOffers();
+    };
+    try {
+      socket.on('offer_update', handleOfferUpdate);
+    } catch (e) {
+      // socket may not be available in test env
+    }
+    return () => {
+      try { socket.off('offer_update', handleOfferUpdate); } catch (e) {}
+    };
+  }, []);
 
   const loadMyOffers = async () => {
     setLoading(true);
@@ -69,6 +85,14 @@ export function MyOffers() {
                 <p className="client-name">
                   <strong>Client:</strong> {offer.client_name}
                 </p>
+                {offer.client_phone ? (
+                  <p className="client-contact"><strong>Contact:</strong> {offer.client_phone}</p>
+                ) : (
+                  <p className="client-contact"><strong>Contact:</strong> Via platform</p>
+                )}
+                {offer.location_address && (
+                  <p className="client-location"><strong>Location:</strong> {offer.location_address}</p>
+                )}
                 <p className="repair-description">{offer.repair_description}</p>
                 
                 <div className="offer-terms">

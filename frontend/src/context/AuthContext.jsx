@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/api';
 
 const AuthContext = createContext();
@@ -8,6 +8,29 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // If there's a token in localStorage on startup, fetch the user profile
+  useEffect(() => {
+    let mounted = true;
+    async function initFromToken() {
+      if (!token) return;
+      setLoading(true);
+      try {
+        const res = await authService.getProfile();
+        if (!mounted) return;
+        setUser(res.data.user || null);
+      } catch (err) {
+        // If token is invalid, clear it to avoid stale state
+        console.error('Failed to initialize user from token:', err?.response?.data || err.message);
+        setToken(null);
+        localStorage.removeItem('token');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    initFromToken();
+    return () => { mounted = false; };
+  }, [token]);
 
   const register = async (email, password, name, phone, role) => {
     setLoading(true);
@@ -21,6 +44,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       const message = err.response?.data?.error || err.message;
       setError(message);
+      console.error('[REGISTER ERROR]', err);
       throw err;
     } finally {
       setLoading(false);

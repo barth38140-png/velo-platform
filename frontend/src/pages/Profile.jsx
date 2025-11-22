@@ -4,7 +4,7 @@ import { authService, repairerService } from '../services/api';
 import '../styles/Profile.css';
 
 export function Profile() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -22,6 +22,7 @@ export function Profile() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -34,6 +35,16 @@ export function Profile() {
     try {
       const response = await authService.getProfile();
       const userData = response.data.user;
+      // If the profile returned by the API doesn't match the identity in context,
+      // there's likely a stale/incorrect token in localStorage. Log out to avoid
+      // showing another user's private data.
+      if (user && userData && user.id !== userData.id) {
+        console.error('Profile mismatch: context user id', user?.id, 'API user id', userData.id);
+        // clear local session and force re-login
+        logout();
+        navigate('/login');
+        return;
+      }
       setProfile({
         name: userData.name || '',
         email: userData.email || '',
@@ -106,15 +117,15 @@ export function Profile() {
   };
 
   if (loading) {
-    return <div className="profile"><p>Loading profile...</p></div>;
+    return <div className="profile"><div className="spinner"><div className="loader"></div> Chargement du profil...</div></div>;
   }
 
   return (
     <div className="profile">
       <h2>My Profile</h2>
 
-      {error && <div className="error">{error}</div>}
-      {success && <div className="success">{success}</div>}
+      {error && <div className="error-toast">{error}</div>}
+      {success && <div className="success-toast">{success}</div>}
 
       {/* User Profile Section */}
       <div className="profile-section">
@@ -224,14 +235,20 @@ export function Profile() {
           <>
             <button
               className="btn-save"
-              onClick={() => {
-                handleSaveProfile();
-                if (profile.role === 'repairer') {
-                  handleSaveRepairerProfile();
+              onClick={async () => {
+                setSaving(true);
+                try {
+                  await handleSaveProfile();
+                  if (profile.role === 'repairer') {
+                    await handleSaveRepairerProfile();
+                  }
+                } finally {
+                  setSaving(false);
                 }
               }}
+              disabled={saving}
             >
-              Save Changes
+              {saving ? 'Enregistrement...' : 'Enregistrer'}
             </button>
             <button
               className="btn-cancel"
@@ -239,8 +256,9 @@ export function Profile() {
                 setIsEditing(false);
                 loadProfile();
               }}
+              disabled={saving}
             >
-              Cancel
+              Annuler
             </button>
           </>
         )}

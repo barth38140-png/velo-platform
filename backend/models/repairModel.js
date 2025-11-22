@@ -1,16 +1,21 @@
 ﻿const pool = require('../config/db');
 
-async function createRepairRequest(userId, title, description, bikeType = null, locationLat = null, locationLng = null, locationAddress = null) {
+async function createRepairRequest(userId, title, description, bikeType = null, locationLat = null, locationLng = null, locationAddress = null, metadata = {}) {
   const res = await pool.query(
-    'INSERT INTO repair_requests (user_id, title, description, bike_type, location_lat, location_lng, location_address) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-    [userId, title, description, bikeType, locationLat, locationLng, locationAddress]
+    'INSERT INTO repair_requests (user_id, title, description, bike_type, location_lat, location_lng, location_address, metadata) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+    [userId, title, description, bikeType, locationLat, locationLng, locationAddress, metadata]
   );
   return res.rows[0];
 }
 
 async function getRepairRequestsByUser(userId) {
   const res = await pool.query(
-    'SELECT * FROM repair_requests WHERE user_id = $1 ORDER BY created_at DESC',
+    `SELECT r.*, COALESCE(json_agg(json_build_object('id', p.id, 'filename', p.filename, 'filepath', p.filepath, 'uploaded_at', p.uploaded_at)) FILTER (WHERE p.id IS NOT NULL), '[]') as photos
+     FROM repair_requests r
+     LEFT JOIN repair_request_photos p ON p.repair_request_id = r.id
+     WHERE r.user_id = $1
+     GROUP BY r.id
+     ORDER BY r.created_at DESC`,
     [userId]
   );
   return res.rows;
@@ -21,7 +26,16 @@ async function getRepairRequestById(requestId) {
     'SELECT * FROM repair_requests WHERE id = $1',
     [requestId]
   );
-  return res.rows[0];
+  const repair = res.rows[0];
+  if (!repair) return null;
+
+  // Fetch photos
+  const photosRes = await pool.query(
+    'SELECT id, filename, filepath, uploaded_at FROM repair_request_photos WHERE repair_request_id = $1 ORDER BY uploaded_at ASC',
+    [requestId]
+  );
+  repair.photos = photosRes.rows;
+  return repair;
 }
 
 async function updateRepairRequestStatus(requestId, status, assignedRepairerId = null) {
@@ -34,7 +48,12 @@ async function updateRepairRequestStatus(requestId, status, assignedRepairerId =
 
 async function getAllRepairRequests() {
   const res = await pool.query(
-    'SELECT * FROM repair_requests WHERE status = $1 ORDER BY created_at DESC',
+    `SELECT r.*, COALESCE(json_agg(json_build_object('id', p.id, 'filename', p.filename, 'filepath', p.filepath, 'uploaded_at', p.uploaded_at)) FILTER (WHERE p.id IS NOT NULL), '[]') as photos
+     FROM repair_requests r
+     LEFT JOIN repair_request_photos p ON p.repair_request_id = r.id
+     WHERE r.status = $1
+     GROUP BY r.id
+     ORDER BY r.created_at DESC`,
     ['pending']
   );
   return res.rows;

@@ -7,8 +7,14 @@ async function createRepairOffer(repairRequestId, repairerId, offeredPrice, esti
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *;
   `;
-  const res = await pool.query(sql, [repairRequestId, repairerId, offeredPrice, estimatedDurationHours, message]);
-  return res.rows[0];
+  try {
+    const res = await pool.query(sql, [repairRequestId, repairerId, offeredPrice, estimatedDurationHours, message]);
+    return res.rows[0];
+  } catch (err) {
+    // If DB unique constraint exists, let the controller handle duplicate attempts
+    // Rethrow the error so caller can inspect err.code (e.g. '23505' for unique_violation)
+    throw err;
+  }
 }
 
 // Get all offers for a repair request
@@ -18,6 +24,7 @@ async function getOffersByRepairRequest(repairRequestId) {
       ro.id,
       ro.repair_request_id,
       ro.repairer_id,
+      rr.user_id as client_id,
       ro.offered_price,
       ro.estimated_duration_hours,
       ro.message,
@@ -51,6 +58,7 @@ async function getOffersByRepairer(repairerId) {
       ro.status,
       ro.created_at,
       rr.title as repair_title,
+      rr.location_address,
       rr.description as repair_description,
       rr.bike_type,
       u.name as client_name,
@@ -116,6 +124,7 @@ async function getOffersByClient(clientId) {
       ro.status,
       ro.created_at,
       rr.title as repair_title,
+      rr.location_address,
       rr.description as repair_description,
       rr.bike_type,
       u.name as repairer_name,

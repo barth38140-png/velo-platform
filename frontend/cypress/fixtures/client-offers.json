@@ -1,0 +1,18 @@
+{
+  "offers": [
+    {
+      "id": 98765,
+      "repair_request_id": 12345,
+      "repair_title": "Frein avant",
+      "repair_description": "Frein avant grince fortement.",
+      "client_name": "Client E2E",
+      "client_phone": "0123456789",
+      "repairer_name": "Repairer E2E",
+      "offered_price": 50,
+      "estimated_duration_hours": 2,
+      "message": "Je peux réparer rapidement.",
+      "status": "pending",
+      "location_address": "Lyon, France"
+    }
+  ]
+}

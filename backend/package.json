@@ -1,4 +1,8 @@
 {
+    "name": "velo-platform-backend",
+    "version": "1.0.0",
+    "main": "index.js",
+    "license": "MIT",
     "scripts": {
         "smoke:test": "node tests/auth-smoke.js",
         "test": "cross-env NODE_ENV=test jest --runInBand",
@@ -8,6 +12,7 @@
     },
     "dependencies": {
         "axios": "^1.13.2",
+        "multer": "^1.4.5-lts.1",
         "bcrypt": "^6.0.0",
         "bcryptjs": "^3.0.3",
         "cors": "^2.8.5",
@@ -16,9 +21,6 @@
         "jsonwebtoken": "^9.0.2",
         "socket.io": "^4.8.1"
     },
-    "version": "1.0.0",
-    "name": "velo-platform-backend",
-    "main": "index.js",
     "devDependencies": {
         "@eslint/js": "^9.39.1",
         "cross-env": "^10.1.0",
@@ -31,6 +33,5 @@
         "nodemon": "^3.1.11",
         "pg": "^8.16.3",
         "supertest": "^7.1.4"
-    },
-    "license": "MIT"
+    }
 }

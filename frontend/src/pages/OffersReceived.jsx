@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { socket } from '../services/socket';
 import { useAuth } from '../context/AuthContext';
 import { repairOfferService } from '../services/api';
 import '../styles/OffersReceived.css';
@@ -18,20 +19,37 @@ export function OffersReceived() {
     }
   }, [user, filter]);
 
+  useEffect(() => {
+    // Reload offers when server notifies of changes (accept/reject)
+    const onStatusUpdate = (data) => {
+      console.log('[socket] status_update received in OffersReceived', data);
+      loadReceivedOffers();
+    };
+    const onOfferUpdate = (data) => {
+      console.log('[socket] offer_update received in OffersReceived', data);
+      loadReceivedOffers();
+    };
+    try {
+      socket.on('status_update', onStatusUpdate);
+      socket.on('offer_update', onOfferUpdate);
+    } catch (e) {
+      // socket may not be available in some environments
+    }
+    return () => {
+      try { socket.off('status_update', onStatusUpdate); socket.off('offer_update', onOfferUpdate); } catch (e) {}
+    };
+  }, []);
+
   const loadReceivedOffers = async () => {
     setLoading(true);
     try {
       const response = await repairOfferService.getClientOffers();
-      console.log('Données reçues du backend :', response.data);
       let filtered = response.data.offers || [];
 
       if (filter !== 'all') {
         filtered = filtered.filter(offer => offer.status === filter);
       }
-      console.log('Offres après filtrage :', filtered);
-      console.log('État avant setOffers :', offers);
       setOffers(filtered);
-      console.log('État après setOffers :', filtered);
     } catch (err) {
       console.error('Erreur lors du chargement des offres :', err);
       setError('Failed to load offers');
@@ -42,9 +60,7 @@ export function OffersReceived() {
 
   const handleAcceptOffer = async (offerId) => {
     try {
-      console.log('Tentative d\'acceptation de l\'offre avec ID :', offerId);
       await repairOfferService.acceptOffer(offerId);
-      console.log('Offre acceptée avec succès, rechargement des offres...');
       await loadReceivedOffers();
       setSelectedOffer(null);
     } catch (err) {
@@ -90,10 +106,10 @@ export function OffersReceived() {
       ) : offers.length > 0 ? (
         <div className="offers-grid">
           {offers.map(offer => (
-            <div key={offer.id} className={`offer-card ${offer.status}`}>
+            <div key={offer.id} className={`offer-card ${offer.status}`} data-cy={`offer-card-${offer.id}`}>
               <div className="offer-header">
-                <h3>{getRepairer(offer)}</h3>
-                <span className={`status-badge ${offer.status}`}>
+                <h3 data-cy={`offer-repairer-${offer.id}`}>{getRepairer(offer)}</h3>
+                <span className={`status-badge ${offer.status}`} data-cy={`offer-status-${offer.id}`}>
                   {offer.status.toUpperCase()}
                 </span>
               </div>
@@ -138,6 +154,7 @@ export function OffersReceived() {
                 <div className="offer-actions">
                   <button 
                     className="btn-accept"
+                    data-cy={`offer-accept-${offer.id}`}
                     onClick={async () => {
                       setProcessingOfferId(offer.id);
                       await handleAcceptOffer(offer.id);
@@ -149,6 +166,7 @@ export function OffersReceived() {
                   </button>
                   <button 
                     className="btn-reject"
+                    data-cy={`offer-reject-${offer.id}`}
                     onClick={async () => {
                       setProcessingOfferId(offer.id);
                       await handleRejectOffer(offer.id);
@@ -160,11 +178,11 @@ export function OffersReceived() {
                   </button>
                 </div>
               ) : offer.status === 'accepted' ? (
-                <div className="offer-accepted-info">
+                <div className="offer-accepted-info" data-cy={`offer-accepted-${offer.id}`}>
                   ✓ You accepted this offer
                 </div>
               ) : (
-                <div className="offer-rejected-info">
+                <div className="offer-rejected-info" data-cy={`offer-rejected-${offer.id}`}>
                   ✗ You rejected this offer
                 </div>
               )}

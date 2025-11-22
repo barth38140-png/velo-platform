@@ -10,7 +10,7 @@
  * Créer une demande de réparation
  */
 async function createRepair(req, res) {
-  const { title, description, bike_type, location_lat, location_lng, location_address } = req.body;
+  const { title, description, bike_type, location_lat, location_lng, location_address, metadata } = req.body;
   const userId = req.user.id;
 
   if (!title || !description) {
@@ -19,13 +19,14 @@ async function createRepair(req, res) {
 
   try {
     const repair = await createRepairRequest(
-      userId, 
-      title, 
-      description, 
+      userId,
+      title,
+      description,
       bike_type || null,
       location_lat || null,
       location_lng || null,
-      location_address || null
+      location_address || null,
+      metadata || {}
     );
     res.status(201).json({ success: true, repair });
   } catch (err) {
@@ -42,7 +43,12 @@ async function getRepairs(req, res) {
 
   try {
     const repairs = await getRepairRequestsByUser(userId);
-    res.json({ success: true, repairs });
+    // Map photos to authenticated URLs
+    const mapped = repairs.map(r => ({
+      ...r,
+      photos: (r.photos || []).map(p => ({ id: p.id, filename: p.filename, url: `/api/repairs/photos/${p.id}` }))
+    }));
+    res.json({ success: true, repairs: mapped });
   } catch (err) {
     console.error('getRepairs error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -60,6 +66,9 @@ async function getRepairDetail(req, res) {
     if (!repair) {
       return res.status(404).json({ error: 'Repair request not found' });
     }
+    // Build photo URLs
+    const photos = (repair.photos || []).map(p => ({ id: p.id, filename: p.filename, url: `/api/repairs/photos/${p.id}` }));
+    repair.photos = photos;
     res.json({ success: true, repair });
   } catch (err) {
     console.error('getRepairDetail error:', err);
@@ -93,7 +102,11 @@ async function updateRepairStatus(req, res) {
 async function getPendingRepairs(req, res) {
   try {
     const repairs = await getAllRepairRequests();
-    res.json({ success: true, repairs, count: repairs.length });
+    const mapped = repairs.map(r => ({
+      ...r,
+      photos: (r.photos || []).map(p => ({ id: p.id, filename: p.filename, url: `/api/repairs/photos/${p.id}` }))
+    }));
+    res.json({ success: true, repairs: mapped, count: mapped.length });
   } catch (err) {
     console.error('getPendingRepairs error:', err);
     res.status(500).json({ error: 'Internal server error' });

@@ -39,6 +39,10 @@ const createOffer = async (req, res) => {
     });
   } catch (err) {
     console.error('createOffer error:', err);
+    // Handle unique constraint violation (repairer already offered)
+    if (err && err.code === '23505') {
+      return res.status(409).json({ success: false, error: 'You have already submitted an offer for this repair request' });
+    }
     res.status(500).json({
       success: false,
       error: err.message
@@ -177,6 +181,23 @@ const updateOfferStatus = async (req, res) => {
       );
     }
 
+    // Emit socket events so clients/repairers can refresh views
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        // Notify the client who owns the repair request
+        const clientId = req.user.id;
+        console.log(`Emitting status_update to user-${clientId} for offer ${offerId} status=${status}`);
+        io.to(`user-${clientId}`).emit('status_update', { status, offer: updatedOffer });
+        // Notify the repairer about their offer update
+        if (updatedOffer && updatedOffer.repairer_id) {
+          console.log(`Emitting offer_update to user-${updatedOffer.repairer_id} for offer ${offerId}`);
+          io.to(`user-${updatedOffer.repairer_id}`).emit('offer_update', { offer: updatedOffer });
+        }
+      }
+    } catch (e) {
+      console.error('Socket emit error after offer status update:', e);
+    }
     res.json({
       success: true,
       offer: updatedOffer

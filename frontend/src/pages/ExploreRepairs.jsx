@@ -15,6 +15,7 @@ export function ExploreRepairs() {
     duration: '',
     message: ''
   });
+  const [sendingOffer, setSendingOffer] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
@@ -78,6 +79,7 @@ export function ExploreRepairs() {
   const handleSubmitOffer = async (e) => {
     e.preventDefault();
     setError('');
+    setSendingOffer(true);
     try {
       await repairOfferService.createOffer(
         selectedRepair.id,
@@ -90,6 +92,8 @@ export function ExploreRepairs() {
       await loadPendingRepairs();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to submit offer');
+    } finally {
+      setSendingOffer(false);
     }
   };
 
@@ -98,16 +102,16 @@ export function ExploreRepairs() {
   return (
     <div className="explore-repairs">
       <h2>Available Repairs</h2>
-      {error && <div className="error">{error}</div>}
-      
+      {error && <div className="error-toast">{error}</div>}
+
       {loading ? (
-        <p>Loading repairs...</p>
+        <div className="spinner"><div className="loader"></div> Chargement des réparations...</div>
       ) : repairsToShow.length > 0 ? (
         <div className="repairs-grid">
           {repairsToShow.map(repair => (
-            <div key={repair.id} className="repair-item">
-              <h3>{repair.title}</h3>
-              <p className="description">{repair.description}</p>
+            <div key={repair.id} className="repair-item" data-cy={`repair-item-${repair.id}`}>
+              <h3 data-cy={`repair-title-${repair.id}`}>{repair.title}</h3>
+              <p className="description" data-cy={`repair-desc-${repair.id}`}>{repair.description}</p>
               <div className="repair-details">
                 <span><strong>Type:</strong> {repair.bike_type}</span>
                 <span><strong>Location:</strong> {repair.location_address}</span>
@@ -115,7 +119,7 @@ export function ExploreRepairs() {
               </div>
               
               {selectedRepair?.id === repair.id ? (
-                <form onSubmit={handleSubmitOffer} className="offer-form">
+                <form onSubmit={handleSubmitOffer} className="offer-form" data-cy={`offer-form-${repair.id}`}>
                   <div className="form-group">
                     <label>Your Quote (EUR)</label>
                     <input
@@ -125,6 +129,7 @@ export function ExploreRepairs() {
                       value={offerForm.price}
                       onChange={(e) => setOfferForm({ ...offerForm, price: e.target.value })}
                       required
+                      data-cy={`offer-price-${repair.id}`}
                     />
                   </div>
                   <div className="form-group">
@@ -135,6 +140,7 @@ export function ExploreRepairs() {
                       value={offerForm.duration}
                       onChange={(e) => setOfferForm({ ...offerForm, duration: e.target.value })}
                       required
+                      data-cy={`offer-duration-${repair.id}`}
                     />
                   </div>
                   <div className="form-group">
@@ -144,16 +150,21 @@ export function ExploreRepairs() {
                       onChange={(e) => setOfferForm({ ...offerForm, message: e.target.value })}
                       required
                       minLength="5"
+                      data-cy={`offer-message-${repair.id}`}
                     />
                   </div>
                   <div className="form-actions">
-                    <button type="submit">Send Offer</button>
+                    <button type="submit" disabled={sendingOffer} data-cy={`offer-submit-${repair.id}`}>
+                      {sendingOffer ? 'Envoi en cours...' : 'Envoyer l’offre'}
+                    </button>
                     <button 
                       type="button" 
                       onClick={() => setSelectedRepair(null)}
                       className="cancel-btn"
+                      disabled={sendingOffer}
+                      data-cy={`offer-cancel-${repair.id}`}
                     >
-                      Cancel
+                      Annuler
                     </button>
                   </div>
                 </form>
@@ -161,6 +172,7 @@ export function ExploreRepairs() {
                 <button 
                   onClick={() => setSelectedRepair(repair)}
                   className="offer-btn"
+                  data-cy={`offer-open-${repair.id}`}
                 >
                   Submit Offer
                 </button>

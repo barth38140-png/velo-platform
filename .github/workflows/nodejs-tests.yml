@@ -33,3 +33,8 @@ jobs:
         with:
           name: coverage-report
           path: backend/coverage/
+
+      - name: Fail if coverage < 75%
+        run: |
+          COV=$(node -e "const r=require('fs').readFileSync('coverage/coverage-summary.json','utf8');const p=JSON.parse(r);console.log(p.total.lines.pct);if(p.total.lines.pct<75){process.exit(1)}")
+        working-directory: ./backend

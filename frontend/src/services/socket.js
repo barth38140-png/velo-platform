@@ -13,17 +13,17 @@ export const socket = io({
 
 // Helpful client-side logs to debug connection issues during demo
 try {
-  console.log('[socket] configured path:', SOCKET_PATH);
+  // debug: socket path configured
 } catch (e) {
   /* ignore */
 }
 
 socket.on('connect', () => {
-  console.log('[socket] connected, id=', socket.id);
+  // socket connected
 });
 socket.on('connect_error', (err) => {
   console.error('[socket] connect_error', err && err.message ? err.message : err);
 });
 socket.on('disconnect', (reason) => {
-  console.log('[socket] disconnected, reason=', reason);
+  // socket disconnected
 });

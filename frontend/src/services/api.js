@@ -28,8 +28,8 @@ export const authService = {
 };
 
 export const repairService = {
-  createRepair: (title, description, bikeType, locationLat, locationLng, locationAddress) =>
-    api.post('/repairs', { title, description, bike_type: bikeType, location_lat: locationLat, location_lng: locationLng, location_address: locationAddress }),
+  createRepair: (title, description, bikeType, locationLat, locationLng, locationAddress, metadata = {}) =>
+    api.post('/repairs', { title, description, bike_type: bikeType, location_lat: locationLat, location_lng: locationLng, location_address: locationAddress, metadata }),
   getMyRepairs: () =>
     api.get('/repairs'),
   getRepairDetail: (repairId) =>
@@ -84,6 +84,12 @@ export const repairOfferService = {
     api.patch(`/repair-offers/${offerId}/status`, { status: 'accepted' }),
   rejectOffer: (offerId) =>
     api.patch(`/repair-offers/${offerId}/status`, { status: 'rejected' })
+};
+
+// Photo upload for repair requests (multipart)
+export const repairPhotoService = {
+  uploadPhotos: (repairRequestId, formData) =>
+    api.post(`/repairs/${repairRequestId}/photos`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
 };
 
 export default api;

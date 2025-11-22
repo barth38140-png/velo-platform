@@ -1,5 +1,8 @@
-﻿console.log("[DEBUG-START] DB_PASSWORD:", JSON.stringify(process.env.DB_PASSWORD));
+﻿// Load environment variables as early as possible so they're available to the app
 require("dotenv").config({ path: process.env.NODE_ENV === "test" ? ".env.test" : ".env" });
+
+// For debugging, only indicate whether a sensitive var is set; do NOT print secrets
+console.log("[DEBUG-START] NODE_ENV:", process.env.NODE_ENV, "DB_PASSWORD set:", !!process.env.DB_PASSWORD);
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
@@ -24,6 +27,10 @@ const pool = require("./config/db");
 
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded photos
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Attach io to app for use in routes/controllers
 app.set('io', io);

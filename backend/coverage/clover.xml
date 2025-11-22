@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1763557322688" clover="3.2.0">
-  <project timestamp="1763557322688" name="All files">
-    <metrics statements="253" coveredstatements="170" conditionals="163" coveredconditionals="68" methods="23" coveredmethods="15" elements="439" coveredelements="253" complexity="0" loc="253" ncloc="253" packages="8" files="14" classes="14"/>
+<coverage generated="1763559677404" clover="3.2.0">
+  <project timestamp="1763559677404" name="All files">
+    <metrics statements="275" coveredstatements="227" conditionals="174" coveredconditionals="114" methods="25" coveredmethods="22" elements="474" coveredelements="363" complexity="0" loc="275" ncloc="275" packages="8" files="15" classes="15"/>
     <package name="config">
       <metrics statements="6" coveredstatements="6" conditionals="4" coveredconditionals="2" methods="0" coveredmethods="0"/>
       <file name="db.js" path="C:\Users\BarthPC\velo-platform\backend\config\db.js">
@@ -117,51 +117,51 @@
       </file>
     </package>
     <package name="middlewares">
-      <metrics statements="27" coveredstatements="21" conditionals="8" coveredconditionals="5" methods="3" coveredmethods="1"/>
+      <metrics statements="27" coveredstatements="27" conditionals="8" coveredconditionals="8" methods="3" coveredmethods="3"/>
       <file name="auth.js" path="C:\Users\BarthPC\velo-platform\backend\middlewares\auth.js">
-        <metrics statements="11" coveredstatements="10" conditionals="6" coveredconditionals="5" methods="1" coveredmethods="1"/>
-        <line num="1" count="2" type="stmt"/>
-        <line num="2" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="4" count="2" type="stmt"/>
-        <line num="5" count="3" type="stmt"/>
-        <line num="6" count="3" type="cond" truecount="3" falsecount="1"/>
-        <line num="8" count="3" type="stmt"/>
-        <line num="9" count="3" type="stmt"/>
-        <line num="10" count="3" type="stmt"/>
-        <line num="11" count="3" type="stmt"/>
-        <line num="12" count="3" type="stmt"/>
-        <line num="14" count="0" type="stmt"/>
+        <metrics statements="11" coveredstatements="11" conditionals="6" coveredconditionals="6" methods="1" coveredmethods="1"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="2" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="4" count="3" type="stmt"/>
+        <line num="5" count="6" type="stmt"/>
+        <line num="6" count="6" type="cond" truecount="4" falsecount="0"/>
+        <line num="8" count="5" type="stmt"/>
+        <line num="9" count="5" type="stmt"/>
+        <line num="10" count="5" type="stmt"/>
+        <line num="11" count="4" type="stmt"/>
+        <line num="12" count="4" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
       </file>
       <file name="validators.js" path="C:\Users\BarthPC\velo-platform\backend\middlewares\validators.js">
-        <metrics statements="16" coveredstatements="11" conditionals="2" coveredconditionals="0" methods="2" coveredmethods="0"/>
-        <line num="1" count="2" type="stmt"/>
-        <line num="4" count="2" type="stmt"/>
-        <line num="5" count="0" type="stmt"/>
-        <line num="6" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="7" count="0" type="stmt"/>
-        <line num="9" count="0" type="stmt"/>
-        <line num="15" count="0" type="stmt"/>
-        <line num="19" count="2" type="stmt"/>
-        <line num="28" count="2" type="stmt"/>
-        <line num="35" count="2" type="stmt"/>
-        <line num="45" count="2" type="stmt"/>
-        <line num="52" count="2" type="stmt"/>
-        <line num="59" count="2" type="stmt"/>
-        <line num="67" count="2" type="stmt"/>
-        <line num="75" count="2" type="stmt"/>
-        <line num="83" count="2" type="stmt"/>
+        <metrics statements="16" coveredstatements="16" conditionals="2" coveredconditionals="2" methods="2" coveredmethods="2"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="4" count="3" type="stmt"/>
+        <line num="5" count="2" type="stmt"/>
+        <line num="6" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="19" count="3" type="stmt"/>
+        <line num="28" count="3" type="stmt"/>
+        <line num="35" count="3" type="stmt"/>
+        <line num="45" count="3" type="stmt"/>
+        <line num="52" count="3" type="stmt"/>
+        <line num="59" count="3" type="stmt"/>
+        <line num="67" count="3" type="stmt"/>
+        <line num="75" count="3" type="stmt"/>
+        <line num="83" count="3" type="stmt"/>
       </file>
     </package>
     <package name="models">
-      <metrics statements="6" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="0"/>
+      <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
       <file name="userModel.js" path="C:\Users\BarthPC\velo-platform\backend\models\userModel.js">
-        <metrics statements="6" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="0"/>
-        <line num="1" count="2" type="stmt"/>
-        <line num="4" count="0" type="stmt"/>
-        <line num="5" count="0" type="stmt"/>
-        <line num="9" count="0" type="stmt"/>
-        <line num="13" count="0" type="stmt"/>
-        <line num="16" count="2" type="stmt"/>
+        <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="16" count="3" type="stmt"/>
       </file>
     </package>
     <package name="routes">
@@ -260,65 +260,90 @@
       </file>
     </package>
     <package name="src.controllers">
-      <metrics statements="56" coveredstatements="27" conditionals="67" coveredconditionals="18" methods="2" coveredmethods="1"/>
+      <metrics statements="78" coveredstatements="74" conditionals="78" coveredconditionals="61" methods="4" coveredmethods="4"/>
       <file name="bookingsController.js" path="C:\Users\BarthPC\velo-platform\backend\src\controllers\bookingsController.js">
-        <metrics statements="56" coveredstatements="27" conditionals="67" coveredconditionals="18" methods="2" coveredmethods="1"/>
-        <line num="1" count="2" type="stmt"/>
-        <line num="4" count="2" type="stmt"/>
-        <line num="5" count="2" type="cond" truecount="3" falsecount="1"/>
-        <line num="6" count="2" type="cond" truecount="2" falsecount="2"/>
+        <metrics statements="56" coveredstatements="52" conditionals="67" coveredconditionals="53" methods="2" coveredmethods="2"/>
+        <line num="1" count="3" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="5" count="8" type="cond" truecount="3" falsecount="1"/>
+        <line num="6" count="8" type="cond" truecount="3" falsecount="1"/>
         <line num="7" count="0" type="stmt"/>
         <line num="8" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="10" count="2" type="cond" truecount="2" falsecount="2"/>
+        <line num="10" count="8" type="cond" truecount="3" falsecount="1"/>
         <line num="11" count="0" type="stmt"/>
         <line num="12" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="19" count="8" type="stmt"/>
+        <line num="20" count="8" type="cond" truecount="2" falsecount="1"/>
+        <line num="21" count="8" type="stmt"/>
+        <line num="22" count="8" type="cond" truecount="1" falsecount="1"/>
+        <line num="23" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="24" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="25" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="26" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="27" count="1" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="31" count="7" type="stmt"/>
+        <line num="32" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="33" count="1" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="36" count="6" type="stmt"/>
+        <line num="37" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="39" count="1" type="stmt"/>
+        <line num="43" count="5" type="stmt"/>
+        <line num="47" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="49" count="2" type="stmt"/>
+        <line num="51" count="2" type="stmt"/>
+        <line num="53" count="2" type="stmt"/>
+        <line num="54" count="2" type="stmt"/>
+        <line num="55" count="2" type="stmt"/>
+        <line num="57" count="2" type="stmt"/>
+        <line num="58" count="2" type="stmt"/>
+        <line num="60" count="1" type="cond" truecount="3" falsecount="1"/>
+        <line num="61" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="62" count="1" type="stmt"/>
+        <line num="71" count="1" type="cond" truecount="3" falsecount="1"/>
+        <line num="72" count="1" type="stmt"/>
+        <line num="84" count="2" type="stmt"/>
+        <line num="85" count="2" type="stmt"/>
+        <line num="86" count="2" type="stmt"/>
+        <line num="87" count="2" type="stmt"/>
+        <line num="88" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="89" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="90" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="91" count="2" type="stmt"/>
+        <line num="92" count="2" type="stmt"/>
+        <line num="93" count="2" type="stmt"/>
+        <line num="94" count="2" type="stmt"/>
+        <line num="95" count="1" type="stmt"/>
+        <line num="97" count="1" type="cond" truecount="3" falsecount="1"/>
+        <line num="98" count="1" type="stmt"/>
+        <line num="102" count="3" type="stmt"/>
+      </file>
+      <file name="listingsController.js" path="C:\Users\BarthPC\velo-platform\backend\src\controllers\listingsController.js">
+        <metrics statements="22" coveredstatements="22" conditionals="11" coveredconditionals="8" methods="2" coveredmethods="2"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="4" count="3" type="stmt"/>
+        <line num="5" count="3" type="cond" truecount="1" falsecount="0"/>
+        <line num="6" count="3" type="cond" truecount="4" falsecount="0"/>
+        <line num="8" count="2" type="stmt"/>
+        <line num="10" count="2" type="stmt"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
         <line num="19" count="2" type="stmt"/>
-        <line num="20" count="2" type="cond" truecount="2" falsecount="1"/>
+        <line num="20" count="2" type="stmt"/>
         <line num="21" count="2" type="stmt"/>
-        <line num="22" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="22" count="2" type="stmt"/>
         <line num="23" count="2" type="cond" truecount="1" falsecount="1"/>
         <line num="24" count="2" type="cond" truecount="1" falsecount="1"/>
         <line num="25" count="2" type="cond" truecount="1" falsecount="1"/>
-        <line num="26" count="2" type="cond" truecount="1" falsecount="1"/>
-        <line num="27" count="0" type="stmt"/>
-        <line num="28" count="0" type="stmt"/>
-        <line num="31" count="2" type="stmt"/>
-        <line num="32" count="2" type="cond" truecount="1" falsecount="1"/>
-        <line num="33" count="0" type="stmt"/>
-        <line num="34" count="0" type="stmt"/>
-        <line num="36" count="2" type="stmt"/>
-        <line num="37" count="2" type="cond" truecount="1" falsecount="1"/>
-        <line num="38" count="0" type="stmt"/>
-        <line num="39" count="0" type="stmt"/>
-        <line num="43" count="2" type="stmt"/>
-        <line num="47" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="49" count="1" type="stmt"/>
-        <line num="51" count="1" type="stmt"/>
-        <line num="53" count="1" type="stmt"/>
-        <line num="54" count="1" type="stmt"/>
-        <line num="55" count="1" type="stmt"/>
-        <line num="57" count="1" type="stmt"/>
-        <line num="58" count="1" type="stmt"/>
-        <line num="60" count="0" type="cond" truecount="0" falsecount="4"/>
-        <line num="61" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="62" count="0" type="stmt"/>
-        <line num="71" count="0" type="cond" truecount="0" falsecount="4"/>
-        <line num="72" count="0" type="stmt"/>
-        <line num="84" count="0" type="stmt"/>
-        <line num="85" count="0" type="stmt"/>
-        <line num="86" count="0" type="stmt"/>
-        <line num="87" count="0" type="stmt"/>
-        <line num="88" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="89" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="90" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="91" count="0" type="stmt"/>
-        <line num="92" count="0" type="stmt"/>
-        <line num="93" count="0" type="stmt"/>
-        <line num="94" count="0" type="stmt"/>
-        <line num="95" count="0" type="stmt"/>
-        <line num="97" count="0" type="cond" truecount="0" falsecount="4"/>
-        <line num="98" count="0" type="stmt"/>
-        <line num="102" count="2" type="stmt"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="31" count="1" type="stmt"/>
+        <line num="35" count="1" type="stmt"/>
       </file>
     </package>
   </project>
