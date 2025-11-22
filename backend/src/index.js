@@ -27,7 +27,7 @@ let configDbPool = null;
 try {
   // some controllers/routes use the legacy config pool (backend/config/db.js)
   configDbPool = require('../config/db');
-} catch (e) {
+} catch {
   // ignore if not present in this environment
   configDbPool = null;
 }

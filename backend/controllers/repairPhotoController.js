@@ -37,7 +37,6 @@ async function uploadPhotosHandler(req, res) {
 
     const inserted = [];
     for (const f of req.files) {
-      const storedFilename = path.basename(f.path);
       const filepath = path.relative(path.join(__dirname, '..'), f.path).replace(/\\/g, '/');
       const q = await pool.query(
         'INSERT INTO repair_request_photos (repair_request_id, filename, filepath) VALUES ($1, $2, $3) RETURNING *',

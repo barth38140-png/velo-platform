@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { socket } from '../services/socket';
 import { useAuth } from '../context/AuthContext';
 import { repairOfferService } from '../services/api';
@@ -13,28 +13,7 @@ export function OffersReceived() {
   const [filter, setFilter] = useState('all');
   // selectedOffer removed (not used)
 
-  useEffect(() => {
-    if (user?.role === 'client') {
-      loadReceivedOffers();
-    }
-  }, [user, filter]);
-
-  useEffect(() => {
-    // Reload offers when server notifies of changes (accept/reject)
-    const onStatusUpdate = () => { loadReceivedOffers(); };
-    const onOfferUpdate = () => { loadReceivedOffers(); };
-    try {
-      socket.on('status_update', onStatusUpdate);
-      socket.on('offer_update', onOfferUpdate);
-    } catch {
-      /* socket not available */
-    }
-    return () => {
-      try { socket.off('status_update', onStatusUpdate); socket.off('offer_update', onOfferUpdate); } catch { /* ignore */ }
-    };
-  }, []);
-
-  const loadReceivedOffers = async () => {
+  const loadReceivedOffers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await repairOfferService.getClientOffers();
@@ -50,7 +29,30 @@ export function OffersReceived() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    if (user?.role === 'client') {
+      loadReceivedOffers();
+    }
+  }, [user, loadReceivedOffers]);
+
+  useEffect(() => {
+    // Reload offers when server notifies of changes (accept/reject)
+    const onStatusUpdate = () => { loadReceivedOffers(); };
+    const onOfferUpdate = () => { loadReceivedOffers(); };
+    try {
+      socket.on('status_update', onStatusUpdate);
+      socket.on('offer_update', onOfferUpdate);
+    } catch {
+      /* socket not available */
+    }
+    return () => {
+      try { socket.off('status_update', onStatusUpdate); socket.off('offer_update', onOfferUpdate); } catch { /* ignore */ }
+    };
+  }, [loadReceivedOffers]);
+
+  
 
   const handleAcceptOffer = async (offerId) => {
     try {

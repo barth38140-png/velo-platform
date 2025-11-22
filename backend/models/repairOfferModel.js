@@ -7,14 +7,8 @@ async function createRepairOffer(repairRequestId, repairerId, offeredPrice, esti
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *;
   `;
-  try {
-    const res = await pool.query(sql, [repairRequestId, repairerId, offeredPrice, estimatedDurationHours, message]);
-    return res.rows[0];
-  } catch (err) {
-    // If DB unique constraint exists, let the controller handle duplicate attempts
-    // Rethrow the error so caller can inspect err.code (e.g. '23505' for unique_violation)
-    throw err;
-  }
+  const res = await pool.query(sql, [repairRequestId, repairerId, offeredPrice, estimatedDurationHours, message]);
+  return res.rows[0];
 }
 
 // Get all offers for a repair request

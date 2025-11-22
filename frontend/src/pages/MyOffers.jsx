@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { socket } from '../services/socket';
 import { useAuth } from '../context/AuthContext';
 import { repairOfferService } from '../services/api';
@@ -12,26 +12,7 @@ export function MyOffers() {
   // processing state removed (unused)
   const [filter, setFilter] = useState('all'); // all, pending, accepted, rejected
 
-  useEffect(() => {
-    if (user?.role === 'repairer') {
-      loadMyOffers();
-    }
-  }, [user, filter]);
-
-  useEffect(() => {
-    // Reload offers when server notifies of offer changes
-    const handleOfferUpdate = () => { loadMyOffers(); };
-    try {
-      socket.on('offer_update', handleOfferUpdate);
-    } catch {
-      /* socket not available */
-    }
-    return () => {
-      try { socket.off('offer_update', handleOfferUpdate); } catch { /* ignore */ }
-    };
-  }, []);
-
-  const loadMyOffers = async () => {
+  const loadMyOffers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await repairOfferService.getRepairerOffers();
@@ -46,7 +27,28 @@ export function MyOffers() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    if (user?.role === 'repairer') {
+      loadMyOffers();
+    }
+  }, [user, loadMyOffers]);
+
+  useEffect(() => {
+    // Reload offers when server notifies of offer changes
+    const handleOfferUpdate = () => { loadMyOffers(); };
+    try {
+      socket.on('offer_update', handleOfferUpdate);
+    } catch {
+      /* socket not available */
+    }
+    return () => {
+      try { socket.off('offer_update', handleOfferUpdate); } catch { /* ignore */ }
+    };
+  }, [loadMyOffers]);
+
+  
 
   return (
     <div className="my-offers">

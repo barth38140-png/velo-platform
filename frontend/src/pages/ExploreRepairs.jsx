@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { repairService, repairOfferService } from '../services/api';
 import '../styles/ExploreRepairs.css';
@@ -20,16 +20,13 @@ export function ExploreRepairs() {
 
   useEffect(() => {
     if (user?.role === 'repairer') {
-      // Load location is optional for proximity filtering
-      // Skip it to avoid 404 errors if location not set
-      // loadRepairerLocation();
       loadPendingRepairs();
     }
-  }, [user]);
+  }, [user, loadPendingRepairs]);
 
   // loadRepairerLocation removed — optional location fetching disabled for stability
 
-  const loadPendingRepairs = async () => {
+  const loadPendingRepairs = useCallback(async () => {
     setLoading(true);
     try {
       const response = await repairService.getPendingRepairs();
@@ -53,7 +50,7 @@ export function ExploreRepairs() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userLocation]);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
