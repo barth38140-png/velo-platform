@@ -1,0 +1,42 @@
+# Root .gitignore — consolidated for repo
+
+# Node / package artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build artifacts
+dist/
+dist-ssr/
+frontend/dist/
+
+# Logs
+logs/
+*.log
+server.log
+
+# Coverage, test artifacts
+coverage/
+frontend/cypress/videos/
+frontend/cypress/screenshots/
+frontend/cypress/screenshots/**
+frontend/cypress/videos/**
+
+# Backups and dumps
+backups/
+*.dump
+
+# Environment
+.env
+.env.*.bak
+.env.backup
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Uploads (local dev)
+uploads/

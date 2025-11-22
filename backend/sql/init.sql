@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS repair_requests (
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'assigned', 'in_progress', 'completed', 'cancelled')),
   assigned_repairer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   estimated_cost DECIMAL(10, 2),
+  metadata JSONB,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -74,6 +75,15 @@ CREATE TABLE IF NOT EXISTS locations (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Photos attached to repair requests (added by migrations)
+CREATE TABLE IF NOT EXISTS repair_request_photos (
+  id SERIAL PRIMARY KEY,
+  repair_request_id INTEGER NOT NULL REFERENCES repair_requests(id) ON DELETE CASCADE,
+  filename TEXT,
+  filepath TEXT,
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Index pour les performances
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
@@ -84,3 +94,6 @@ CREATE INDEX IF NOT EXISTS idx_repair_offers_repairer_id ON repair_offers(repair
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_messages_receiver_id ON messages(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_locations_user_id ON locations(user_id);
+-- Index to support queries on JSON metadata
+CREATE INDEX IF NOT EXISTS idx_repair_requests_metadata_gin ON repair_requests USING GIN (metadata);
+CREATE INDEX IF NOT EXISTS idx_repair_request_photos_request_id ON repair_request_photos(repair_request_id);
