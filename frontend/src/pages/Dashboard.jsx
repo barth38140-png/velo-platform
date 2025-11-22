@@ -2,12 +2,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { repairService } from '../services/api';
+import { repairService, repairPhotoService } from '../services/api';
 import { socket } from '../services/socket';
+import NotificationCenter from '../components/NotificationCenter';
 import { ExploreRepairs } from './ExploreRepairs';
 import { MyOffers } from './MyOffers';
 import { OffersReceived } from './OffersReceived';
 import { Profile } from './Profile';
+import MapPicker from '../components/MapPicker';
 import '../styles/Dashboard.css';
 
 export function Dashboard() {
@@ -18,93 +20,91 @@ export function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [realtimeMsg, setRealtimeMsg] = useState('');
-  const toastTimeout = useRef();
-    // Socket.io: connexion et gestion des notifications temps réel
-    useEffect(() => {
-      if (!user) return;
-      socket.auth = { token: localStorage.getItem('token') };
-      socket.connect();
-
-      // Notification pour nouvelle offre
-      socket.on('new_offer', (data) => {
-        setRealtimeMsg('📩 Nouvelle offre reçue sur une de vos demandes !');
-        clearTimeout(toastTimeout.current);
-        toastTimeout.current = setTimeout(() => setRealtimeMsg(''), 5000);
-      });
-      // Notification pour changement de statut
-      socket.on('status_update', (data) => {
-        setRealtimeMsg(`🔔 Statut mis à jour : ${data.status}`);
-        clearTimeout(toastTimeout.current);
-        toastTimeout.current = setTimeout(() => setRealtimeMsg(''), 5000);
-      });
-      // Notification pour nouveau message
-      socket.on('new_message', (data) => {
-        setRealtimeMsg('💬 Nouveau message reçu !');
-        clearTimeout(toastTimeout.current);
-        toastTimeout.current = setTimeout(() => setRealtimeMsg(''), 5000);
-      });
-
-      return () => {
-        socket.off('new_offer');
-        socket.off('status_update');
-        socket.off('new_message');
-        socket.disconnect();
-        clearTimeout(toastTimeout.current);
-      };
-    }, [user]);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    bikeType: '',
-    location: ''
-  });
   const [error, setError] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [formData, setFormData] = useState({ title: '', description: '', bikeType: '', wheelSize: '', affectedParts: '', severity: 'minor', photos: [], location: '', locationLat: null, locationLng: null, locationAddress: '' });
+  const [photoPreviews, setPhotoPreviews] = useState([]);
+  const photosInputRef = useRef(null);
+  const [mapResetCounter, setMapResetCounter] = useState(0);
+  const toastTimeout = useRef();
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    } else {
-      loadRepairs();
-    }
-  }, [user, navigate]);
+    if (!user) return;
+    socket.auth = { token: localStorage.getItem('token') };
+    socket.connect();
+    socket.emit('join-chat', user.id);
 
-  const loadRepairs = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await repairService.getMyRepairs();
-      setRepairs(response.data.repairs || []);
-    } catch (err) {
-      setError('Échec du chargement des demandes');
-    } finally {
-      setLoading(false);
-    }
-  };
+    socket.on('new_offer', (data) => {
+      setNotifications(n => [{ id: Date.now(), text: '📩 Nouvelle offre reçue sur une de vos demandes !', ts: Date.now() }, ...n]);
+    });
 
-  const handleCreateRepair = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    try {
-      await repairService.createRepair(
-        formData.title,
-        formData.description,
-        formData.bikeType,
-        48.8566,
-        2.3522,
-        formData.location
-      );
-      setFormData({ title: '', description: '', bikeType: '', location: '' });
-      setSuccess('Demande créée avec succès !');
-      loadRepairs();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Échec de la création de la demande');
-    }
-  };
+    socket.on('status_update', async (data) => {
+      setNotifications(n => [{ id: Date.now(), text: `🔔 Statut mis à jour : ${data.status}`, ts: Date.now() }, ...n]);
+      try {
+        const r = await repairService.getMyRepairs();
+        setRepairs(r.data.repairs || []);
+      } catch (e) {}
+    });
+
+    socket.on('new_message', (data) => {
+      setNotifications(n => [{ id: Date.now(), text: '💬 Nouveau message reçu !', ts: Date.now() }, ...n]);
+    });
+
+    return () => {
+      socket.off('new_offer');
+      socket.off('status_update');
+      socket.off('new_message');
+      socket.disconnect();
+    };
+  }, [user]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handlePhotosSelected = (files) => {
+    const arr = Array.from(files || []);
+    const previews = arr.map(f => ({ name: f.name, url: URL.createObjectURL(f), fileSize: f.size, file: f }));
+    try { photoPreviews.forEach(p => URL.revokeObjectURL(p.url)); } catch (e) {}
+    setPhotoPreviews(previews);
+    setFormData(prev => ({ ...prev, photos: arr }));
+  };
+
+  const handleCreateRepair = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const res = await repairService.createRepair(
+        formData.title,
+        formData.description,
+        formData.bikeType,
+        formData.locationLat,
+        formData.locationLng,
+        formData.locationAddress,
+        { wheelSize: formData.wheelSize, affectedParts: formData.affectedParts, severity: formData.severity }
+      );
+      const repairId = res.data.repair?.id || res.data?.repair?.id || res.data.id;
+      if (formData.photos && formData.photos.length > 0 && repairId) {
+        const fd = new FormData();
+        formData.photos.forEach((p) => fd.append('photos', p));
+        await repairPhotoService.uploadPhotos(repairId, fd);
+      }
+      setSuccess('Demande créée');
+      setFormData({ title: '', description: '', bikeType: '', wheelSize: '', affectedParts: '', severity: 'minor', photos: [], location: '', locationLat: null, locationLng: null, locationAddress: '' });
+      try { photoPreviews.forEach(p => URL.revokeObjectURL(p.url)); } catch (e) {}
+      // Clear preview thumbnails and reset file input
+      setPhotoPreviews([]);
+      try { if (photosInputRef && photosInputRef.current) photosInputRef.current.value = null; } catch (e) {}
+      // Reset map picker to initial state
+      try { setMapResetCounter(c => c + 1); } catch (e) {}
+      try { const r = await repairService.getMyRepairs(); setRepairs(r.data.repairs || []); } catch (e) {}
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Erreur');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -205,6 +205,7 @@ export function Dashboard() {
                   <label>Titre</label>
                   <input
                     type="text"
+                    data-cy="repair-title"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     required
@@ -213,31 +214,83 @@ export function Dashboard() {
                 <div className="form-group">
                   <label>Description</label>
                   <textarea
+                    data-cy="repair-description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     required
                     minLength="10"
                   />
+                  <div className="suggestions">
+                    <small>Suggestions: </small>
+                    <button type="button" className="suggest-btn" onClick={() => setFormData(f => ({ ...f, description: 'Pneu crevé, besoin d\'une chambre à air' }))}>pneu crevé</button>
+                    <button type="button" className="suggest-btn" onClick={() => setFormData(f => ({ ...f, description: 'Frein qui grince fortement' }))}>frein qui grince</button>
+                    <button type="button" className="suggest-btn" onClick={() => setFormData(f => ({ ...f, description: 'Chaîne cassée après sortie' }))}>chaîne cassée</button>
+                  </div>
                 </div>
                 <div className="form-group">
                   <label>Type de vélo</label>
                   <input
                     type="text"
+                    data-cy="repair-bike-type"
                     value={formData.bikeType}
                     onChange={(e) => setFormData({ ...formData, bikeType: e.target.value })}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Localisation</label>
+                  <label>Taille de la roue</label>
                   <input
                     type="text"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    required
+                    placeholder="ex: 26 pouces, 28 pouces"
+                    data-cy="repair-wheel-size"
+                    value={formData.wheelSize}
+                    onChange={(e) => setFormData({ ...formData, wheelSize: e.target.value })}
                   />
                 </div>
-                <button type="submit" className="submit-btn" disabled={loading}>{loading ? 'Création...' : 'Créer la demande'}</button>
+                <div className="form-group">
+                  <label>Parties affectées</label>
+                  <input
+                    type="text"
+                    placeholder="ex: chaîne, pneu, freins"
+                    data-cy="repair-affected-parts"
+                    value={formData.affectedParts}
+                    onChange={(e) => setFormData({ ...formData, affectedParts: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Sévérité</label>
+                  <select data-cy="repair-severity" value={formData.severity} onChange={(e) => setFormData({ ...formData, severity: e.target.value })}>
+                    <option value="minor">Mineure</option>
+                    <option value="moderate">Modérée</option>
+                    <option value="major">Importante</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Photos (optionnel) 📸</label>
+                  <input ref={photosInputRef} data-cy="repair-photos" type="file" accept="image/*" capture="environment" multiple onChange={(e) => handlePhotosSelected(e.target.files)} />
+                  {photoPreviews && photoPreviews.length > 0 && (
+                    <div className="photo-previews">
+                      {photoPreviews.map((p, i) => (
+                        <div key={i} className="preview-item">
+                          <img src={p.url} alt={p.name} style={{ height: 80 }} />
+                          <div className="preview-meta">{p.name} - {Math.round((p.fileSize||0)/1024)}KB</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label>Localisation</label>
+                  <MapPicker showConfirm={false} resetTrigger={mapResetCounter} initialPosition={{ lat: 48.8566, lng: 2.3522 }} onChange={(pos) => setFormData(f => ({ ...f, locationLat: pos.lat, locationLng: pos.lng, locationAddress: pos.address }))} />
+                  <input
+                    type="text"
+                    data-cy="repair-location"
+                    placeholder="Adresse (optionnel)"
+                    value={formData.locationAddress || formData.location}
+                    onChange={(e) => setFormData({ ...formData, locationAddress: e.target.value })}
+                  />
+                </div>
+                <button data-cy="repair-submit" type="submit" className="submit-btn" disabled={loading}>{loading ? 'Création...' : 'Créer la demande'}</button>
               </form>
             </div>
           )}

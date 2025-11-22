@@ -68,6 +68,7 @@ services:
       CYPRESS_baseUrl: http://frontend:3000
     volumes:
       - ./frontend:/e2e
+    shm_size: 2gb
     command: ["npx", "cypress", "run", "--config-file", "cypress.config.cjs"]
     networks:
       - velo_network
