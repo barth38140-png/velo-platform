@@ -11,6 +11,7 @@ import { OffersReceived } from './OffersReceived';
 import { Profile } from './Profile';
 import MapPicker from '../components/MapPicker';
 import '../styles/Dashboard.css';
+import '../styles/RepairForm.css';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
@@ -69,6 +70,31 @@ export function Dashboard() {
     try { photoPreviews.forEach(p => URL.revokeObjectURL(p.url)); } catch (e) {}
     setPhotoPreviews(previews);
     setFormData(prev => ({ ...prev, photos: arr }));
+  };
+
+  const [step, setStep] = useState(1);
+
+  const nextStep = () => setStep(s => Math.min(3, s + 1));
+  const prevStep = () => setStep(s => Math.max(1, s - 1));
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) return setError('Géolocalisation non supportée');
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        // reverse geocode
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+        const data = await res.json();
+        const addr = data.display_name || '';
+        setFormData(f => ({ ...f, locationLat: lat, locationLng: lng, locationAddress: addr }));
+      } catch (e) {
+        setError('Impossible de récupérer l\'adresse');
+      } finally {
+        setLoading(false);
+      }
+    }, (err) => { setLoading(false); setError('Autorisation géolocalisation refusée'); });
   };
 
   const handleCreateRepair = async (e) => {
@@ -168,6 +194,94 @@ export function Dashboard() {
 
           {error && <div className="error-toast">{error}</div>}
           {success && <div className="success-toast">{success}</div>}
+          <div className="repair-form-shell">
+            <h2 className="repair-title">Déclarez votre problème en quelques clics</h2>
+            <p className="repair-sub">Votre demande sera transmise à nos réparateurs partenaires.</p>
+
+            <div className="steps-indicator">
+              <button className={`step ${step===1? 'active':''}`}>1<br/><small>Type</small></button>
+              <div className="step-sep" />
+              <button className={`step ${step===2? 'active':''}`}>2<br/><small>Problème</small></button>
+              <div className="step-sep" />
+              <button className={`step ${step===3? 'active':''}`}>3<br/><small>Localisation</small></button>
+            </div>
+
+            <form onSubmit={handleCreateRepair} className="modern-form">
+              {step === 1 && (
+                <div className="step-panel">
+                  <label className="label">Type de vélo</label>
+                  <input
+                    type="text"
+                    data-cy="repair-bike-type"
+                    placeholder="Ex: VTC, VTT, Vélo de ville"
+                    value={formData.bikeType}
+                    onChange={(e) => setFormData({ ...formData, bikeType: e.target.value })}
+                    required
+                  />
+                  <div className="icon-choices">
+                    <button type="button" className="icon-btn" onClick={() => setFormData(f => ({ ...f, bikeType: 'VTC' }))}>🚲 VTC</button>
+                    <button type="button" className="icon-btn" onClick={() => setFormData(f => ({ ...f, bikeType: 'VTT' }))}>🏔️ VTT</button>
+                    <button type="button" className="icon-btn" onClick={() => setFormData(f => ({ ...f, bikeType: 'Ville' }))}>🏙️ Ville</button>
+                  </div>
+                  <div className="form-actions">
+                    <button type="button" className="btn secondary" onClick={prevStep}>Annuler</button>
+                    <button type="button" className="btn primary" onClick={nextStep}>Suivant</button>
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="step-panel">
+                  <label className="label">Décrivez le problème</label>
+                  <textarea
+                    data-cy="repair-description"
+                    placeholder="Décrivez votre problème : ex. Mon pneu est crevé"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    required
+                    minLength={10}
+                  />
+
+                  <div className="issue-icons">
+                    <button type="button" className="issue-btn" onClick={() => setFormData(f => ({ ...f, affectedParts: 'pneu' }))}>🔧 Pneu</button>
+                    <button type="button" className="issue-btn" onClick={() => setFormData(f => ({ ...f, affectedParts: 'frein' }))}>🛠️ Frein</button>
+                    <button type="button" className="issue-btn" onClick={() => setFormData(f => ({ ...f, affectedParts: 'chaine' }))}>🔗 Chaîne</button>
+                  </div>
+
+                  <div className="form-actions">
+                    <button type="button" className="btn secondary" onClick={prevStep}>Précédent</button>
+                    <button type="button" className="btn primary" onClick={nextStep}>Suivant</button>
+                  </div>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="step-panel">
+                  <label className="label">Localisation</label>
+                  <div className="location-row">
+                    <MapPicker showConfirm={false} showAddress={false} showSearch={false} resetTrigger={mapResetCounter} initialPosition={{ lat: 48.8566, lng: 2.3522 }} onChange={(pos) => setFormData(f => ({ ...f, locationLat: pos.lat, locationLng: pos.lng, locationAddress: pos.address }))} />
+                  </div>
+                  <input
+                    type="text"
+                    data-cy="repair-location"
+                    placeholder="Adresse (optionnel)"
+                    value={formData.locationAddress || formData.location}
+                    onChange={(e) => setFormData({ ...formData, locationAddress: e.target.value })}
+                  />
+                  <div className="location-actions">
+                    <button type="button" className="btn tertiary" onClick={useMyLocation}>Utiliser ma position</button>
+                    <small className="micro">Nous utilisons OpenStreetMap pour localiser votre position.</small>
+                  </div>
+
+                  <div className="form-actions">
+                    <button type="button" className="btn secondary" onClick={prevStep}>Précédent</button>
+                    <button data-cy="repair-submit" type="submit" className="btn primary" disabled={loading}>{loading ? 'Création...' : 'Envoyer ma demande'}</button>
+                  </div>
+                </div>
+              )}
+
+            </form>
+          </div>
           {realtimeMsg && <div className="success-toast">{realtimeMsg}</div>}
 
           {activeTab === 'repairs' && (
@@ -281,7 +395,7 @@ export function Dashboard() {
                 </div>
                 <div className="form-group">
                   <label>Localisation</label>
-                  <MapPicker showConfirm={false} resetTrigger={mapResetCounter} initialPosition={{ lat: 48.8566, lng: 2.3522 }} onChange={(pos) => setFormData(f => ({ ...f, locationLat: pos.lat, locationLng: pos.lng, locationAddress: pos.address }))} />
+                  <MapPicker showConfirm={false} showAddress={false} showSearch={false} resetTrigger={mapResetCounter} initialPosition={{ lat: 48.8566, lng: 2.3522 }} onChange={(pos) => setFormData(f => ({ ...f, locationLat: pos.lat, locationLng: pos.lng, locationAddress: pos.address }))} />
                   <input
                     type="text"
                     data-cy="repair-location"

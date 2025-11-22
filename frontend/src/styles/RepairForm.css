@@ -1,0 +1,25 @@
+/* Soft blue/green palette and modern form styles */
+.repair-form-shell { max-width: 900px; margin: 12px auto; background: #f7fbfb; padding: 20px; border-radius: 12px; box-shadow: 0 6px 18px rgba(13,38,59,0.06);} 
+.repair-title { margin: 0; font-size: 1.6rem; color: #085f63; }
+.repair-sub { margin: 6px 0 12px; color: #2e6b60; }
+.steps-indicator { display:flex; align-items:center; gap:8px; margin:12px 0; }
+.step { background:#e6f6f2; border:none; padding:8px 12px; border-radius:8px; color:#07514b; font-weight:600; }
+.step.active { background: linear-gradient(90deg,#78d0c7,#5abca7); color:white; }
+.step-sep { flex:1; height:2px; background:rgba(90,188,167,0.18); }
+.step-panel { padding:12px 0; }
+.label { display:block; margin-bottom:6px; font-weight:700; color:#064a49; }
+.modern-form input[type="text"], .modern-form textarea { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #dcedea; background:white; margin-bottom:10px; font-size:1rem; }
+.modern-form textarea { min-height:100px; resize:vertical; }
+.icon-choices { display:flex; gap:8px; margin:8px 0 16px; }
+.icon-btn { border:1px solid transparent; background:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(5,80,75,0.06);} 
+.issue-icons { display:flex; gap:8px; margin:8px 0 16px; }
+.issue-btn { padding:8px 12px; border-radius:8px; background:#fff; border:1px solid #e1f3ef; cursor:pointer; }
+.form-actions { display:flex; justify-content:space-between; margin-top:12px; gap:8px; }
+.btn { padding:10px 14px; border-radius:10px; cursor:pointer; border:none; font-weight:700; }
+.btn.primary { background:linear-gradient(90deg,#2a9d8f,#2b8f7d); color:white; }
+.btn.secondary { background:#ffffff; border:1px solid #cdebe4; color:#07514b; }
+.btn.tertiary { background:#effaf8; color:#07514b; border:1px solid #d6efe8; }
+.location-row { margin-bottom:10px; }
+.location-actions { display:flex; align-items:center; gap:12px; margin:8px 0; }
+.micro { color:#4b6b66; font-size:0.85rem; }
+@media (max-width:720px){ .repair-form-shell { padding:14px; margin:8px; } .steps-indicator{gap:4px;} }
