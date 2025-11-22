@@ -14,6 +14,9 @@ export default defineConfig([
         ...globals.jest,
       },
     },
+    settings: {
+      react: { version: 'detect' }
+    },
   },
   pluginReact.configs.flat.recommended,
 ]);
