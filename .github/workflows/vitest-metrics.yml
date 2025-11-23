@@ -1,0 +1,36 @@
+name: Vitest Metrics
+
+on:
+  push:
+    branches: [ main, ci/**, 'ci/*', '**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  collect-metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run vitest metrics
+        working-directory: frontend
+        run: npm run test:metrics
+
+      - name: Generate markdown report
+        working-directory: frontend
+        run: node scripts/generate-metrics-md.cjs
+
+      - name: Upload metrics artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-metrics
+          path: frontend/test-metrics
