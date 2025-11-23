@@ -46,8 +46,11 @@ vi.mock('react-router-dom', async () => {
 
 // MSW setup — handlers are defined in test/msw/handlers.js
 try {
-  // Avoid starting MSW more than once per worker
-  if (!globalThis.__MSW_SERVER_SETUP__) {
+  // Avoid starting MSW more than once per worker and only start in worker 1
+  // Vitest exposes `VITEST_WORKER_ID` so we can limit MSW startup to a single worker.
+  if (process.env.VITEST_WORKER_ID !== '1') {
+    // Skip starting MSW in other workers to reduce overall setup time
+  } else if (!globalThis.__MSW_SERVER_SETUP__) {
     globalThis.__MSW_SERVER_SETUP__ = true;
     try {
       // Prefer a direct dynamic import so errors are visible in test output
