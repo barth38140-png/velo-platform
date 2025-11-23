@@ -49,3 +49,13 @@ vi.mock('react-router-dom', async () => {
 // global setup cost. Example import from a test file:
 //   import '../../../test/msw/setup';
 
+// For fully-lazy MSW we attach tiny wrappers that start MSW automatically
+// on the first network call (fetch/XHR). The module is cheap to import and
+// only performs small runtime monkey-patching.
+try {
+  // eslint-disable-next-line no-unused-expressions
+  await import('./test/msw/lazy.js');
+} catch (e) {
+  // ignore if msw not installed or import fails — tests will still run
+}
+

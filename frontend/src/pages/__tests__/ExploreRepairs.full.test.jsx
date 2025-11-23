@@ -8,8 +8,6 @@ vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({ user: { id: 1, role: 'repairer' } })
 }));
 
-// Start MSW for this integration-like suite
-import '../../../test/msw/setup';
 
 const mockRepairs = [
   {

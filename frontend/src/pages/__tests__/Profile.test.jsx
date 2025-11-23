@@ -7,9 +7,6 @@ import React from 'react';
 // Some components may rely on a global React variable at import time
 globalThis.React = React;
 
-// Start MSW for this suite (lazy import)
-import '../../../test/msw/setup';
-
 vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({ user: { id: 1, role: 'repairer' }, logout: vi.fn() })
 }));
