@@ -44,32 +44,8 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// MSW setup — handlers are defined in test/msw/handlers.js
-try {
-  // Avoid starting MSW more than once per worker and only start in worker 1
-  // Vitest exposes `VITEST_WORKER_ID` so we can limit MSW startup to a single worker.
-  if (process.env.VITEST_WORKER_ID !== '1') {
-    // Skip starting MSW in other workers to reduce overall setup time
-  } else if (!globalThis.__MSW_SERVER_SETUP__) {
-    globalThis.__MSW_SERVER_SETUP__ = true;
-    try {
-      // Prefer a direct dynamic import so errors are visible in test output
-      const mod = await import('./test/msw/server.js');
-      const { server } = mod;
-      beforeAll(() => {
-        server.listen({ onUnhandledRequest: 'warn' });
-        // eslint-disable-next-line no-console
-        console.log('MSW server started for tests');
-      });
-      afterEach(() => server.resetHandlers());
-      afterAll(() => server.close());
-    } catch (err) {
-      // If MSW fails to import/start, surface the error so we can debug
-      // eslint-disable-next-line no-console
-      console.error('Failed to start MSW server in vitest.setup.js:', err);
-      throw err;
-    }
-  }
-} catch (err) {
-  // If msw isn't installed, tests will continue without network mocking
-}
+// MSW is now started lazily by importing `frontend/test/msw/setup.js` from
+// individual test suites that need network interception. This reduces the
+// global setup cost. Example import from a test file:
+//   import '../../../test/msw/setup';
+
