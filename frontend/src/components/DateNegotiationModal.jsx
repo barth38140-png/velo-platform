@@ -14,11 +14,17 @@ export default function DateNegotiationModal({ offer, onClose, onDateProposed, o
   const [scheduledFrom, setScheduledFrom] = useState(
     offer.scheduled_from ? new Date(offer.scheduled_from).toISOString().slice(0, 16) : ''
   );
-  const [scheduledTo, setScheduledTo] = useState(
-    offer.scheduled_to ? new Date(offer.scheduled_to).toISOString().slice(0, 16) : ''
-  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Calculer automatiquement la date de fin selon la durée de l'offre
+  const calculateScheduledTo = (fromDate) => {
+    if (!fromDate || !offer.duration) return null;
+    const start = new Date(fromDate);
+    const durationHours = Number(offer.duration) || Number(offer.estimated_duration_hours) || 1;
+    const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+    return end.toISOString();
+  };
 
   // Déterminer l'état de la négociation
   const hasProposedDate = offer.scheduled_from;
@@ -37,10 +43,8 @@ export default function DateNegotiationModal({ offer, onClose, onDateProposed, o
     }
 
     const fromDate = new Date(scheduledFrom);
-    const toDate = scheduledTo ? new Date(scheduledTo) : null;
-
-    if (toDate && toDate < fromDate) {
-      setError('La date de fin doit être postérieure à la date de début');
+    if (isNaN(fromDate.getTime())) {
+      setError('Date de début invalide');
       return;
     }
 
@@ -48,7 +52,9 @@ export default function DateNegotiationModal({ offer, onClose, onDateProposed, o
     setError('');
 
     try {
-      await onDateProposed(scheduledFrom, scheduledTo || null);
+      // Calculer automatiquement la date de fin selon la durée
+      const calculatedTo = calculateScheduledTo(scheduledFrom);
+      await onDateProposed(scheduledFrom, calculatedTo);
       // onClose sera appelé par le parent après succès
     } catch (err) {
       setError(err?.response?.data?.error || 'Erreur lors de la proposition de date');
@@ -148,22 +154,29 @@ export default function DateNegotiationModal({ offer, onClose, onDateProposed, o
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="scheduled_to">
-                  Date et heure de fin (optionnel)
-                </label>
-                <input
-                  type="datetime-local"
-                  id="scheduled_to"
-                  value={scheduledTo}
-                  onChange={(e) => setScheduledTo(e.target.value)}
-                  min={scheduledFrom || new Date().toISOString().slice(0, 16)}
-                  disabled={loading}
-                />
-                <small className="help-text">
-                  Laissez vide si la durée est indéterminée
-                </small>
-              </div>
+              {scheduledFrom && offer.duration && (
+                <div className="form-group">
+                  <label>Durée estimée</label>
+                  <div className="calculated-duration">
+                    ⏱️ {offer.duration || offer.estimated_duration_hours} heure(s)
+                    {calculateScheduledTo(scheduledFrom) && (
+                      <span className="end-time">
+                        {' → Fin prévue : '}
+                        {new Date(calculateScheduledTo(scheduledFrom)).toLocaleString('fr-FR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    )}
+                  </div>
+                  <small className="help-text">
+                    La date de fin est calculée automatiquement selon la durée de l'offre
+                  </small>
+                </div>
+              )}
 
               {error && (
                 <div className="alert alert-error">

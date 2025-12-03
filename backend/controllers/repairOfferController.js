@@ -193,9 +193,9 @@ const updateOfferStatus = async (req, res) => {
       return res.status(403).json({ success: false, error: 'Vous ne pouvez gérer que les offres de vos demandes' });
     }
 
-    // Vérifier que la date est confirmée avant d'accepter
+    // Vérifier que la date est confirmée avant d'accepter (si la colonne existe)
     if (status === 'accepted') {
-      if (offer.date_status !== 'confirmed') {
+      if (offer.date_status !== undefined && offer.date_status !== null && offer.date_status !== 'confirmed') {
         return res.status(400).json({ 
           success: false, 
           error: 'Vous devez d\'abord confirmer une date d\'intervention avec le réparateur avant d\'accepter l\'offre' 

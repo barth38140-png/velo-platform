@@ -151,6 +151,22 @@
   color: #777;
 }
 
+.calculated-duration {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #333;
+  border-left: 3px solid #2196f3;
+}
+
+.calculated-duration .end-time {
+  display: block;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  color: #2196f3;
+}
+
 .alert {
   padding: 1rem;
   border-radius: 6px;

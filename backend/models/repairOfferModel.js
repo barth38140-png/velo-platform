@@ -212,6 +212,32 @@ async function hasExistingOffer(repairRequestId, repairerId) {
 
 // Proposer ou contre-proposer des dates d'intervention
 async function proposeDates(offerId, scheduledFrom, scheduledTo, proposedBy, dateStatus) {
+  // Vérifier si les colonnes de négociation existent
+  let hasNegotiation = false;
+  try {
+    const colCheck = await pool.query(
+      "SELECT COUNT(*) AS cnt FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'repair_offers' AND column_name IN ('date_status','proposed_by','date_confirmed_at')"
+    );
+    const cnt = Number(colCheck?.rows?.[0]?.cnt || 0);
+    hasNegotiation = cnt === 3;
+  } catch (e) {
+    hasNegotiation = false;
+  }
+
+  if (!hasNegotiation) {
+    // Fallback: juste mettre à jour les dates sans les colonnes de négociation
+    const sql = `
+      UPDATE repair_offers 
+      SET scheduled_from = $1,
+          scheduled_to = $2,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+      RETURNING *;
+    `;
+    const res = await pool.query(sql, [scheduledFrom, scheduledTo, offerId]);
+    return res.rows[0];
+  }
+
   const sql = `
     UPDATE repair_offers 
     SET scheduled_from = $1,
@@ -229,6 +255,25 @@ async function proposeDates(offerId, scheduledFrom, scheduledTo, proposedBy, dat
 
 // Confirmer une date proposée
 async function confirmDate(offerId) {
+  // Vérifier si les colonnes de négociation existent
+  let hasNegotiation = false;
+  try {
+    const colCheck = await pool.query(
+      "SELECT COUNT(*) AS cnt FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'repair_offers' AND column_name IN ('date_status','date_confirmed_at')"
+    );
+    const cnt = Number(colCheck?.rows?.[0]?.cnt || 0);
+    hasNegotiation = cnt === 2;
+  } catch (e) {
+    hasNegotiation = false;
+  }
+
+  if (!hasNegotiation) {
+    // Fallback: juste retourner l'offre sans modification
+    const sql = `SELECT * FROM repair_offers WHERE id = $1`;
+    const res = await pool.query(sql, [offerId]);
+    return res.rows[0];
+  }
+
   const sql = `
     UPDATE repair_offers 
     SET date_status = 'confirmed',
