@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { repairOfferService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import '../styles/ListControls.css';
+import DateNegotiationModal from '../components/DateNegotiationModal';
 
 export default function OffresList({ selectedRepair }) {
 	const [offers, setOffers] = useState([]);
@@ -10,6 +11,7 @@ export default function OffresList({ selectedRepair }) {
 	const [processing, setProcessing] = useState(null);
 	const [sortBy, setSortBy] = useState('price-asc');
 	const [filterStatus, setFilterStatus] = useState('all');
+	const [showDateModal, setShowDateModal] = useState(null); // ID de l'offre pour laquelle afficher le modal
 	const toast = useToast();
 	const prevOffersRef = React.useRef('');
 
@@ -99,6 +101,28 @@ export default function OffresList({ selectedRepair }) {
 			setError(errorMsg);
 			toast.error('❌ ' + errorMsg);
 		} finally { setProcessing(null); }
+	};
+
+	const handleProposeDate = async (offerId, scheduledFrom, scheduledTo) => {
+		try {
+			await repairOfferService.proposeDate(offerId, scheduledFrom, scheduledTo);
+			toast.success('📅 Date proposée au réparateur');
+			setShowDateModal(null);
+			await loadOffers();
+		} catch (err) {
+			throw err; // Le modal gérera l'erreur
+		}
+	};
+
+	const handleConfirmDate = async (offerId) => {
+		try {
+			await repairOfferService.confirmDate(offerId);
+			toast.success('✅ Date confirmée ! Vous pouvez maintenant accepter l\'offre');
+			setShowDateModal(null);
+			await loadOffers();
+		} catch (err) {
+			throw err; // Le modal gérera l'erreur
+		}
 	};
 
 	// Filtrage et tri des offres
@@ -194,15 +218,39 @@ export default function OffresList({ selectedRepair }) {
 									<div className="offer-body">
 										<div><strong>Prix:</strong> {priceStr}</div>
 										<div><strong>Durée:</strong> {durStr}</div>
-										{dateStr && <div><strong>Date d'intervention:</strong> {dateStr}</div>}
+										{dateStr && (
+											<div>
+												<strong>Date d'intervention:</strong> {dateStr}
+												{o.date_status === 'confirmed' && <span className="badge confirmed" style={{marginLeft: 8}}>✅ Confirmée</span>}
+												{o.date_status === 'proposed_by_repairer' && <span className="badge pending" style={{marginLeft: 8}}>⏳ Proposée par réparateur</span>}
+												{o.date_status === 'proposed_by_client' && <span className="badge pending" style={{marginLeft: 8}}>⏳ Votre proposition</span>}
+											</div>
+										)}
 										<div><strong>Compatibilité:</strong> {compat}</div>
 										{o.message && <div className="offer-msg">{o.message}</div>}
 									</div>
 									<div className="offer-actions">
 										{o.status === 'proposée' && (
 											<>
-												<button className="btn accept small" onClick={() => handleAccept(o.id)} disabled={processing === o.id}>{processing === o.id ? '...' : 'Accepter'}</button>
-												<button className="btn danger small" onClick={() => handleReject(o.id)} disabled={processing === o.id} style={{marginLeft:8}}>Refuser</button>
+												{o.date_status !== 'confirmed' && (
+													<button 
+														className="btn secondary small" 
+														onClick={() => setShowDateModal(o.id)} 
+														style={{marginBottom: 8, width: '100%'}}
+													>
+														📅 {o.scheduled_from ? 'Négocier la date' : 'Proposer une date'}
+													</button>
+												)}
+												{o.date_status === 'confirmed' ? (
+													<>
+														<button className="btn accept small" onClick={() => handleAccept(o.id)} disabled={processing === o.id}>{processing === o.id ? '...' : 'Accepter'}</button>
+														<button className="btn danger small" onClick={() => handleReject(o.id)} disabled={processing === o.id} style={{marginLeft:8}}>Refuser</button>
+													</>
+												) : (
+													<div className="muted" style={{fontSize: '0.85rem', padding: '0.5rem', background: '#fff3cd', borderRadius: '4px'}}>
+														⚠️ Confirmez d'abord une date d'intervention avant d'accepter l'offre
+													</div>
+												)}
 											</>
 										)}
 										{o.status === 'acceptée' && <div className="muted">Offre acceptée</div>}
@@ -213,6 +261,17 @@ export default function OffresList({ selectedRepair }) {
 						})}
 					</div>
 				)
+			)}
+
+			{/* Modal de négociation de dates */}
+			{showDateModal && (
+				<DateNegotiationModal
+					offer={offers.find(o => o.id === showDateModal)}
+					onClose={() => setShowDateModal(null)}
+					onDateProposed={(from, to) => handleProposeDate(showDateModal, from, to)}
+					onDateConfirmed={() => handleConfirmDate(showDateModal)}
+					isClient={true}
+				/>
 			)}
 		</div>
 	);

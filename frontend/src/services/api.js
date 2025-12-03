@@ -122,7 +122,14 @@ export const repairOfferService = {
   acceptOffer: (offerId) =>
     api.patch(`/repair-offers/${offerId}/status`, { status: 'accepted' }),
   rejectOffer: (offerId) =>
-    api.patch(`/repair-offers/${offerId}/status`, { status: 'rejected' })
+    api.patch(`/repair-offers/${offerId}/status`, { status: 'rejected' }),
+  proposeDate: (offerId, scheduledFrom, scheduledTo = null) =>
+    api.post(`/repair-offers/${offerId}/propose-date`, { 
+      scheduled_from: scheduledFrom, 
+      scheduled_to: scheduledTo 
+    }),
+  confirmDate: (offerId) =>
+    api.post(`/repair-offers/${offerId}/confirm-date`)
 };
 
 export const bikeService = {

@@ -1,0 +1,262 @@
+/* frontend/src/styles/DateNegotiationModal.css */
+
+.date-negotiation-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.date-negotiation-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.date-negotiation-modal .modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.date-negotiation-modal .close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.date-negotiation-modal .close-btn:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.date-negotiation-modal .modal-body {
+  padding: 1.5rem;
+}
+
+.date-proposal {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #2196f3;
+}
+
+.date-proposal.my-proposal {
+  border-left-color: #4caf50;
+  background: #f1f8f4;
+}
+
+.date-proposal.their-proposal {
+  border-left-color: #ff9800;
+  background: #fff8f1;
+}
+
+.date-proposal h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.proposed-dates p {
+  margin: 0.5rem 0;
+  color: #555;
+}
+
+.proposed-dates strong {
+  color: #333;
+  margin-right: 0.5rem;
+}
+
+.confirm-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.confirm-actions .info-text {
+  margin-bottom: 0.75rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.confirm-actions .small-text {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #777;
+  text-align: center;
+}
+
+.date-form h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group .required {
+  color: #f44336;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.form-group input:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.help-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #777;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.alert-success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.alert-error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #2196f3;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1976d2;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.btn-secondary {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.btn-success {
+  background: #4caf50;
+  color: white;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #388e3c;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.confirmed-info {
+  text-align: center;
+  padding: 1rem;
+}
+
+.confirmed-info .info-text {
+  font-size: 1.1rem;
+  color: #4caf50;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .date-negotiation-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .date-negotiation-modal .modal-header {
+    padding: 1rem;
+  }
+
+  .date-negotiation-modal .modal-body {
+    padding: 1rem;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

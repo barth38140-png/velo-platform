@@ -2,15 +2,20 @@ import { useState, useEffect, useCallback } from 'react';
 import { socket } from '../services/socket';
 import { useAuth } from '../context/AuthContext';
 import { repairOfferService } from '../services/api';
+import { useToast } from '../context/ToastContext';
 import '../styles/MyOffers.css';
+import DateNegotiationModal from '../components/DateNegotiationModal';
 
 export function MyOffers() {
   const { user } = useAuth();
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
+  const [showDateModal, setShowDateModal] = useState(null);
+  const toast = useToast();
   // processing state removed (unused)
-  const [filter, setFilter] = useState('all'); // all, pending, accepted, rejected
+  const [filter, setFilter] = useState('all'); // all, proposed, accepted, rejected
 
   const loadMyOffers = useCallback(async () => {
     setLoading(true);
@@ -29,15 +34,42 @@ export function MyOffers() {
     }
   }, [filter]);
 
+  const handleProposeDate = async (offerId, scheduledFrom, scheduledTo) => {
+    try {
+      await repairOfferService.proposeDate(offerId, scheduledFrom, scheduledTo);
+      toast.success('📅 Date proposée au client');
+      setShowDateModal(null);
+      await loadMyOffers();
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const handleConfirmDate = async (offerId) => {
+    try {
+      await repairOfferService.confirmDate(offerId);
+      toast.success('✅ Date confirmée !');
+      setShowDateModal(null);
+      await loadMyOffers();
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  // Charger immédiatement à l'ouverture de la vue et à chaque changement de filtre
   useEffect(() => {
     if (user?.role === 'repairer') {
       loadMyOffers();
     }
-  }, [user, loadMyOffers]);
+  }, [user?.role, loadMyOffers]);
 
   useEffect(() => {
     // Reload offers when server notifies of offer changes
-    const handleOfferUpdate = () => { loadMyOffers(); };
+    const handleOfferUpdate = () => { 
+      setInfo('Mise à jour en temps réel des offres');
+      loadMyOffers(); 
+      setTimeout(() => setInfo(''), 2000);
+    };
     try {
       socket.on('offer_update', handleOfferUpdate);
     } catch {
@@ -55,9 +87,10 @@ export function MyOffers() {
       <h2>My Repair Offers</h2>
       
       {error && <div className="error-toast">{error}</div>}
+      {info && <div className="info-toast">{info}</div>}
       
       <div className="filter-tabs">
-        {['all', 'pending', 'accepted', 'rejected'].map(status => (
+        {['all', 'proposed', 'accepted', 'rejected'].map(status => (
           <button
             key={status}
             className={`filter-btn ${filter === status ? 'active' : ''}`}
@@ -98,13 +131,13 @@ export function MyOffers() {
                 <div className="offer-terms">
                   <span className="price">
                     <strong>Quote:</strong> {(() => {
-                      const p = Number(offer.offered_price ?? offer.price);
+                      const p = Number(offer.price);
                       return Number.isFinite(p) ? `€${p.toFixed(2)}` : '—';
                     })()}
                   </span>
                   <span className="duration">
                     <strong>Duration:</strong> {(() => {
-                      const d = Number(offer.estimated_duration_hours ?? offer.duration);
+                      const d = Number(offer.duration);
                       return Number.isFinite(d) ? `${d}h` : '—';
                     })()}
                   </span>
@@ -116,11 +149,29 @@ export function MyOffers() {
                     <p>{offer.message}</p>
                   </div>
                 )}
+
+                {offer.scheduled_from && (
+                  <div className="offer-date">
+                    <strong>Date d'intervention:</strong> {new Date(offer.scheduled_from).toLocaleString('fr-FR')}
+                    {offer.date_status === 'confirmed' && <span className="badge-success">✅ Confirmée</span>}
+                    {offer.date_status === 'proposed_by_repairer' && <span className="badge-warning">⏳ Votre proposition</span>}
+                    {offer.date_status === 'proposed_by_client' && <span className="badge-info">⏳ Proposée par client</span>}
+                  </div>
+                )}
               </div>
 
-              {offer.status === 'pending' && (
+              {offer.status === 'proposed' && (
                 <div className="offer-actions">
-                  <p className="info-text">Waiting for client decision...</p>
+                  {offer.date_status !== 'confirmed' && (
+                    <button 
+                      className="btn-date-negotiate" 
+                      onClick={() => setShowDateModal(offer.id)}
+                      style={{marginBottom: '0.5rem'}}
+                    >
+                      📅 {offer.scheduled_from ? 'Négocier la date' : 'Proposer une date'}
+                    </button>
+                  )}
+                  <p className="info-text">En attente de décision du client...</p>
                 </div>
               )}
               {offer.status === 'accepted' && (
@@ -138,6 +189,17 @@ export function MyOffers() {
         </div>
       ) : (
         <p>No offers found</p>
+      )}
+
+      {/* Modal de négociation de dates */}
+      {showDateModal && (
+        <DateNegotiationModal
+          offer={offers.find(o => o.id === showDateModal)}
+          onClose={() => setShowDateModal(null)}
+          onDateProposed={(from, to) => handleProposeDate(showDateModal, from, to)}
+          onDateConfirmed={() => handleConfirmDate(showDateModal)}
+          isClient={false}
+        />
       )}
     </div>
   );
