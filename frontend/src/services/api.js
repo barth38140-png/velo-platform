@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Utiliser un chemin relatif pour profiter du proxy Vite en dev
+// En production, VITE_API_URL sera défini pour pointer vers l'API backend
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -17,6 +19,18 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Intercepteur de réponse pour supprimer les logs d'erreurs 404
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Ne pas logger les 404 en console (erreurs attendues pour données non créées)
+    if (error?.response?.status !== 404) {
+      console.error('API Error:', error);
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const authService = {
   register: (email, password, name, phone, role) =>
@@ -37,7 +51,11 @@ export const repairService = {
   updateRepairStatus: (repairId, status) =>
     api.patch(`/repairs/${repairId}/status`, { status }),
   getPendingRepairs: () =>
-    api.get('/repairs/pending-requests')
+    api.get('/repairs/pending-requests'),
+  startRepair: (repairId) =>
+    api.post(`/repairs/${repairId}/start`),
+  completeRepair: (repairId) =>
+    api.post(`/repairs/${repairId}/complete`)
 };
 
 export const repairerService = {
@@ -67,9 +85,30 @@ export const messageService = {
     api.get(`/messages/${userId}`)
 };
 
+// Nouveau service de conversations (messagerie structurée)
+export const conversationService = {
+  createConversation: (repairerId, repairRequestId) =>
+    api.post('/conversations', { repairerId, repairRequestId }),
+  getConversations: () =>
+    api.get('/conversations'),
+  getMessages: (conversationId) =>
+    api.get(`/conversations/${conversationId}/messages`),
+  sendMessage: (conversationId, content) =>
+    api.post(`/conversations/${conversationId}/messages`, { content })
+};
+
 export const repairOfferService = {
-  createOffer: (repairRequestId, offeredPrice, estimatedDurationHours, message) =>
-    api.post('/repair-offers', { repair_request_id: repairRequestId, offered_price: offeredPrice, estimated_duration_hours: estimatedDurationHours, message }),
+  createOffer: (repairRequestId, offeredPrice, estimatedDurationHours, message, scheduledFrom = null, scheduledTo = null) => {
+    const payload = { 
+      repair_request_id: repairRequestId, 
+      offered_price: offeredPrice, 
+      estimated_duration_hours: estimatedDurationHours, 
+      message 
+    };
+    if (scheduledFrom) payload.scheduled_from = scheduledFrom;
+    if (scheduledTo) payload.scheduled_to = scheduledTo;
+    return api.post('/repair-offers', payload);
+  },
   getRepairerOffers: () =>
     api.get('/repair-offers/my-offers'),
   getClientOffers: () =>
@@ -85,6 +124,67 @@ export const repairOfferService = {
   rejectOffer: (offerId) =>
     api.patch(`/repair-offers/${offerId}/status`, { status: 'rejected' })
 };
+
+export const bikeService = {
+  getMyBikes: () => api.get('/bikes').then(r => r.data),
+  createBike: (payload) => api.post('/bikes', payload).then(r => r.data),
+  getBike: (id) => api.get(`/bikes/${id}`).then(r => r.data),
+  updateBike: (id, payload) => api.patch(`/bikes/${id}`, payload).then(r => r.data),
+  // Update technical metadata + unknown attributes, returns updated bike with confidence_score
+  updateBikeTech: (id, tech, unknownAttributes = []) => api.patch(`/bikes/${id}/tech`, { tech, unknown_attributes: unknownAttributes }).then(r => r.data),
+  updateComponent: (componentId, payload) => api.patch(`/bikes/component/${componentId}`, payload).then(r => r.data),
+  async getBrands() {
+    const res = await fetch(`${API_BASE_URL}/brands`);
+    if (!res.ok) throw new Error('Failed to fetch brands');
+    const data = await res.json();
+    return Array.isArray(data.brands) ? data.brands : [];
+  },
+  async addBrand(name) {
+    const res = await fetch(`${API_BASE_URL}/brands`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) throw new Error('Failed to add brand');
+    return res.json();
+  },
+  async getModels(brand) {
+    const url = brand ? `${API_BASE_URL}/bike-models?brand=${encodeURIComponent(brand)}` : `${API_BASE_URL}/bike-models`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch models');
+    const data = await res.json();
+    return Array.isArray(data.models) ? data.models : [];
+  },
+  async addModel(brand, model) {
+    const res = await fetch(`${API_BASE_URL}/bike-models`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ brand, model }),
+    });
+    if (!res.ok) throw new Error('Failed to add model');
+    return res.json();
+  },
+  async getWheelSizes() {
+    const res = await fetch(`${API_BASE_URL}/wheel-sizes`);
+    if (!res.ok) throw new Error('Failed to fetch wheel sizes');
+    const data = await res.json();
+    return Array.isArray(data.sizes) ? data.sizes : [];
+  },
+  async addWheelSize(size) {
+    const res = await fetch(`${API_BASE_URL}/wheel-sizes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ size }),
+    });
+    if (!res.ok) throw new Error('Failed to add wheel size');
+    return res.json();
+  },
+};
+
+// Component management
+bikeService.createComponent = (bikeId, payload) => api.post(`/bikes/${bikeId}/components`, payload).then(r => r.data);
+bikeService.deleteComponent = (componentId) => api.delete(`/bikes/component/${componentId}`).then(r => r.data);
+bikeService.deleteBike = (bikeId) => api.delete(`/bikes/${bikeId}`).then(r => r.data);
 
 // Photo upload for repair requests (multipart)
 export const repairPhotoService = {
