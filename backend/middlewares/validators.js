@@ -1,9 +1,11 @@
 const { body, param, query, validationResult } = require('express-validator');
+const logger = require('../src/logger');
 
 // Middleware to handle validation errors
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    logger.warn({ errors: errors.array(), body: req.body, url: req.url }, 'Validation errors');
     return res.status(400).json({
       success: false,
       errors: errors.array().map(err => ({
@@ -43,8 +45,9 @@ const validateCreateRepair = [
 ];
 
 const validateUpdateRepairStatus = [
-  param('repairId').isInt({ min: 1 }).withMessage('Invalid repair ID'),
-  body('status').isIn(['pending', 'assigned', 'in_progress', 'completed', 'cancelled']).withMessage('Invalid status'),
+  // route uses :requestId (legacy naming) so validate that param
+  param('requestId').isInt({ min: 1 }).withMessage('Invalid repair ID'),
+  body('status').isIn(['créée', 'en_attente', 'assignée', 'en_cours', 'terminée', 'annulée']).withMessage('Statut invalide'),
   handleValidationErrors
 ];
 
@@ -80,6 +83,12 @@ const validateCreateProfile = [
   handleValidationErrors
 ];
 
+// Brand validators
+const validateAddBrand = [
+  body('name').trim().notEmpty().isLength({ min: 1, max: 50 }).withMessage('Brand name required (1-50 chars)'),
+  handleValidationErrors
+];
+
 module.exports = {
   handleValidationErrors,
   validateRegister,
@@ -89,5 +98,6 @@ module.exports = {
   validateUpdateLocation,
   validateNearbySearch,
   validateSendMessage,
-  validateCreateProfile
+  validateCreateProfile,
+  validateAddBrand
 };

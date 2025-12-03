@@ -3,7 +3,6 @@ dist
 build
 .vite
 .env
-.env.test
 .git
 .gitignore
 npm-debug.log

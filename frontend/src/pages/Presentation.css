@@ -1,0 +1,57 @@
+.presentation-root {
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  color: #1f2937;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.presentation-hero {
+  background: linear-gradient(90deg,#06b6d4 0%,#3b82f6 100%);
+  color: white;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.presentation-hero h1 {
+  margin: 0 0 .5rem 0;
+  font-size: 2.5rem;
+}
+
+.subtitle {
+  margin: 0 0 1.25rem 0;
+  opacity: 0.95;
+}
+
+.cta {
+  display: inline-block;
+  background: white;
+  color: #0f172a;
+  padding: .6rem 1rem;
+  border-radius: .5rem;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
+  gap: 1rem;
+  padding: 2rem;
+  width: min(1000px,90%);
+  margin: 0 auto;
+}
+
+.features article {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  padding: 1.25rem;
+  border-radius: .5rem;
+}
+
+.presentation-footer {
+  margin-top: auto;
+  padding: 1rem;
+  text-align: center;
+  color: #6b7280;
+}

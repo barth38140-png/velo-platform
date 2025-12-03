@@ -1,0 +1,13 @@
+.id-guide-modal { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:2000; }
+.id-guide-panel { width:100%; max-width:640px; background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:20px 24px; box-shadow:0 8px 24px rgba(0,0,0,0.18); max-height:85vh; overflow-y:auto; }
+.id-guide-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.id-guide-header h3 { margin:0; font-size:1.25rem; }
+.intro { font-size:0.95rem; color:#475569; margin:0 0 12px; }
+.guide-tasks { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.guide-tasks.advanced { margin-top:8px; }
+.task { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; }
+.task.empty { text-align:center; font-style:italic; color:#64748b; }
+.task-title { font-weight:600; font-size:0.95rem; }
+.task-detail { font-size:0.85rem; color:#475569; line-height:1.25; }
+.actions-row { margin-top:16px; display:flex; justify-content:flex-end; gap:8px; }
+.btn.small { font-size:0.75rem; padding:4px 10px; }

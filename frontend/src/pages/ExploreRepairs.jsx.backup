@@ -1,0 +1,320 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { repairService, repairOfferService } from '../services/api';
+import '../styles/ExploreRepairs.css';
+import '../styles/Modal.css';
+
+export function ExploreRepairs() {
+  const { user } = useAuth();
+  const [repairs, setRepairs] = useState([]);
+  const [nearbyRepairs, setNearbyRepairs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedRepair, setSelectedRepair] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [offerForm, setOfferForm] = useState({
+    price: '',
+    duration: '',
+    message: ''
+  });
+  const [sendingOffer, setSendingOffer] = useState(false);
+  const userLocation = null; // optional location disabled for now
+
+  const loadPendingRepairs = useCallback(async () => {
+    // diagnostic log for tests
+    // eslint-disable-next-line no-console
+    console.log('[ExploreRepairs] loadPendingRepairs start');
+    setLoading(true);
+    try {
+      const response = await repairService.getPendingRepairs();
+      // eslint-disable-next-line no-console
+      console.log('[ExploreRepairs] got repairs response', response && response.data && response.data.repairs && response.data.repairs.length);
+      setRepairs(response.data.repairs || []);
+      
+      // Filter nearby repairs if we have location
+      if (userLocation) {
+        const nearby = response.data.repairs.filter((repair) => {
+          const dist = calculateDistance(
+            userLocation.latitude,
+            userLocation.longitude,
+            repair.location_lat,
+            repair.location_lng
+          );
+          return dist <= 20;
+        });
+        setNearbyRepairs(nearby);
+      }
+    } catch {
+      setError('Failed to load repairs');
+    } finally {
+      setLoading(false);
+      // eslint-disable-next-line no-console
+      console.log('[ExploreRepairs] loadPendingRepairs finished, loading set to false');
+    }
+  }, [userLocation]);
+
+  // Only depend on the user's role to avoid re-running when the user object
+  // identity changes (tests may provide a new object each call).
+  useEffect(() => {
+    if (user?.role === 'repairer') {
+      // eslint-disable-next-line no-console
+      console.log('[ExploreRepairs] useEffect triggered for user role', user && user.role);
+      loadPendingRepairs();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role, loadPendingRepairs]);
+
+  // loadRepairerLocation removed — optional location fetching disabled for stability
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const openDetail = (repair) => {
+    setSelectedRepair(repair);
+    setShowDetailModal(true);
+    setOfferForm({ price: '', duration: '', message: '' });
+  };
+
+  const closeDetail = () => {
+    setShowDetailModal(false);
+    setSelectedRepair(null);
+    setOfferForm({ price: '', duration: '', message: '' });
+  };
+
+  const handleSubmitOffer = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSendingOffer(true);
+    try {
+      await repairOfferService.createOffer(
+        selectedRepair.id,
+        parseFloat(offerForm.price),
+        parseInt(offerForm.duration),
+        offerForm.message
+      );
+      setOfferForm({ price: '', duration: '', message: '' });
+      closeDetail();
+      await loadPendingRepairs();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to submit offer');
+    } finally {
+      setSendingOffer(false);
+    }
+  };
+
+  const repairsToShow = nearbyRepairs.length > 0 ? nearbyRepairs : repairs;
+
+  return (
+    <div className="explore-repairs">
+      <h2>Available Repairs</h2>
+      {error && <div className="error-toast">{error}</div>}
+
+      {loading ? (
+        <div className="spinner"><div className="loader"></div> Chargement des réparations...</div>
+      ) : repairsToShow.length > 0 ? (
+        <div className="repairs-grid">
+          {repairsToShow.map(repair => (
+            <div 
+              key={repair.id} 
+              className="repair-item" 
+              data-cy={`repair-item-${repair.id}`}
+              onClick={() => openDetail(repair)}
+              style={{ cursor: 'pointer' }}
+            >
+              <h3 data-cy={`repair-title-${repair.id}`}>{repair.title}</h3>
+              <p className="description" data-cy={`repair-desc-${repair.id}`}>{repair.description}</p>
+              <div className="repair-details">
+                <span><strong>Type:</strong> {repair.bike_type}</span>
+                <span><strong>Location:</strong> {repair.location_address}</span>
+              </div>
+              
+              {/* Render the open button only when this repair is not selected. */}
+              {!selectedRepair?.id || selectedRepair?.id !== repair.id ? (
+                <button
+                  onClick={() => setSelectedRepair(repair)}
+                  className="offer-btn"
+                  data-cy={`offer-open-${repair.id}`}
+                >
+                  Submit Offer
+                </button>
+              ) : null}
+
+              {/* Only mount the offer form when this repair is selected. */}
+              {selectedRepair?.id === repair.id ? (
+                <form
+                  onSubmit={handleSubmitOffer}
+                  className="offer-form"
+                  data-cy={`offer-form-${repair.id}`}
+                >
+                <div className="form-group">
+                  <label>Your Quote (EUR)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={offerForm.price}
+                    onChange={(e) => setOfferForm({ ...offerForm, price: e.target.value })}
+                    required
+                    data-cy={`offer-price-${repair.id}`}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Estimated Duration (hours)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={offerForm.duration}
+                    onChange={(e) => setOfferForm({ ...offerForm, duration: e.target.value })}
+                    required
+                    data-cy={`offer-duration-${repair.id}`}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Message to Client</label>
+                  <textarea
+                    value={offerForm.message}
+                    onChange={(e) => setOfferForm({ ...offerForm, message: e.target.value })}
+                    required
+                    minLength="5"
+                    data-cy={`offer-message-${repair.id}`}
+                  />
+                </div>
+                <div className="form-actions">
+                  <button type="submit" disabled={sendingOffer} data-cy={`offer-submit-${repair.id}`}>
+                    {sendingOffer ? 'Envoi en cours...' : 'Envoyer l’offre'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRepair(null)}
+                    className="cancel-btn"
+                    disabled={sendingOffer}
+                    data-cy={`offer-cancel-${repair.id}`}
+                  >
+                    Annuler
+                  </button>
+                </div>
+                </form>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p>No available repairs in your area</p>
+      )}
+
+      {showDetailModal && selectedRepair && (
+        <div className="modal-overlay" onClick={closeDetail}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-btn" onClick={closeDetail}>&times;</button>
+            
+            <div className="repair-detail-view">
+              <h2>{selectedRepair.title}</h2>
+              
+              <div className="detail-section">
+                <h3>Description</h3>
+                <p>{selectedRepair.description}</p>
+              </div>
+
+              <div className="detail-section">
+                <h3>Informations</h3>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <strong>Type de vélo:</strong>
+                    <span>{selectedRepair.bike_type || 'Non spécifié'}</span>
+                  </div>
+                  <div className="info-item">
+                    <strong>Lieu:</strong>
+                    <span>{selectedRepair.location_address || 'Non spécifié'}</span>
+                  </div>
+                  <div className="info-item">
+                    <strong>Statut:</strong>
+                    <span>{selectedRepair.status}</span>
+                  </div>
+                  {selectedRepair.metadata?.problem && (
+                    <div className="info-item">
+                      <strong>Problème:</strong>
+                      <span>{selectedRepair.metadata.problem}</span>
+                    </div>
+                  )}
+                  {selectedRepair.metadata?.subNeed && (
+                    <div className="info-item">
+                      <strong>Détail:</strong>
+                      <span>{selectedRepair.metadata.subNeed}</span>
+                    </div>
+                  )}
+                  {selectedRepair.metadata?.note && (
+                    <div className="info-item">
+                      <strong>Note:</strong>
+                      <span>{selectedRepair.metadata.note}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h3>Soumettre une offre</h3>
+                <form onSubmit={handleSubmitOffer} className="offer-form">
+                  <div className="form-group">
+                    <label>Votre devis (EUR)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={offerForm.price}
+                      onChange={(e) => setOfferForm({ ...offerForm, price: e.target.value })}
+                      required
+                      data-cy={`offer-price-${selectedRepair.id}`}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Durée estimée (heures)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={offerForm.duration}
+                      onChange={(e) => setOfferForm({ ...offerForm, duration: e.target.value })}
+                      required
+                      data-cy={`offer-duration-${selectedRepair.id}`}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Message au client</label>
+                    <textarea
+                      value={offerForm.message}
+                      onChange={(e) => setOfferForm({ ...offerForm, message: e.target.value })}
+                      required
+                      minLength="5"
+                      rows="4"
+                      data-cy={`offer-message-${selectedRepair.id}`}
+                    />
+                  </div>
+                  <div className="form-actions">
+                    <button type="submit" disabled={sendingOffer} data-cy={`offer-submit-${selectedRepair.id}`}>
+                      {sendingOffer ? 'Envoi en cours...' : 'Envoyer l'offre'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeDetail}
+                      className="cancel-btn"
+                      disabled={sendingOffer}
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

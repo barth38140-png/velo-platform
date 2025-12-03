@@ -1,0 +1,63 @@
+<svg viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg" aria-label="Vélo de route">
+  <defs>
+    <linearGradient id="roadGrad" x1="0" x2="1">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#dc2626" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Vélo de route - Design sportif et aérodynamique -->
+  
+  <!-- Roue arrière (fine) -->
+  <circle cx="120" cy="280" r="70" stroke="#1f2937" stroke-width="3" fill="none" />
+  <circle cx="120" cy="280" r="60" stroke="#4b5563" stroke-width="1" fill="none" />
+  <circle cx="120" cy="280" r="6" fill="#1f2937" />
+  <!-- Rayons roue arrière -->
+  <line x1="120" y1="280" x2="120" y2="210" stroke="#4b5563" stroke-width="0.5" />
+  <line x1="120" y1="280" x2="190" y2="280" stroke="#4b5563" stroke-width="0.5" />
+  <line x1="120" y1="280" x2="120" y2="350" stroke="#4b5563" stroke-width="0.5" />
+  <line x1="120" y1="280" x2="50" y2="280" stroke="#4b5563" stroke-width="0.5" />
+  
+  <!-- Roue avant (fine) -->
+  <circle cx="480" cy="280" r="70" stroke="#1f2937" stroke-width="3" fill="none" />
+  <circle cx="480" cy="280" r="60" stroke="#4b5563" stroke-width="1" fill="none" />
+  <circle cx="480" cy="280" r="6" fill="#1f2937" />
+  <!-- Rayons roue avant -->
+  <line x1="480" y1="280" x2="480" y2="210" stroke="#4b5563" stroke-width="0.5" />
+  <line x1="480" y1="280" x2="550" y2="280" stroke="#4b5563" stroke-width="0.5" />
+  <line x1="480" y1="280" x2="480" y2="350" stroke="#4b5563" stroke-width="0.5" />
+  <line x1="480" y1="280" x2="410" y2="280" stroke="#4b5563" stroke-width="0.5" />
+  
+  <!-- Cadre principal (aérodynamique) -->
+  <path d="M155 270 L260 140 L360 140 L430 270" stroke="url(#roadGrad)" stroke-width="10" fill="none" stroke-linecap="round" />
+  <!-- Tube diagonal -->
+  <path d="M260 140 L320 255" stroke="url(#roadGrad)" stroke-width="8" fill="none" stroke-linecap="round" />
+  <!-- Tube de selle -->
+  <path d="M360 140 L310 255" stroke="url(#roadGrad)" stroke-width="8" fill="none" stroke-linecap="round" />
+  <!-- Hauban arrière -->
+  <path d="M310 255 L155 270" stroke="url(#roadGrad)" stroke-width="7" fill="none" stroke-linecap="round" />
+  
+  <!-- Fourche avant (inclinée) -->
+  <path d="M360 140 L480 280" stroke="#1f2937" stroke-width="6" fill="none" stroke-linecap="round" />
+  
+  <!-- Potence et cintre de course (abaissé) -->
+  <path d="M360 140 L390 110" stroke="#1f2937" stroke-width="5" fill="none" stroke-linecap="round" />
+  <path d="M380 110 L420 95 L440 110" stroke="#1f2937" stroke-width="4" fill="none" stroke-linecap="round" />
+  
+  <!-- Selle sport (fine et longue) -->
+  <ellipse cx="315" cy="115" rx="35" ry="8" fill="#1f2937" />
+  <path d="M280 115 L260 140" stroke="#1f2937" stroke-width="4" fill="none" stroke-linecap="round" />
+  
+  <!-- Pédalier et manivelles -->
+  <circle cx="315" cy="255" r="12" fill="#1f2937" />
+  <path d="M315 255 L295 290" stroke="#1f2937" stroke-width="5" fill="none" stroke-linecap="round" />
+  <rect x="288" y="288" width="14" height="8" fill="#4b5563" rx="2" />
+  <path d="M315 255 L335 220" stroke="#1f2937" stroke-width="5" fill="none" stroke-linecap="round" />
+  <rect x="328" y="212" width="14" height="8" fill="#4b5563" rx="2" />
+  
+  <!-- Chaîne -->
+  <path d="M315 265 L155 275" stroke="#6b7280" stroke-width="2" fill="none" stroke-dasharray="3,2" />
+  
+  <!-- Détails aérodynamiques -->
+  <text x="240" y="170" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#dc2626">ROAD</text>
+</svg>

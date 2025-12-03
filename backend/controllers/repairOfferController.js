@@ -288,6 +288,9 @@ const proposeDate = async (req, res) => {
       return res.status(400).json({ success: false, error: 'La date de fin doit être postérieure à la date de début' });
     }
 
+    // Traces pour diagnostic
+    logger.debug({ offerId, userId, scheduled_from, scheduled_to }, 'proposeDate received payload');
+
     const offer = await repairOfferModel.getOfferById(offerId);
     if (!offer) {
       return res.status(404).json({ success: false, error: 'Offre introuvable' });
@@ -335,8 +338,16 @@ const proposeDate = async (req, res) => {
       message: 'Date proposée avec succès'
     });
   } catch (err) {
-    logger.error({ err, offerId: req.params?.offerId }, 'proposeDate error');
-    res.status(500).json({ success: false, error: 'Erreur serveur' });
+    logger.error({ 
+      err, 
+      offerId: req.params?.offerId,
+      body: req.body,
+      userId: req.user?.id
+    }, 'proposeDate error');
+    const msg = err?.message?.includes('invalid input syntax for type timestamp')
+      ? 'Format de date invalide'
+      : 'Erreur serveur lors de la proposition de date';
+    res.status(500).json({ success: false, error: msg });
   }
 };
 

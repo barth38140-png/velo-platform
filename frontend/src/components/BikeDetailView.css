@@ -1,0 +1,42 @@
+/* BikeDetailView styles */
+.bike-detail { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:16px; }
+.bike-detail-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.bike-detail-header h3 { margin:0; font-size:18px; color:#111827; }
+.bike-id { font-size:12px; color:#6b7280; }
+
+.bike-summary { display:grid; grid-template-columns: 1fr 1fr; gap:8px 16px; margin-bottom:16px; }
+.detail-row { display:flex; gap:8px; align-items:center; }
+.detail-label { width:160px; min-width:160px; font-size:13px; color:#374151; }
+.detail-value { font-size:14px; color:#111827; }
+
+.color-swatches { display:flex; gap:8px; flex-wrap:wrap; }
+.color-swatch { display:flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid #e5e7eb; border-radius:999px; background:#fafafa; }
+.swatch-dot { width:14px; height:14px; border-radius:999px; display:inline-block; border:1px solid #d1d5db; }
+.swatch-label { font-size:12px; color:#374151; }
+
+.swatch-dot[data-color="Noir"] { background:#111827; }
+.swatch-dot[data-color="Blanc"] { background:#F8FAFC; }
+.swatch-dot[data-color="Rouge"] { background:#ef4444; }
+.swatch-dot[data-color="Bleu"] { background:#3b82f6; }
+.swatch-dot[data-color="Vert"] { background:#10b981; }
+.swatch-dot[data-color="Jaune"] { background:#f59e0b; }
+.swatch-dot[data-color="Orange"] { background:#fb923c; }
+.swatch-dot[data-color="Violet"] { background:#8b5cf6; }
+
+.components-section { margin-top:8px; }
+.section-title { font-weight:600; color:#111827; margin-bottom:8px; }
+.component-groups { display:flex; flex-direction:column; gap:12px; }
+.component-group { border:1px solid #e5e7eb; border-radius:8px; padding:8px; background:#fff; }
+.group-header { font-weight:600; color:#111827; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+.group-icon { font-size:16px; }
+.component-list { display:flex; flex-direction:column; gap:8px; }
+.component-item { display:flex; justify-content:space-between; align-items:center; border:1px solid #e5e7eb; border-radius:8px; padding:10px 12px; background:#fcfdff; }
+.component-main { display:flex; align-items:center; gap:8px; }
+.component-name { font-weight:600; color:#111827; }
+.component-type { font-size:12px; color:#6b7280; }
+
+.component-meta { display:flex; gap:8px; }
+.meta-pill { display:flex; gap:6px; align-items:center; padding:4px 8px; border:1px solid #e5e7eb; border-radius:999px; background:#fff; }
+.meta-label { font-size:12px; color:#6b7280; }
+.meta-value { font-size:12px; color:#111827; }
+.empty-note { font-size:13px; color:#6b7280; }

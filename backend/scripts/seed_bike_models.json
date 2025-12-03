@@ -1,0 +1,27 @@
+[
+  {"brand":"Trek","models":["Domane SL7","Emonda SL6","Fuel EX","Madone SLR","Checkpoint SL","Marlin 7","Top Fuel","Slash"]},
+  {"brand":"Specialized","models":["Tarmac SL7","Roubaix","Aethos","Epic","Stumpjumper","Chisel","Diverge","Enduro"]},
+  {"brand":"Giant","models":["Defy Advanced","TCR Advanced","Propel Advanced","Trance","Anthem","Reign","Revolt","Talon"]},
+  {"brand":"Cannondale","models":["Synapse","SuperSix EVO","Topstone","Scalpel","Habit","Trail","SystemSix","CAAD13"]},
+  {"brand":"Scott","models":["Addict","Foil","Speedster","Spark","Scale","Genius","Ransom","Addict Gravel"]},
+  {"brand":"Orbea","models":["Orca","Avant","Gain","Alma","Occam","Oiz","Terra","Vector"]},
+  {"brand":"Canyon","models":["Ultimate","Aeroad","Endurace","Grizl","Grail","Neuron","Spectral","Lux"]},
+  {"brand":"Bianchi","models":["Oltre","Specialissima","Aria","Sprint","Impulso","Infinito","Methanol","Arcadex"]},
+  {"brand":"Cube","models":["Agree","Litening","Attain","Nuroad","Acid","Reaction","Stereo","AMS"]},
+  {"brand":"Santa Cruz","models":["Hightower","Megatower","Bronson","5010","Nomad","Tallboy","Blur","Chameleon"]},
+  {"brand":"YT Industries","models":["Capra","Jeffsy","Izzo","Decoy","Tues","Szepter","Dirt Love"]},
+  {"brand":"Marin","models":["Gestalt","Headlands","Four Corners","Nicasio","Rift Zone","Hawk Hill","Pine Mountain"]},
+  {"brand":"Norco","models":["Search","Threshold","Sight","Range","Optic","Fluid","Revolver","Storm"]},
+  {"brand":"Merida","models":["Scultura","Reacto","Ride","Silex","One-Twenty","One-Forty","Big Nine","Ninety-Six"]},
+  {"brand":"Cervelo","models":["R5","S5","Caledonia","Soloist","Aspero","P-Series","Tri-Series"]},
+  {"brand":"Pinarello","models":["Dogma F","F-Series","X-Series","Prince","Grevil","Nytron"]},
+  {"brand":"Lapierre","models":["Xelius","Aircode","Pulsium","ProRace","Zesty","Spicy","Edge","Overvolt"]},
+  {"brand":"Decathlon","models":["Rockrider 520","Rockrider 900","Triban RC520","Van Rysel EDR","Riverside 920","Gravel 520","E-ST 900"]},
+  {"brand":"Ribble","models":["Endurance SL","Ultra SL","CGR AL","Adventure","Ti Gravel","CX SL"]},
+  {"brand":"Kona","models":["Rove","Sutra","Libre","Process","Hei Hei","Honzo","Mahuna"]},
+  {"brand":"Peugeot","models":[
+    "LR01","PR10","PY10",
+    "eT01 Powertube","eR02","e-Adventure",
+    "eM01 FS","eM02 HT","Citystar","Legend"
+  ]}
+]

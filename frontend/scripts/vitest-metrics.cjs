@@ -33,7 +33,9 @@ function ensureDir(filePath) {
 console.log('Running vitest to collect timings...');
 const child = exec('npx vitest run --reporter=dot', { cwd, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
   const combined = `${stdout}\n${stderr}`;
-  const metrics = parseDurationLine(combined);
+  // strip ANSI escape codes which vitest may include in output
+  const clean = combined.replace(/\x1b\[[0-9;]*m/g, '');
+  const metrics = parseDurationLine(clean);
   if (!metrics) {
     console.error('Could not parse duration line from vitest output.');
     // still save raw output for inspection

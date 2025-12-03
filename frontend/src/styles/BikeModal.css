@@ -1,0 +1,185 @@
+/* Styles for Ajouter un vélo modal */
+.ajouter-velo-form {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  background: #fbfdfc;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(2,6,23,0.05);
+  font-size: 14px;
+}
+
+.ajouter-velo-form .label {
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #064a49;
+  font-size: 14px;
+}
+
+.ajouter-velo-form input[type="text"],
+.ajouter-velo-form input[type="date"],
+.ajouter-velo-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #e6eef0;
+  background: #fff;
+}
+
+.group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 8px;
+}
+
+.row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.row.grid-2 { grid-template-columns: 1fr 1fr; }
+
+.brands-grid, .models-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
+
+.type-grid, .frame-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+.color-grid { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start; }
+
+.ajouter-velo-form .issue-btn {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e6eef0;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  font-size: 14px;
+}
+
+.ajouter-velo-form .issue-btn.active { background: #e6ffed; border-color: #28a745; color: inherit; }
+
+.brand-btn { display:flex; align-items:center; gap:10px; justify-content:center; }
+.brand-icon { font-size:18px; }
+.brand-label { font-weight:600; }
+
+.issue-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(2,6,23,0.05); }
+
+.color-btn { display:flex; align-items:center; gap:6px; }
+.color-swatch { width:16px; height:16px; border-radius:50%; display:inline-block; box-shadow: 0 1px 2px rgba(0,0,0,0.08); border:1px solid rgba(0,0,0,0.06); }
+.mini-swatch { width:12px; height:12px; border-radius:50%; display:inline-block; margin-right:6px; vertical-align:middle; border:1px solid rgba(0,0,0,0.06); }
+.color-label { font-size:13px; }
+
+.summary-card { background: #fff; border-radius:8px; padding:10px; box-shadow: 0 6px 18px rgba(2,6,23,0.05); margin: 8px 0; }
+.summary-header { font-weight:700; margin-bottom:8px; color:#064a49 }
+.summary-body { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+.summary-row { font-size:13px; color:#0f172a }
+.summary-actions { display:flex; gap:8px; justify-content:flex-end; }
+
+.error-msg { color: #d9534f; text-align: center; }
+.success-toast { margin-bottom:12px; text-align:center; color: #075985; font-weight:600; }
+
+.field-row { margin-bottom:12px; }
+
+@media (max-width: 600px) {
+  .row.grid-2 { grid-template-columns: 1fr; }
+  .brands-grid, .models-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+  .ajouter-velo-form { padding: 14px; }
+}
+
+/* Brand and model card visuals */
+.brand-card { position: relative; padding: 8px; display:flex; align-items:center; justify-content:center; }
+.brand-card-inner { display:flex; gap:8px; align-items:center; }
+.brand-card:hover, .model-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(2,6,23,0.08); }
+.model-card { position: relative; padding: 10px; text-align:center; }
+.model-card-inner { font-weight:600; }
+.selected-badge { position:absolute; top:6px; right:8px; background: rgba(40,167,69,0.12); color:#167a3a; border-radius:12px; padding:2px 6px; font-size:12px; }
+
+/* Live preview */
+.live-preview { margin-top:10px; padding:10px; border-radius:8px; background:#ffffff; box-shadow:0 6px 18px rgba(2,6,23,0.04); }
+.preview-title { font-weight:700; color:#064a49; margin-bottom:6px; }
+.preview-row { font-size:14px; color:#0f172a; margin-bottom:4px; }
+
+/* Selected outline green */
+.issue-btn.active { outline: 2px solid rgba(40,167,69,0.12); }
+
+/* Immersive grid layout */
+.immersive-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  align-items: start;
+}
+.left-col, .center-col, .right-col { display:flex; flex-direction:column; gap:8px; }
+.bike-image-wrap { display:flex; align-items:center; justify-content:center; padding:4px; }
+.bike-svg { width:220px; height:auto; display:block; }
+.colors-under { margin-top:8px; }
+.color-pill { width:24px; height:24px; border-radius:50%; padding:3px; display:inline-flex; align-items:center; justify-content:center; border:1px solid transparent; }
+.color-grid { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start; }
+.color-pill .color-swatch { width:18px; height:18px; border-radius:50%; }
+.color-pill.active { box-shadow: 0 6px 14px rgba(16,185,129,0.10); border: 2px solid #10b981; transform: translateY(-2px); }
+
+.field-group .inline-add { display:flex; gap:8px; margin-top:6px; }
+.field-group .inline-add input { flex:1 }
+
+/* Type button icons */
+.type-btn { display:flex; gap:6px; align-items:center; justify-content:center; padding:6px 8px; }
+.type-icon { font-size:14px; }
+
+/* Live preview adjustments (below the form) */
+.live-preview { margin-top:8px; padding:8px; border-radius:8px; background:#fff; box-shadow:0 6px 14px rgba(2,6,23,0.04); font-size:13px; }
+
+@media (max-width: 880px) {
+  .immersive-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 660px) {
+  .immersive-grid { grid-template-columns: 1fr; }
+  .bike-svg { width:220px; margin: 0 auto; }
+  .brands-grid, .models-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+  .color-grid { justify-content:flex-start; }
+}
+
+/* Hotspot visuals */
+.hotspot { cursor: pointer; }
+.hotspot:hover { opacity: 0.9; transform: translateY(-2px); }
+.hot-active path, .hot-active circle { stroke: #10b981 !important; filter: drop-shadow(0 6px 18px rgba(16,185,129,0.08)); }
+
+/* Part menu */
+.part-menu { margin-top:12px; background:#fff; border-radius:10px; padding:10px; box-shadow: 0 8px 24px rgba(2,6,23,0.06); }
+.part-menu-header { font-weight:700; color:#064a49; margin-bottom:8px; }
+.options-grid { display:flex; gap:8px; flex-wrap:wrap; }
+.add-option { display:flex; gap:8px; margin-top:10px; }
+.add-option input { flex:1 }
+.part-menu-footer { display:flex; justify-content:flex-end; margin-top:8px; }
+
+/* Overlay positioning when rendered inside the bike wrapper */
+.part-menu.absolute { position: absolute; top: 8px; right: 8px; width: 260px; z-index: 30; }
+
+@media (max-width: 660px) {
+  .part-menu.absolute { position: static; width: 100%; margin-top: 12px; }
+}
+
+/* Modal wrapper moved from inline styles */
+.modal { width:100%; max-width:400px; background:#f9f9f9; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,0.06); padding:14px; margin:0 auto; }
+.modal-overlay { display:flex; align-items:center; justify-content:center; padding:16px; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; }
+.modal-header h3 { margin:0; }
+.modal-footer { display:flex; justify-content:center; gap:10px; }
+
+/* Compact brand-model row */
+.brand-model-row { display:flex; gap:8px; }
+.brand-model-col { flex:1; }
+
+/* Compact buttons */
+.btn, .issue-btn { font-size:14px; padding:6px 10px; }
+
+@media (max-width: 480px) {
+  .ajouter-velo-form { padding:10px; }
+  .bike-svg { width:180px; }
+  .brands-grid, .models-grid { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); }
+}
+
+

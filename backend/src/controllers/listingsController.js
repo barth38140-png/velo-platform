@@ -1,17 +1,19 @@
 ﻿const db = require('../db');
+const logger = require('../logger');
 
 async function createListing(req, res) {
+  const { repairer_id, title } = req.body || {};
   try {
-    const { repairer_id, title, description, price, duration_min, visible = true } = req.body;
-    if (!repairer_id || !title) return res.status(400).json({ error: 'repairer_id and title required' });
+    const { description, price, duration_min, visible = true } = req.body || {};
+    if (!repairer_id || !title) return res.status(400).json({ error: 'ID réparateur et titre requis' });
 
     const q = `INSERT INTO listings (repairer_id, title, description, price, duration_min, visible)
                VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`;
     const { rows } = await db.query(q, [repairer_id, title, description, price, duration_min, visible]);
     return res.status(201).json(rows[0]);
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'internal_error' });
+    logger.error({ err, repairer_id, title }, 'createListing error');
+    return res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 
@@ -27,8 +29,8 @@ async function getListings(req, res) {
     const { rows } = await db.query(q, params);
     return res.json(rows);
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'internal_error' });
+    logger.error({ err }, 'getListings error');
+    return res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 

@@ -44,7 +44,11 @@ describe('ExploreRepairs', () => {
     const title = await screen.findByText(/Chaîne cassée/i);
     expect(title).toBeTruthy();
 
-    // Submit Offer button present
+    // Click on repair item to open modal
+    const repairItem = await screen.findByRole('heading', { name: /Chaîne cassée/i });
+    repairItem.closest('.repair-item').click();
+
+    // Submit Offer button present after modal opens
     const submitBtn = await screen.findByRole('button', { name: /Submit Offer/i }, { timeout: 2000 });
     expect(submitBtn).toBeTruthy();
 

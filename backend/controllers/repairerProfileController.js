@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const logger = require('../src/logger');
 
 /**
  * Créer ou mettre à jour un profil de réparateur
@@ -11,7 +12,7 @@ async function createRepaireProfile(req, res) {
     // Vérifier que c'est un réparateur
     const userResult = await pool.query('SELECT role FROM users WHERE id = $1', [userId]);
     if (userResult.rows.length === 0 || userResult.rows[0].role !== 'repairer') {
-      return res.status(403).json({ error: 'Only repairers can create a profile' });
+      return res.status(403).json({ error: 'Seuls les réparateurs peuvent créer un profil' });
     }
 
     // Vérifier si le profil existe déjà
@@ -39,8 +40,8 @@ async function createRepaireProfile(req, res) {
 
     res.json({ success: true, profile });
   } catch (err) {
-    console.error('createRepaireProfile error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    logger.error({ err, userId }, 'createRepaireProfile error');
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 
@@ -61,13 +62,13 @@ async function getRepairerProfile(req, res) {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Repairer not found' });
+      return res.status(404).json({ error: 'Réparateur introuvable' });
     }
 
     res.json({ success: true, repairer: result.rows[0] });
   } catch (err) {
-    console.error('getRepairerProfile error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    logger.error({ err, userId }, 'getRepairerProfile error');
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 
@@ -87,8 +88,8 @@ async function getAllRepairers(req, res) {
 
     res.json({ success: true, repairers: result.rows, count: result.rows.length });
   } catch (err) {
-    console.error('getAllRepairers error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    logger.error({ err }, 'getAllRepairers error');
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 

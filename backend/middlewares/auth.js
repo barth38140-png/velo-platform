@@ -1,4 +1,5 @@
 ﻿const jwt = require("jsonwebtoken");
+const logger = require("../src/logger");
 const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
 
 module.exports = (req, res, next) => {
@@ -8,6 +9,7 @@ module.exports = (req, res, next) => {
   const token = auth.split(" ")[1];
   try {
     const payload = jwt.verify(token, JWT_SECRET);
+    logger.debug({ userId: payload.id, reqId: req.id }, 'auth middleware: token verified');
     req.user = payload;
     next();
     } catch {

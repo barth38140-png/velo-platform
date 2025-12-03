@@ -1,0 +1,81 @@
+/* Styles pour le badge de nombre d'offres */
+
+.offer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  position: relative;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.offer-badge .offer-icon {
+  font-size: 1rem;
+}
+
+.offer-badge .offer-count {
+  font-weight: 600;
+}
+
+.offer-badge .new-indicator {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  color: #f44336;
+  font-size: 1.2rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Couleurs selon le nombre d'offres */
+.offer-badge.few {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
+
+.offer-badge.several {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffb74d;
+}
+
+.offer-badge.many {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #81c784;
+}
+
+.offer-badge.assigned {
+  background: #f3e5f5;
+  color: #6a1b9a;
+  border: 1px solid #ba68c8;
+}
+
+.offer-badge.new {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+/* Animation pour le point "nouveau" */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+/* Hover effect */
+.offer-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}

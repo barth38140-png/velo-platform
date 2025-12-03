@@ -9,6 +9,7 @@ export function OffersReceived() {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [processingOfferId, setProcessingOfferId] = useState(null);
   const [filter, setFilter] = useState('all');
   // selectedOffer removed (not used)
@@ -39,8 +40,16 @@ export function OffersReceived() {
 
   useEffect(() => {
     // Reload offers when server notifies of changes (accept/reject)
-    const onStatusUpdate = () => { loadReceivedOffers(); };
-    const onOfferUpdate = () => { loadReceivedOffers(); };
+    const onStatusUpdate = () => { 
+      setInfo('Mise à jour en temps réel des offres');
+      loadReceivedOffers();
+      setTimeout(() => setInfo(''), 2000);
+    };
+    const onOfferUpdate = () => { 
+      setInfo('Mise à jour en temps réel des offres');
+      loadReceivedOffers();
+      setTimeout(() => setInfo(''), 2000);
+    };
     try {
       socket.on('status_update', onStatusUpdate);
       socket.on('offer_update', onOfferUpdate);
@@ -82,6 +91,7 @@ export function OffersReceived() {
       <h2>Offers Received</h2>
       
       {error && <div className="error-toast">{error}</div>}
+      {info && <div className="info-toast">{info}</div>}
       
       <div className="filter-tabs">
         {['all', 'pending', 'accepted', 'rejected'].map(status => (

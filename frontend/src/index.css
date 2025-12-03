@@ -33,13 +33,32 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: transparent;
+  color: inherit;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.15s, color 0.15s;
 }
 button:hover {
   border-color: #646cff;
 }
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Utility button modifiers used across the app */
+.btn {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  border: none;
+}
+.btn.small { padding: 6px 10px; font-size: 0.9em; }
+.btn.danger, .btn.danger.small { background: #ef4444; color: white; }
+.btn.danger:hover { background: #dc2626; }
+.btn.accept, .btn.accept.small { background: #10b981; color: white; }
+.btn.accept:hover { background: #059669; }
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;

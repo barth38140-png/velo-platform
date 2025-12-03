@@ -55,9 +55,14 @@ describe('ExploreRepairs (integration-like)', () => {
     const title = await screen.findByText(/Chaîne cassée/i);
     expect(title).toBeTruthy();
 
-    // Open the offer form
-    const openBtn = await screen.findByRole('button', { name: /Submit Offer/i });
     const user = userEvent.setup();
+
+    // Click on repair item to open modal
+    const repairItem = await screen.findByRole('heading', { name: /Chaîne cassée/i });
+    await user.click(repairItem.closest('.repair-item'));
+
+    // Now wait for the modal with Submit Offer button
+    const openBtn = await screen.findByRole('button', { name: /Submit Offer/i });
     await user.click(openBtn);
     // debug: dump container HTML after clicking to inspect DOM
     // eslint-disable-next-line no-console

@@ -241,6 +241,15 @@ try {
   logger.error({ err: e }, '[startup] failed to mount /api/push');
 }
 
+// Mount availability slots API
+try {
+  const availabilityRoutes = require('../routes/availabilityRoutes');
+  app.use('/api/availability', availabilityRoutes);
+  logger.info('[startup] mounted /api/availability');
+} catch (e) {
+  logger.error({ err: e }, '[startup] failed to mount /api/availability');
+}
+
 // NOTE: /api/velos alias removed to avoid duplicate mounts
 
 

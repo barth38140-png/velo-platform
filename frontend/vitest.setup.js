@@ -26,7 +26,8 @@ try {
       return null;
     },
     setItem: () => {},
-    removeItem: () => {}
+    removeItem: () => {},
+    clear: () => {}
   };
   globalThis.localStorage = fakeStorage;
 } catch (e) {
@@ -57,5 +58,26 @@ try {
   await import('./test/msw/lazy.js');
 } catch (e) {
   // ignore if msw not installed or import fails — tests will still run
+}
+
+// Harmoniser les logs côté tests: on intercepte console.* pour éviter le bruit
+// et fournir un buffer consultable par les assertions.
+// Cela respecte la consigne de ne pas utiliser console.* directement dans les tests.
+const __testConsoleBuffer = { log: [], error: [], warn: [] };
+try {
+  if (console) {
+    vi.spyOn(console, 'log').mockImplementation((...args) => {
+      __testConsoleBuffer.log.push(args);
+    });
+    vi.spyOn(console, 'error').mockImplementation((...args) => {
+      __testConsoleBuffer.error.push(args);
+    });
+    vi.spyOn(console, 'warn').mockImplementation((...args) => {
+      __testConsoleBuffer.warn.push(args);
+    });
+  }
+  globalThis.testConsole = __testConsoleBuffer;
+} catch (e) {
+  // Si l'environnement ne permet pas d'écraser console, on ignore.
 }
 

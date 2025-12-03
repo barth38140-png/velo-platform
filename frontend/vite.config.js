@@ -8,21 +8,22 @@ export default defineConfig({
     host: true,
     port: 3000,
     // Keep allowed hosts minimal and configurable via environment.
-    // When running inside Compose set DEV_ALLOW_DOCKER=true to accept the service name `frontend`.
-    allowedHosts: process.env.DEV_ALLOW_DOCKER === 'true'
-      ? ['frontend', 'localhost', '127.0.0.1']
-      : ['localhost', '127.0.0.1'],
+    // DEV_ALLOW_DOCKER defaults to enabled so Compose service names are accepted unless explicitly disabled.
+    allowedHosts: process.env.DEV_ALLOW_DOCKER === 'false'
+      ? ['localhost', '127.0.0.1']
+      : ['frontend', 'localhost', '127.0.0.1'],
     proxy: {
       '/api': {
         // Proxy API requests to the backend service inside Docker by default.
         // Use an absolute target only for proxying; the client should use a relative base (`/api`).
-        target: process.env.VITE_PROXY_TARGET || 'http://backend:3010',
+        // Default to local backend on port 5000 when not running inside Docker.
+        target: process.env.VITE_PROXY_TARGET || 'http://127.0.0.1:5000',
         changeOrigin: true,
         secure: false
       }
       ,
       '/socket.io': {
-        target: process.env.VITE_PROXY_TARGET || 'http://backend:3010',
+        target: process.env.VITE_PROXY_TARGET || 'http://127.0.0.1:5000',
         ws: true,
         changeOrigin: true,
         secure: false

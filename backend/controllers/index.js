@@ -4,6 +4,5 @@
  Update exports as you add real controllers.
 */
 module.exports = {
-  userController: require('./userController'),
-  authController: require('./authController')
+  userController: require('./userController')
 };

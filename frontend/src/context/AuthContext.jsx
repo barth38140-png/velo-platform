@@ -33,6 +33,27 @@ export function AuthProvider({ children }) {
     return () => { mounted = false; };
   }, [token]);
 
+  // Sync token changes across browser tabs/windows
+  useEffect(() => {
+    function handleStorage(e) {
+      if (e.key === 'token') {
+        const newToken = e.newValue;
+        if (!newToken) {
+          // Token removed elsewhere: clear local auth state
+          setToken(null);
+          setUser(null);
+        } else {
+          // Update token; profile will refresh via existing effect
+          if (newToken !== token) {
+            setToken(newToken);
+          }
+        }
+      }
+    }
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [token]);
+
   const register = async (email, password, name, phone, role) => {
     setLoading(true);
     setError(null);
@@ -84,5 +105,21 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    if (import.meta && import.meta.env && import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.warn('[AuthContext] useAuth called outside of AuthProvider; returning safe defaults');
+    }
+    return {
+      user: null,
+      token: null,
+      loading: false,
+      error: null,
+      register: async () => { throw new Error('AuthProvider not mounted'); },
+      login: async () => { throw new Error('AuthProvider not mounted'); },
+      logout: () => {}
+    };
+  }
+  return ctx;
 }

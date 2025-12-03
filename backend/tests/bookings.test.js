@@ -1,8 +1,18 @@
 ﻿/* tests/bookings.test.js */
+// Improve error visibility during CI/debugging
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED_REJECTION in bookings.test:', reason && (reason.stack || reason));
+});
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT_EXCEPTION in bookings.test:', err && (err.stack || err));
+});
 const request = require("supertest");
 const { start, stop } = require("../src/index");
 const { Client } = require("pg");
-require('dotenv').config({ path: '.env.test' });
+// Load environment variables from `.env` when DB connection details are not provided externally.
+if (!process.env.DATABASE_URL && !process.env.PGHOST && !process.env.DB_HOST) {
+  require('dotenv').config();
+}
 
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
@@ -22,14 +32,25 @@ async function withClient(fn) {
   const client = process.env.DATABASE_URL
     ? new Client({ connectionString: process.env.DATABASE_URL })
     : new Client({
-        host: process.env.PGHOST,
-        port: Number(process.env.PGPORT),
-        user: process.env.PGUSER,
-        password: process.env.PGPASSWORD,
-        database: process.env.PGDATABASE
+        host: process.env.PGHOST || process.env.DB_HOST || 'localhost',
+        port: Number(process.env.PGPORT || process.env.DB_PORT || 5432),
+        user: process.env.PGUSER || process.env.DB_USER || 'postgres',
+        password: process.env.PGPASSWORD || process.env.DB_PASSWORD || '',
+        database: process.env.PGDATABASE || process.env.DB_NAME || 'velo_platform_test'
       });
 
-  await client.connect();
+  console.log('[withClient] connecting with', {
+    host: client.host || process.env.PGHOST || process.env.DB_HOST,
+    port: client.port || process.env.PGPORT || process.env.DB_PORT,
+    user: client.user || process.env.PGUSER || process.env.DB_USER,
+    database: client.database || process.env.PGDATABASE || process.env.DB_NAME
+  });
+  try {
+    await client.connect();
+  } catch (err) {
+    console.error('[withClient] connect error:', err && (err.stack || err.message || err));
+    throw err;
+  }
   // ensure tests always use public schema to avoid ambiguous resolution
   await client.query("SET search_path TO public");
 
@@ -58,6 +79,30 @@ async function seedTestData() {
   });
 }
 
+async function waitForDb(retries = 10, delay = 500) {
+  const { Client } = require('pg');
+  for (let i = 0; i < retries; i++) {
+    try {
+      const client = process.env.DATABASE_URL
+        ? new Client({ connectionString: process.env.DATABASE_URL })
+        : new Client({
+            host: process.env.PGHOST || process.env.DB_HOST || 'localhost',
+            port: Number(process.env.PGPORT || process.env.DB_PORT || 5432),
+            user: process.env.PGUSER || process.env.DB_USER || 'postgres',
+            password: process.env.PGPASSWORD || process.env.DB_PASSWORD || '',
+            database: process.env.PGDATABASE || process.env.DB_NAME || 'velo_platform_test'
+          });
+      await client.connect();
+      await client.end();
+      return;
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      // small delay then retry
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+}
+
 async function teardownTestData() {
   await withClient(async (c) => {
     // Supprime d'abord les bookings liés à l'utilisateur et à la listing
@@ -72,10 +117,16 @@ async function teardownTestData() {
 }
 
 beforeAll(async () => {
-  // assure .env.test is loaded
-  // seed DB and start server
-  await seedTestData();
-  await start(TEST_PORT);
+  try {
+    // assure environment variables are loaded
+    // wait for the DB to be ready, seed DB and start server
+    await waitForDb(20, 500);
+    await seedTestData();
+    await start(TEST_PORT);
+  } catch (err) {
+    console.error('beforeAll ERROR in bookings.test:', err && (err.stack || err));
+    throw err;
+  }
 }, 20000);
 
 afterAll(async () => {
@@ -91,6 +142,7 @@ test("POST /bookings creates booking and is idempotent", async () => {
     .send(BOOKING_PAYLOAD)
     .set("Accept", "application/json")
     .set("Authorization", `Bearer ${TEST_TOKEN}`);
+  if (![200,201].includes(res1.status)) console.error('DEBUG res1 body:', res1.body);
   // ...existing code...
   expect([200,201]).toContain(res1.status);
   expect(res1.body).toBeDefined();

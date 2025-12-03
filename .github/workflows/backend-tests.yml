@@ -1,0 +1,79 @@
+name: Backend tests
+
+on:
+  push:
+    branches: [ main, master, ci/** ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: velo_platform
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Wait for Postgres
+        env:
+          PGPASSWORD: postgres
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U postgres && break || sleep 1;
+          done
+
+      - name: Initialize database schema
+        env:
+          PGPASSWORD: postgres
+        run: |
+          if [ -f backend/sql/init.sql ]; then
+            psql -h localhost -U postgres -d velo_platform -f backend/sql/init.sql
+          fi
+          if [ -f backend/sql/seed_users.sql ]; then
+            psql -h localhost -U postgres -d velo_platform -f backend/sql/seed_users.sql
+          fi
+
+      - name: Install dependencies (backend)
+        working-directory: backend
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: backend
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: velo_platform
+          JWT_SECRET: devsecretkey
+        run: npm test -- --runInBand
+
+      - name: Upload coverage artifact
+        if: success() && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage

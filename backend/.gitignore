@@ -2,7 +2,6 @@
 coverage/
 backups/
 .env
-.env.test
 .env.*.bak
 *.dump
 server.log

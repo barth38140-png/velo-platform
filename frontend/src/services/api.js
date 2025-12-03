@@ -132,6 +132,28 @@ export const repairOfferService = {
     api.post(`/repair-offers/${offerId}/confirm-date`)
 };
 
+// Disponibilités réparateur
+export const availabilityService = {
+  async list(repairerId, params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const url = `/api/availability/${repairerId}${query ? `?${query}` : ''}`;
+    const res = await api.get(url);
+    return res.data;
+  },
+  async create(startsAt, endsAt) {
+    const res = await api.post(`/api/availability`, { startsAt, endsAt });
+    return res.data;
+  },
+  async remove(slotId) {
+    const res = await api.delete(`/api/availability/${slotId}`);
+    return res.data;
+  },
+  async reserve(slotId, repairerId, repairRequestId) {
+    const res = await api.post(`/api/availability/${slotId}/reserve`, { repairerId, repairRequestId });
+    return res.data;
+  }
+};
+
 export const bikeService = {
   getMyBikes: () => api.get('/bikes').then(r => r.data),
   createBike: (payload) => api.post('/bikes', payload).then(r => r.data),

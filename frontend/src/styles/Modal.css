@@ -1,0 +1,54 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 20px;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 980px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:16px 20px;
+  border-bottom:1px solid #eee;
+}
+
+.modal-body{
+  display:flex;
+  gap:20px;
+  padding:18px 20px;
+}
+
+.repair-details{
+  flex: 1 1 40%;
+  min-width: 260px;
+}
+
+.modal-offers{
+  flex: 1 1 60%;
+  min-width: 320px;
+  max-height: 60vh;
+  overflow:auto;
+}
+
+.modal-body h4{ margin-top:0; }
+
+@media (max-width:900px){
+  .modal-body{ flex-direction:column; }
+  .modal-offers{ max-height: none; }
+}

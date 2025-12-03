@@ -1,4 +1,5 @@
 ﻿const { upsertLocation, getLocationByUser, findNearbyRepairers } = require('../models/locationModel');
+const logger = require('../src/logger');
 
 /**
  * Mettre à jour ou créer la localisation de l'utilisateur
@@ -8,15 +9,15 @@ async function updateLocation(req, res) {
   const userId = req.user.id;
 
   if (latitude === undefined || longitude === undefined) {
-    return res.status(400).json({ error: 'latitude and longitude are required' });
+    return res.status(400).json({ error: 'Latitude et longitude requises' });
   }
 
   try {
     const loc = await upsertLocation(userId, latitude, longitude, address || null);
     res.json({ success: true, location: loc });
   } catch (err) {
-    console.error('updateLocation error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    logger.error({ err, userId, latitude, longitude }, 'updateLocation error');
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 
@@ -42,8 +43,8 @@ async function getLocation(req, res) {
     }
     res.json({ success: true, location: loc });
   } catch (err) {
-    console.error('getLocation error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    logger.error({ err, userId }, 'getLocation error');
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 
@@ -54,7 +55,7 @@ async function getNearbyRepairers(req, res) {
   const { latitude, longitude, radius_km } = req.query;
 
   if (latitude === undefined || longitude === undefined) {
-    return res.status(400).json({ error: 'latitude and longitude are required' });
+    return res.status(400).json({ error: 'Latitude et longitude requises' });
   }
 
   try {
@@ -62,8 +63,8 @@ async function getNearbyRepairers(req, res) {
     const repairers = await findNearbyRepairers(parseFloat(latitude), parseFloat(longitude), radiusKm);
     res.json({ success: true, repairers, count: repairers.length });
   } catch (err) {
-    console.error('getNearbyRepairers error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    logger.error({ err, latitude, longitude, radius_km }, 'getNearbyRepairers error');
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 

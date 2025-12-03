@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/8</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">28.57% </span>
+                <span class="strong">64.28% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/14</span>
+                <span class='fraction'>9/14</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/8</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
@@ -87,27 +87,21 @@
 <a name='L22'></a><a href='#L22'>22</a>
 <a name='L23'></a><a href='#L23'>23</a>
 <a name='L24'></a><a href='#L24'>24</a>
-<a name='L25'></a><a href='#L25'>25</a>
-<a name='L26'></a><a href='#L26'>26</a>
-<a name='L27'></a><a href='#L27'>27</a>
-<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<a name='L25'></a><a href='#L25'>25</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -116,19 +110,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">﻿/* env loader */
-if (process.env.NODE_ENV === 'test') {
-  require('dotenv').config({ path: '.env.test', override: true });
-} else <span class="missing-if-branch" title="else path not taken" >E</span>{
-<span class="cstat-no" title="statement not covered" >  require('dotenv').config();</span>
-}
-<span class="missing-if-branch" title="if path not taken" >I</span>if (process.env.DEBUG_DB === 'true') {
+// Load environment variables from the default `.env` file when present.
+require('dotenv').config();
+if (process.env.DEBUG_DB === 'true') {
    
-<span class="cstat-no" title="statement not covered" >  console.log('DB connection vars:', {</span>
-    DB_USER: process.env.DB_USER || '(unset)',
-    DB_NAME: process.env.DB_NAME || '(unset)',
-    DB_HOST: process.env.DB_HOST || '(unset)',
+  console.log('DB connection vars:', {
+    DB_USER: process.env.DB_USER || <span class="branch-1 cbranch-no" title="branch not covered" >'(unset)',</span>
+    DB_NAME: process.env.DB_NAME || <span class="branch-1 cbranch-no" title="branch not covered" >'(unset)',</span>
+    DB_HOST: process.env.DB_HOST || <span class="branch-1 cbranch-no" title="branch not covered" >'(unset)',</span>
   });
 }
 &nbsp;
@@ -138,7 +129,7 @@ const pool = new Pool({
   host: process.env.DB_HOST || <span class="branch-1 cbranch-no" title="branch not covered" >'127.0.0.1',</span>
   port: process.env.DB_PORT ? Number(process.env.DB_PORT) : <span class="branch-1 cbranch-no" title="branch not covered" >5432,</span>
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  password: process.env.PGPASSWORD || process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   // max: 10, idleTimeoutMillis: 30000
 });
@@ -151,7 +142,7 @@ module.exports = pool;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-19T13:41:17.267Z
+                at 2025-11-23T20:18:54.855Z
             </div>
         <script src="../prettify.js"></script>
         <script>

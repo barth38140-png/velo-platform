@@ -32,7 +32,7 @@ const validateUpdateOfferStatus = [
 const validateProposeDate = [
   param('offerId').isInt({ min: 1 }).withMessage('Invalid offer ID'),
   body('scheduled_from').isISO8601().withMessage('scheduled_from must be a valid date'),
-  body('scheduled_to').optional().isISO8601().withMessage('scheduled_to must be a valid date'),
+  body('scheduled_to').optional({ nullable: true }).isISO8601().withMessage('scheduled_to must be a valid date'),
   handleValidationErrors
 ];
 

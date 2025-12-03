@@ -1,0 +1,49 @@
+.demandes-offres-page { padding: 16px; }
+.demandes-offres-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px }
+.demandes-offres-header h2 { margin:0 }
+.demandes-offres-layout { display: flex; gap: 20px; align-items:flex-start; }
+.demandes-column { width: 36%; }
+.offres-column { width: 64%; }
+.demandes-list ul { list-style: none; padding: 0; margin: 0; }
+.demand-item { display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid #eee; border-radius:6px; margin-bottom:8px; cursor: pointer; }
+.demand-item.selected { background:#f7fbff; border-color:#cfe8ff; }
+.demand-title { font-weight:600; }
+.demand-meta { color:#666; font-size:0.9em; }
+.demand-actions button { margin-left:8px; }
+.status.pending { color:#ff9800; }
+.status.assigned { color:#1976d2; }
+.status.completed { color:#2e7d32; }
+.offer-card { border:1px solid #eee; padding:12px; border-radius:6px; margin-bottom:12px; }
+.offer-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.badge.pending { background:#fff3e0; color:#ff9800; padding:4px 8px; border-radius:12px; }
+.badge.accepted { background:#e8f5e9; color:#2e7d32; padding:4px 8px; border-radius:12px; }
+.badge.rejected { background:#ffebee; color:#c62828; padding:4px 8px; border-radius:12px; }
+.offer-actions { margin-top:10px; }
+.btn.small { padding:6px 10px; font-size:0.9em; }
+
+/* Nouvelle demande button */
+.new-request-btn {
+	background: linear-gradient(180deg,#1976d2,#115293);
+	color: white;
+	border: none;
+	padding: 8px 12px;
+	border-radius: 8px;
+	font-weight: 600;
+	box-shadow: 0 6px 14px rgba(17,82,147,0.14);
+}
+.new-request-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(17,82,147,0.18); }
+.new-request-btn:active { transform: translateY(0); box-shadow: 0 6px 12px rgba(17,82,147,0.12); }
+.new-request-btn:focus { outline: 3px solid rgba(25,118,210,0.18); }
+
+/* Ensure visibility on small screens */
+@media (max-width: 640px) {
+	.demandes-offres-header { flex-direction: column; align-items:flex-start; gap:8px }
+	.new-request-btn { align-self: stretch; text-align:center }
+}
+
+/* Icon spacing inside the button */
+.new-request-btn .icon { margin-right:8px; font-size:1.1em; line-height:1 }
+.new-request-btn .label { vertical-align:middle }
+.loader-sm { padding:8px; }
+.error-toast.small { background:#ffe7e7; color:#8a1515; padding:8px; border-radius:6px; margin-bottom:8px; }
+.empty-list { color:#666; padding:10px; }

@@ -1,0 +1,33 @@
+.repairers-page { padding: 16px; }
+.repairers-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.repairers-controls { display: flex; gap: 12px; align-items: center; }
+.repairers-controls input[type="text"] { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; min-width: 280px; }
+.toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; }
+.loader { padding: 20px; color: #666; }
+.error-banner { background: #ffe6e6; color: #b20000; border: 1px solid #ffb3b3; padding: 10px 12px; border-radius: 6px; margin-top: 12px; }
+.empty { padding: 20px; color: #666; }
+
+.repairers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
+.repairer-card { border: 1px solid #e6e6e6; border-radius: 10px; padding: 12px; background: white; display: flex; flex-direction: column; gap: 10px; }
+.repairer-card.unavailable { opacity: 0.6; }
+.repairer-card-header { display: flex; gap: 12px; align-items: center; }
+.repairer-card .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9, #22c55e); }
+.repairer-card .title h3 { margin: 0; }
+.repairer-card .muted { color: #777; font-size: 12px; }
+.availability-badge { margin-left: auto; font-size: 12px; padding: 4px 8px; border-radius: 999px; }
+.availability-badge.on { background: #e7f9ee; color: #0c7a2b; border: 1px solid #bde5c8; }
+.availability-badge.off { background: #fff3f3; color: #9c1c1c; border: 1px solid #f3c3c3; }
+.repairer-card .bio { margin: 0; color: #333; }
+.skills { display: flex; gap: 6px; flex-wrap: wrap; }
+.skill-badge { background: #f0f7ff; color: #0b74d1; border: 1px solid #cfe6ff; padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+.actions { display: flex; justify-content: flex-end; }
+button.primary { background: #0ea5e9; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+button.primary:disabled { background: #a3d6f4; cursor: not-allowed; }
+button.secondary { background: #f3f4f6; color: #111827; border: 1px solid #e5e7eb; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; }
+.modal { width: 560px; max-width: calc(100% - 32px); background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+.modal-header { padding: 16px; border-bottom: 1px solid #eee; }
+.modal-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.modal-body textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }

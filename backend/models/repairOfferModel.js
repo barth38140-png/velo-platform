@@ -131,6 +131,19 @@ async function getOffersByRepairer(repairerId) {
 
 // Get a single offer
 async function getOfferById(offerId) {
+  // Détecter la présence des colonnes scheduled_* pour compatibilité avec bases non migrées
+  let hasScheduled = false;
+  try {
+    const colCheck = await pool.query(
+      "SELECT COUNT(*) AS cnt FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'repair_offers' AND column_name IN ('scheduled_from','scheduled_to')"
+    );
+    const cnt = Number(colCheck?.rows?.[0]?.cnt || 0);
+    hasScheduled = cnt === 2;
+  } catch (e) {
+    hasScheduled = false;
+  }
+
+  const scheduledSelect = hasScheduled ? 'ro.scheduled_from, ro.scheduled_to,' : '';
   const sql = `
     SELECT 
       ro.id,
@@ -140,8 +153,7 @@ async function getOfferById(offerId) {
       ro.estimated_duration_hours,
       ro.message,
       ro.status,
-      ro.scheduled_from,
-      ro.scheduled_to,
+      ${scheduledSelect}
       ro.created_at,
       ro.updated_at,
       u.name as repairer_name,
@@ -171,6 +183,18 @@ async function updateOfferStatus(offerId, status) {
 
 // Get offers received by a client
 async function getOffersByClient(clientId) {
+  // Détecter la présence des colonnes scheduled_* pour compatibilité
+  let hasScheduledClient = false;
+  try {
+    const colCheck = await pool.query(
+      "SELECT COUNT(*) AS cnt FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'repair_offers' AND column_name IN ('scheduled_from','scheduled_to')"
+    );
+    const cnt = Number(colCheck?.rows?.[0]?.cnt || 0);
+    hasScheduledClient = cnt === 2;
+  } catch (e) {
+    hasScheduledClient = false;
+  }
+  const scheduledSelectClient = hasScheduledClient ? 'ro.scheduled_from, ro.scheduled_to,' : '';
   const sql = `
     SELECT 
       ro.id,
@@ -180,8 +204,7 @@ async function getOffersByClient(clientId) {
       ro.estimated_duration_hours as duration,
       ro.message,
       ro.status,
-      ro.scheduled_from,
-      ro.scheduled_to,
+      ${scheduledSelectClient}
       ro.created_at,
       rr.title as repair_title,
       rr.location_address,
@@ -224,32 +247,64 @@ async function proposeDates(offerId, scheduledFrom, scheduledTo, proposedBy, dat
     hasNegotiation = false;
   }
 
+  // Vérifier si les colonnes scheduled_from/to existent pour compatibilité
+  let hasScheduled = false;
+  try {
+    const schCheck = await pool.query(
+      "SELECT COUNT(*) AS cnt FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'repair_offers' AND column_name IN ('scheduled_from','scheduled_to')"
+    );
+    const scnt = Number(schCheck?.rows?.[0]?.cnt || 0);
+    hasScheduled = scnt === 2;
+  } catch (e) {
+    hasScheduled = false;
+  }
+
   if (!hasNegotiation) {
-    // Fallback: juste mettre à jour les dates sans les colonnes de négociation
+    // Base non migrée pour négociation
+    if (hasScheduled) {
+      // Mettre à jour uniquement les colonnes existantes
+      const sql = `
+        UPDATE repair_offers 
+        SET scheduled_from = $1,
+            scheduled_to = $2,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $3
+        RETURNING *;
+      `;
+      const res = await pool.query(sql, [scheduledFrom, scheduledTo, offerId]);
+      return res.rows[0];
+    }
+    // Aucune colonne de dates: retourner l'offre sans modification
+    const res = await pool.query('SELECT * FROM repair_offers WHERE id = $1', [offerId]);
+    return res.rows[0];
+  }
+
+  if (hasScheduled) {
     const sql = `
       UPDATE repair_offers 
       SET scheduled_from = $1,
           scheduled_to = $2,
+          proposed_by = $3,
+          date_status = $4,
+          date_confirmed_at = NULL,
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $3
+      WHERE id = $5
       RETURNING *;
     `;
-    const res = await pool.query(sql, [scheduledFrom, scheduledTo, offerId]);
+    const res = await pool.query(sql, [scheduledFrom, scheduledTo, proposedBy, dateStatus, offerId]);
     return res.rows[0];
   }
-
+  // Colonnes de négociation présentes, mais pas les dates: mettre à jour uniquement le statut
   const sql = `
     UPDATE repair_offers 
-    SET scheduled_from = $1,
-        scheduled_to = $2,
-        proposed_by = $3,
-        date_status = $4,
+    SET proposed_by = $1,
+        date_status = $2,
         date_confirmed_at = NULL,
         updated_at = CURRENT_TIMESTAMP
-    WHERE id = $5
+    WHERE id = $3
     RETURNING *;
   `;
-  const res = await pool.query(sql, [scheduledFrom, scheduledTo, proposedBy, dateStatus, offerId]);
+  const res = await pool.query(sql, [proposedBy, dateStatus, offerId]);
   return res.rows[0];
 }
 

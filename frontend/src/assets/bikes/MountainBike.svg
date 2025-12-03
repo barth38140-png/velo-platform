@@ -1,0 +1,84 @@
+<svg viewBox="0 0 600 360" xmlns="http://www.w3.org/2000/svg" aria-label="VTT - Vélo tout terrain">
+  <defs>
+    <linearGradient id="mtbGrad" x1="0" x2="1">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  
+  <!-- VTT - Design robuste avec suspensions -->
+  
+  <!-- Roue arrière (large avec crampons) -->
+  <circle cx="130" cy="270" r="75" stroke="#1f2937" stroke-width="8" fill="none" />
+  <circle cx="130" cy="270" r="65" stroke="#374151" stroke-width="2" fill="none" />
+  <circle cx="130" cy="270" r="10" fill="#1f2937" />
+  <!-- Crampons -->
+  <circle cx="130" cy="195" r="4" fill="#374151" />
+  <circle cx="180" cy="230" r="4" fill="#374151" />
+  <circle cx="205" cy="270" r="4" fill="#374151" />
+  <circle cx="180" cy="310" r="4" fill="#374151" />
+  <circle cx="130" cy="345" r="4" fill="#374151" />
+  <circle cx="80" cy="310" r="4" fill="#374151" />
+  <circle cx="55" cy="270" r="4" fill="#374151" />
+  <circle cx="80" cy="230" r="4" fill="#374151" />
+  
+  <!-- Roue avant (large avec crampons) -->
+  <circle cx="470" cy="270" r="75" stroke="#1f2937" stroke-width="8" fill="none" />
+  <circle cx="470" cy="270" r="65" stroke="#374151" stroke-width="2" fill="none" />
+  <circle cx="470" cy="270" r="10" fill="#1f2937" />
+  <!-- Crampons -->
+  <circle cx="470" cy="195" r="4" fill="#374151" />
+  <circle cx="520" cy="230" r="4" fill="#374151" />
+  <circle cx="545" cy="270" r="4" fill="#374151" />
+  <circle cx="520" cy="310" r="4" fill="#374151" />
+  <circle cx="470" cy="345" r="4" fill="#374151" />
+  <circle cx="420" cy="310" r="4" fill="#374151" />
+  <circle cx="395" cy="270" r="4" fill="#374151" />
+  <circle cx="420" cy="230" r="4" fill="#374151" />
+  
+  <!-- Cadre principal (robuste) -->
+  <path d="M165 265 L250 160 L340 160 L410 265" stroke="url(#mtbGrad)" stroke-width="14" fill="none" stroke-linecap="round" />
+  <!-- Tube diagonal -->
+  <path d="M250 160 L310 250" stroke="url(#mtbGrad)" stroke-width="12" fill="none" stroke-linecap="round" />
+  <!-- Tube de selle -->
+  <path d="M340 160 L300 250" stroke="url(#mtbGrad)" stroke-width="12" fill="none" stroke-linecap="round" />
+  <!-- Hauban arrière avec suspension -->
+  <path d="M305 250 L165 265" stroke="url(#mtbGrad)" stroke-width="10" fill="none" stroke-linecap="round" />
+  
+  <!-- Suspension arrière -->
+  <circle cx="235" cy="257" r="8" fill="#f59e0b" stroke="#1f2937" stroke-width="2" />
+  <path d="M227 257 L180 265" stroke="#f59e0b" stroke-width="6" fill="none" stroke-linecap="round" />
+  
+  <!-- Fourche suspendue avant -->
+  <path d="M340 160 L370 200" stroke="#f59e0b" stroke-width="10" fill="none" stroke-linecap="round" />
+  <path d="M370 200 L470 270" stroke="#1f2937" stroke-width="8" fill="none" stroke-linecap="round" />
+  <!-- Ressort de fourche -->
+  <rect x="365" y="195" width="10" height="40" fill="#f59e0b" rx="2" />
+  
+  <!-- Guidon large et droit -->
+  <path d="M340 160 L365 135" stroke="#1f2937" stroke-width="7" fill="none" stroke-linecap="round" />
+  <path d="M335 135 L395 135" stroke="#1f2937" stroke-width="6" fill="none" stroke-linecap="round" />
+  <!-- Poignées -->
+  <circle cx="335" cy="135" r="6" fill="#374151" />
+  <circle cx="395" cy="135" r="6" fill="#374151" />
+  
+  <!-- Selle sport rembourrée -->
+  <ellipse cx="305" cy="130" rx="30" ry="12" fill="#1f2937" />
+  <path d="M275" cy="130" L250 160" stroke="#1f2937" stroke-width="6" fill="none" stroke-linecap="round" />
+  
+  <!-- Pédalier robuste -->
+  <circle cx="305" cy="250" r="15" fill="#1f2937" />
+  <path d="M305 250 L285 290" stroke="#1f2937" stroke-width="7" fill="none" stroke-linecap="round" />
+  <rect x="277" y="288" width="16" height="10" fill="#374151" rx="2" />
+  <path d="M305 250 L325 210" stroke="#1f2937" stroke-width="7" fill="none" stroke-linecap="round" />
+  <rect x="317" y="202" width="16" height="10" fill="#374151" rx="2" />
+  
+  <!-- Chaîne -->
+  <path d="M305 265 L165 270" stroke="#6b7280" stroke-width="3" fill="none" stroke-dasharray="4,2" />
+  
+  <!-- Garde-boue arrière -->
+  <path d="M130 195 Q90 230 100 280" stroke="#374151" stroke-width="4" fill="none" stroke-linecap="round" />
+  
+  <!-- Logo -->
+  <text x="260" y="185" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#059669">MTB</text>
+</svg>

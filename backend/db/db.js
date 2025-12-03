@@ -1,9 +1,6 @@
 ﻿/* env loader */
-if (process.env.NODE_ENV === 'test') {
-  require('dotenv').config({ path: '.env.test', override: true });
-} else {
-  require('dotenv').config();
-}
+// Load environment variables from the default `.env` file when present.
+require('dotenv').config();
 if (process.env.DEBUG_DB === 'true') {
    
   console.log('DB connection vars:', {
@@ -19,7 +16,7 @@ const pool = new Pool({
   host: process.env.DB_HOST || '127.0.0.1',
   port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432,
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  password: process.env.PGPASSWORD || process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   // max: 10, idleTimeoutMillis: 30000
 });

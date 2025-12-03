@@ -1,0 +1,56 @@
+.mes-velos { padding: 16px; box-sizing: border-box; }
+.mes-velos-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin: 0 0 16px 0 }
+.mes-velos-header h2 { margin:0; font-size:1.4rem }
+.mes-velos-header .actions { display:flex; gap:8px; align-items:center }
+
+.bike-list { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:16px; align-items:start }
+.bike-card { border:1px solid #e6e6e6; border-radius:8px; padding:12px; background:white; display:flex; flex-direction:column; min-height:120px }
+.bike-card-header { display:flex; justify-content:space-between; align-items:center; gap:8px }
+.bike-card-header h3 { margin:0; font-size:1.05rem }
+.bike-meta { font-size:0.85rem; color: #666 }
+.bike-actions .btn { margin-left:8px }
+
+.bike-components { margin-top:10px; display:flex; flex-direction:column; gap:6px }
+.component-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0 }
+.component-name { font-size:0.95rem }
+.component-wear { display:flex; align-items:center; gap:8px }
+.wear-bar { width:120px; height:8px; border-radius:4px; overflow:hidden; background:#eee }
+.wear-level { height:100%; }
+.wear-percent { font-size:0.8rem; color:#444 }
+
+.bike-footer { margin-top:auto; padding-top:8px; border-top:1px dashed #f0f0f0 }
+
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.35); display:flex; justify-content:center; align-items:flex-start; padding-top:48px; z-index:50 }
+.modal { background:white; padding:18px; border-radius:8px; width:640px; max-width:95%; box-shadow:0 12px 30px rgba(0,0,0,0.12) }
+.modal-header { display:flex; justify-content:space-between; align-items:center }
+.modal-header h3 { margin:0 }
+
+.modal-header .close { background:transparent; border:none; font-size:1.1rem; cursor:pointer }
+
+.modal-body { margin-top:12px }
+.form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:start }
+.form-grid label { display:flex; flex-direction:column; gap:6px; font-size:0.95rem }
+.form-grid input, .form-grid textarea { padding:8px; border-radius:6px; border:1px solid #e0e0e0; font-size:0.95rem }
+.components-section { grid-column: 1 / -1; margin-top:8px }
+
+.modal-footer { display:flex; gap:8px; justify-content:center; margin-top:16px }
+.modal-footer .btn { min-width:120px }
+
+@media (max-width: 640px) {
+	.form-grid { grid-template-columns: 1fr }
+	.modal { width:92%; padding:14px }
+	.bike-list { grid-template-columns: 1fr }
+}
+
+/* Additional styles for components UI */
+.components-header .btn.small, .bike-actions .btn.small { padding:6px 8px; font-size:0.9rem }
+.btn.small { padding:6px 8px; font-size:0.9rem }
+.btn.danger { background:#d9534f; color:white; border:none }
+.btn.danger.small { padding:6px 8px; font-size:0.85rem }
+.chip { padding:6px 10px; border-radius:20px; border:1px solid #e6eef0; background:#fff; cursor:pointer }
+.chip.active { background:#2a9d8f; color:white; border-color: #2a9d8f }
+.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.35); display:flex; justify-content:center; align-items:center; z-index:60 }
+.modal.small { width:420px; max-width:96%; padding:14px }
+.empty-list { color:#777; padding:8px 0 }
+.component-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 0; border-bottom:1px solid #f5f5f5 }
+.components-list { display:flex; flex-direction:column; gap:6px }

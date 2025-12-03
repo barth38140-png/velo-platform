@@ -32,6 +32,9 @@ backups/
 .env
 .env.*.bak
 .env.backup
+# Local override (should be kept private)
+.env.local
+.env.local.*
 
 # OS / Editor
 .DS_Store
