@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const pushSubscriptionController = require('../controllers/pushSubscriptionController');
-const { authenticate } = require('../middlewares/auth');
+const authenticate = require('../middlewares/auth');
 
 // Obtenir la clé publique VAPID (public, pas besoin d'auth)
 router.get('/vapid-public-key', pushSubscriptionController.getVapidPublicKey);
