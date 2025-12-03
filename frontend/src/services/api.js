@@ -192,4 +192,16 @@ export const repairPhotoService = {
     api.post(`/repairs/${repairRequestId}/photos`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
 };
 
+// Review service for rating system
+export const reviewService = {
+  createReview: (repairRequestId, rating, comment) =>
+    api.post('/reviews', { repair_request_id: repairRequestId, rating, comment }),
+  getReviewByRepairId: (repairId) =>
+    api.get(`/reviews/repair/${repairId}`),
+  getRepairerReviews: (repairerId, limit = 10, offset = 0) =>
+    api.get(`/reviews/repairer/${repairerId}?limit=${limit}&offset=${offset}`),
+  getRepairerStats: (repairerId) =>
+    api.get(`/reviews/repairer/${repairerId}/stats`)
+};
+
 export default api;
