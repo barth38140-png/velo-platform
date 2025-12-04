@@ -9,20 +9,21 @@ async function getGlobalStats(req, res) {
     const { period = '7d' } = req.query;
     
     const startDate = getPeriodStartDate(period);
+    const startDateStr = startDate.toISOString();
     
-    // Utiliser des sous-requêtes simples avec des paramètres
+    // Récupérer les statistiques
     const stats = await pool.query(`
       SELECT 
         (SELECT COUNT(*) FROM users) as total_users,
         (SELECT COUNT(*) FROM users WHERE role = 'repairer') as total_repairers,
         (SELECT COUNT(*) FROM users WHERE role = 'client') as total_clients,
-        (SELECT COUNT(*) FROM repairs WHERE created_at >= $1) as repairs_period,
-        (SELECT COUNT(*) FROM repairs WHERE status = 'completed' AND created_at >= $1) as repairs_completed,
-        (SELECT COUNT(*) FROM reviews WHERE created_at >= $1) as reviews_period,
-        (SELECT AVG(rating) FROM reviews WHERE created_at >= $1) as avg_rating,
+        (SELECT COUNT(*) FROM repairs WHERE created_at > '${startDateStr}') as repairs_period,
+        (SELECT COUNT(*) FROM repairs WHERE status = 'completed' AND created_at > '${startDateStr}') as repairs_completed,
+        (SELECT COUNT(*) FROM reviews WHERE created_at > '${startDateStr}') as reviews_period,
+        (SELECT AVG(rating) FROM reviews WHERE created_at > '${startDateStr}') as avg_rating,
         (SELECT COUNT(*) FROM users WHERE verified = true AND role = 'repairer') as verified_repairers,
-        (SELECT COUNT(*) FROM users WHERE created_at >= $1) as new_users_period
-    `, [startDate]);
+        (SELECT COUNT(*) FROM users WHERE created_at > '${startDateStr}') as new_users_period
+    `);
     
     return res.json({
       success: true,
@@ -43,6 +44,7 @@ async function getRevenueStats(req, res) {
     const { period = '7d' } = req.query;
     
     const startDate = getPeriodStartDate(period);
+    const startDateStr = startDate.toISOString();
     
     // Simuler revenue basé sur les réparations complétées
     const result = await pool.query(`
@@ -53,8 +55,8 @@ async function getRevenueStats(req, res) {
         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
         AVG(CASE WHEN status = 'completed' THEN 45 ELSE NULL END)::INTEGER as avg_repair_value
       FROM repairs
-      WHERE created_at >= $1
-    `, [startDate]);
+      WHERE created_at > '${startDateStr}'
+    `);
     
     const data = result.rows[0];
     const estimatedRevenue = (data.completed_repairs * data.avg_repair_value) || 0;
@@ -67,13 +69,13 @@ async function getRevenueStats(req, res) {
         AVG(rev.rating)::NUMERIC(3,2) as avg_rating,
         (COUNT(r.id) * 45)::INTEGER as estimated_revenue
       FROM users u
-      LEFT JOIN repairs r ON u.id = r.repairer_id AND r.status = 'completed' AND r.created_at >= $1
+      LEFT JOIN repairs r ON u.id = r.repairer_id AND r.status = 'completed' AND r.created_at > '${startDateStr}'
       LEFT JOIN reviews rev ON u.id = rev.repairer_id
       WHERE u.role = 'repairer'
       GROUP BY u.id, u.email, u.name
       ORDER BY repairs_completed DESC
       LIMIT 5
-    `, [startDate]);
+    `);
     
     return res.json({
       success: true,
@@ -140,6 +142,7 @@ async function getActivityCharts(req, res) {
     const { period = '7d' } = req.query;
     
     const startDate = getPeriodStartDate(period);
+    const startDateStr = startDate.toISOString();
     
     const repairs = await pool.query(`
       SELECT 
@@ -147,10 +150,10 @@ async function getActivityCharts(req, res) {
         COUNT(*) as count,
         COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed
       FROM repairs
-      WHERE created_at >= $1
+      WHERE created_at > '${startDateStr}'
       GROUP BY DATE(created_at)
       ORDER BY date DESC
-    `, [startDate]);
+    `);
     
     const users = await pool.query(`
       SELECT 
@@ -159,10 +162,10 @@ async function getActivityCharts(req, res) {
         COUNT(CASE WHEN role = 'repairer' THEN 1 END) as repairers,
         COUNT(CASE WHEN role = 'client' THEN 1 END) as clients
       FROM users
-      WHERE created_at >= $1
+      WHERE created_at > '${startDateStr}'
       GROUP BY DATE(created_at)
       ORDER BY date DESC
-    `, [startDate]);
+    `);
     
     return res.json({
       success: true,
