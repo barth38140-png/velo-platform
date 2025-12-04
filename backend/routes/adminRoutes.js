@@ -177,5 +177,30 @@ module.exports = (config = {}) => {
     }
   });
 
+  // ===== Gestion Utilisateurs =====
+  const userController = require('../controllers').userController;
+  
+  router.get('/users', userController.getAllUsersAdmin);
+  router.put('/users/:userId/status', userController.toggleUserStatus);
+  router.put('/users/:userId/verify', userController.verifyRepairerProfile);
+  router.get('/users/pending-verifications', userController.getPendingVerifications);
+
+  // ===== Modération =====
+  const moderationController = require('../controllers').moderationController;
+  
+  router.get('/reviews/flagged', moderationController.getFlaggedReviews);
+  router.post('/reviews/:reviewId/moderate', moderationController.moderateReview);
+  router.get('/messages/flagged', moderationController.getFlaggedMessages);
+  router.post('/messages/:messageId/moderate', moderationController.moderateMessage);
+
+  // ===== Statistiques et Revenue =====
+  const statsController = require('../controllers').statsController;
+  
+  router.get('/stats/global', statsController.getGlobalStats);
+  router.get('/stats/revenue', statsController.getRevenueStats);
+  router.get('/stats/audit-logs', statsController.getAuditLogs);
+  router.get('/stats/activity-charts', statsController.getActivityCharts);
+
   return router;
 };
+

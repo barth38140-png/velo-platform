@@ -6,6 +6,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { Presentation } from './pages/Presentation';
+import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
 
 function ProtectedRoute({ children }) {
@@ -13,6 +14,15 @@ function ProtectedRoute({ children }) {
   // While the auth context is initializing (checking token/profile), avoid redirecting.
   if (loading) return null;
   return token ? children : <Navigate to="/login" />;
+}
+
+function AdminRoute({ children }) {
+  const { token, loading, user } = useAuth();
+  // While the auth context is initializing, avoid redirecting.
+  if (loading) return null;
+  if (!token) return <Navigate to="/login" />;
+  if (user?.role !== 'admin') return <Navigate to="/dashboard" />;
+  return children;
 }
 
 function AppRoutes() {
@@ -27,6 +37,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
         }
       />
       {/* Direct route to /demandes-offres removed: redirect to dashboard to force inline tab usage */}

@@ -180,10 +180,148 @@ async function elevateToAdmin(req, res) {
   }
 }
 
+/**
+ * Admin: Récupérer tous les utilisateurs avec filtres
+ */
+async function getAllUsersAdmin(req, res) {
+  try {
+    const { status = 'all', role = 'all', search = '', limit = 50, offset = 0 } = req.query;
+    
+    let query = 'SELECT id, email, name, phone, role, status, created_at, last_login FROM users WHERE 1=1';
+    const params = [];
+    
+    if (status !== 'all') {
+      query += ' AND status = $' + (params.length + 1);
+      params.push(status);
+    }
+    
+    if (role !== 'all') {
+      query += ' AND role = $' + (params.length + 1);
+      params.push(role);
+    }
+    
+    if (search) {
+      query += ' AND (email ILIKE $' + (params.length + 1) + ' OR name ILIKE $' + (params.length + 1) + ')';
+      params.push(`%${search}%`);
+    }
+    
+    const countRes = await pool.query(
+      query.replace('SELECT id, email, name, phone, role, status, created_at, last_login FROM users', 'SELECT COUNT(*) as total FROM users'),
+      params
+    );
+    
+    query += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
+    params.push(limit, offset);
+    
+    const res_data = await pool.query(query, params);
+    return res.json({
+      success: true,
+      users: res_data.rows,
+      total: parseInt(countRes.rows[0].total),
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+  } catch (err) {
+    logger.error({ err }, 'getAllUsersAdmin error');
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
+/**
+ * Admin: Suspendre/activer un utilisateur
+ */
+async function toggleUserStatus(req, res) {
+  try {
+    const { userId } = req.params;
+    const { status, reason } = req.body; // status: 'active', 'suspended', 'banned'
+    
+    if (!['active', 'suspended', 'banned'].includes(status)) {
+      return res.status(400).json({ error: 'Statut invalide' });
+    }
+    
+    const result = await pool.query(
+      'UPDATE users SET status = $1, status_reason = $2, status_updated_at = NOW() WHERE id = $3 RETURNING id, email, status',
+      [status, reason || null, userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+    
+    // Log audit
+    await logAdminAction(req.user.id, 'USER_STATUS_CHANGE', `User ${userId} status changed to ${status}`, { userId, status, reason });
+    
+    return res.json({
+      success: true,
+      user: result.rows[0],
+      message: `Utilisateur ${status === 'active' ? 'activé' : status === 'suspended' ? 'suspendu' : 'banni'}`
+    });
+  } catch (err) {
+    logger.error({ err }, 'toggleUserStatus error');
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
+/**
+ * Admin: Vérifier/valider un utilisateur réparateur
+ */
+async function verifyRepairerProfile(req, res) {
+  try {
+    const { userId } = req.params;
+    const { verified, verificationNotes } = req.body;
+    
+    const result = await pool.query(
+      'UPDATE users SET verified = $1, verification_notes = $2, verified_at = NOW(), verified_by = $3 WHERE id = $4 AND role = $5 RETURNING id, email, verified',
+      [verified, verificationNotes || null, req.user.id, userId, 'repairer']
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Réparateur non trouvé' });
+    }
+    
+    await logAdminAction(req.user.id, 'REPAIRER_VERIFICATION', `Repairer ${userId} verification: ${verified}`, { userId, verified });
+    
+    return res.json({
+      success: true,
+      user: result.rows[0],
+      message: verified ? 'Réparateur vérifié' : 'Vérification annulée'
+    });
+  } catch (err) {
+    logger.error({ err }, 'verifyRepairerProfile error');
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
+/**
+ * Admin: Obtenir les utilisateurs en attente de vérification
+ */
+async function getPendingVerifications(req, res) {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, name, phone, role, verified, created_at FROM users WHERE role = $1 AND verified = false ORDER BY created_at ASC',
+      ['repairer']
+    );
+    
+    return res.json({
+      success: true,
+      pending: result.rows,
+      count: result.rows.length
+    });
+  } catch (err) {
+    logger.error({ err }, 'getPendingVerifications error');
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
 module.exports = {
   registerUser,
   loginUser,
   getUsers,
   getProfile,
-  elevateToAdmin
+  elevateToAdmin,
+  getAllUsersAdmin,
+  toggleUserStatus,
+  verifyRepairerProfile,
+  getPendingVerifications
 };
+

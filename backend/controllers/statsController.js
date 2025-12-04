@@ -1,0 +1,208 @@
+const logger = require('../src/logger');
+const pool = require('../config/db');
+
+/**
+ * Admin: Obtenir les statistiques globales
+ */
+async function getGlobalStats(req, res) {
+  try {
+    const { period = '7d' } = req.query; // '7d', '30d', '90d', 'all'
+    
+    const dateFilter = getPeriodFilter(period);
+    
+    const stats = await pool.query(`
+      SELECT 
+        (SELECT COUNT(*) FROM users) as total_users,
+        (SELECT COUNT(*) FROM users WHERE role = 'repairer') as total_repairers,
+        (SELECT COUNT(*) FROM users WHERE role = 'client') as total_clients,
+        (SELECT COUNT(*) FROM repairs WHERE created_at ${dateFilter}) as repairs_${period},
+        (SELECT COUNT(*) FROM repairs WHERE status = 'completed' AND created_at ${dateFilter}) as repairs_completed_${period},
+        (SELECT COUNT(*) FROM reviews WHERE created_at ${dateFilter}) as reviews_${period},
+        (SELECT AVG(rating) FROM reviews WHERE created_at ${dateFilter}) as avg_rating_${period},
+        (SELECT COUNT(*) FROM users WHERE verified = true AND role = 'repairer') as verified_repairers,
+        (SELECT COUNT(*) FROM users WHERE status = 'suspended' OR status = 'banned') as suspended_users,
+        (SELECT COUNT(*) FROM users WHERE created_at ${dateFilter}) as new_users_${period}
+    `);
+    
+    return res.json({
+      success: true,
+      stats: stats.rows[0],
+      period
+    });
+  } catch (err) {
+    logger.error({ err }, 'getGlobalStats error');
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
+/**
+ * Admin: Obtenir les statistiques de revenue (simulé)
+ */
+async function getRevenueStats(req, res) {
+  try {
+    const { period = '7d' } = req.query;
+    
+    const dateFilter = getPeriodFilter(period);
+    
+    // Simuler revenue basé sur les réparations complétées
+    const result = await pool.query(`
+      SELECT 
+        COUNT(*) as total_repairs,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_repairs,
+        COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress,
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+        AVG(CASE WHEN status = 'completed' THEN 45 ELSE NULL END)::INTEGER as avg_repair_value
+      FROM repairs
+      WHERE created_at ${dateFilter}
+    `);
+    
+    const data = result.rows[0];
+    const estimatedRevenue = (data.completed_repairs * data.avg_repair_value) || 0;
+    
+    // Statistiques par réparateur (top 5)
+    const topRepairers = await pool.query(`
+      SELECT 
+        u.id, u.email, u.name,
+        COUNT(r.id) as repairs_completed,
+        AVG(rev.rating)::NUMERIC(3,2) as avg_rating,
+        (COUNT(r.id) * 45)::INTEGER as estimated_revenue
+      FROM users u
+      LEFT JOIN repairs r ON u.id = r.repairer_id AND r.status = 'completed' AND r.created_at ${dateFilter}
+      LEFT JOIN reviews rev ON u.id = rev.repairer_id
+      WHERE u.role = 'repairer'
+      GROUP BY u.id, u.email, u.name
+      ORDER BY repairs_completed DESC
+      LIMIT 5
+    `);
+    
+    return res.json({
+      success: true,
+      revenue: {
+        period,
+        total_repairs: data.total_repairs,
+        completed_repairs: data.completed_repairs,
+        in_progress: data.in_progress,
+        pending: data.pending,
+        estimated_revenue: estimatedRevenue,
+        avg_repair_value: data.avg_repair_value || 0
+      },
+      top_repairers: topRepairers.rows
+    });
+  } catch (err) {
+    logger.error({ err }, 'getRevenueStats error');
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
+/**
+ * Admin: Obtenir les logs d'audit
+ */
+async function getAuditLogs(req, res) {
+  try {
+    const { action = 'all', limit = 100, offset = 0 } = req.query;
+    
+    let query = 'SELECT * FROM audit_logs WHERE 1=1';
+    const params = [];
+    
+    if (action !== 'all') {
+      query += ' AND action = $' + (params.length + 1);
+      params.push(action);
+    }
+    
+    const countRes = await pool.query(
+      query.replace('SELECT *', 'SELECT COUNT(*) as total') + ' FROM audit_logs',
+      params
+    );
+    
+    query += ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2);
+    params.push(limit, offset);
+    
+    const result = await pool.query(query, params);
+    
+    return res.json({
+      success: true,
+      logs: result.rows,
+      total: parseInt(countRes.rows[0].total),
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+  } catch (err) {
+    logger.error({ err }, 'getAuditLogs error');
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
+/**
+ * Admin: Obtenir les statistiques d'activité par jour
+ */
+async function getActivityCharts(req, res) {
+  try {
+    const { period = '7d' } = req.query;
+    
+    const dateFilter = getPeriodFilter(period);
+    
+    const repairs = await pool.query(`
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as count,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed
+      FROM repairs
+      WHERE created_at ${dateFilter}
+      GROUP BY DATE(created_at)
+      ORDER BY date DESC
+    `);
+    
+    const users = await pool.query(`
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as count,
+        COUNT(CASE WHEN role = 'repairer' THEN 1 END) as repairers,
+        COUNT(CASE WHEN role = 'client' THEN 1 END) as clients
+      FROM users
+      WHERE created_at ${dateFilter}
+      GROUP BY DATE(created_at)
+      ORDER BY date DESC
+    `);
+    
+    return res.json({
+      success: true,
+      repairs: repairs.rows,
+      users: users.rows,
+      period
+    });
+  } catch (err) {
+    logger.error({ err }, 'getActivityCharts error');
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
+/**
+ * Helper: Retourner le filtre de date pour les statistiques
+ */
+function getPeriodFilter(period) {
+  const now = new Date();
+  let startDate;
+  
+  switch(period) {
+    case '7d':
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      break;
+    case '30d':
+      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      break;
+    case '90d':
+      startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      break;
+    default:
+      return '> NOW() - INTERVAL \'7 days\'';
+  }
+  
+  return `> '${startDate.toISOString()}'`;
+}
+
+module.exports = {
+  getGlobalStats,
+  getRevenueStats,
+  getAuditLogs,
+  getActivityCharts
+};

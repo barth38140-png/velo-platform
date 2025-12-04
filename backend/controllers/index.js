@@ -4,5 +4,8 @@
  Update exports as you add real controllers.
 */
 module.exports = {
-  userController: require('./userController')
+  userController: require('./userController'),
+  moderationController: require('./moderationController'),
+  statsController: require('./statsController')
 };
+
