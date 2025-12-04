@@ -19,9 +19,9 @@ async function getGlobalStats(req, res) {
         (SELECT COUNT(*) FROM users WHERE role = 'client') as total_clients,
         (SELECT COUNT(*) FROM repair_requests WHERE created_at > '${startDateStr}') as repairs_period,
         (SELECT COUNT(*) FROM repair_requests WHERE status = 'terminée' AND created_at > '${startDateStr}') as repairs_completed,
-        (SELECT COUNT(*) FROM repair_reviews WHERE created_at > '${startDateStr}') as reviews_period,
-        (SELECT AVG(rating) FROM repair_reviews WHERE created_at > '${startDateStr}') as avg_rating,
-        (SELECT COUNT(*) FROM users WHERE verified = true AND role = 'repairer') as verified_repairers,
+        (SELECT COUNT(*) FROM reviews WHERE created_at > '${startDateStr}') as reviews_period,
+        (SELECT AVG(rating) FROM reviews WHERE created_at > '${startDateStr}') as avg_rating,
+        (SELECT COUNT(*) FROM repairer_profiles WHERE is_available = true) as verified_repairers,
         (SELECT COUNT(*) FROM users WHERE created_at > '${startDateStr}') as new_users_period
     `);
     
@@ -70,7 +70,7 @@ async function getRevenueStats(req, res) {
         (COUNT(r.id) * 45)::INTEGER as estimated_revenue
       FROM users u
       LEFT JOIN repair_requests r ON u.id = r.repairer_id AND r.status = 'terminée' AND r.created_at > '${startDateStr}'
-      LEFT JOIN repair_reviews rev ON u.id = rev.repairer_id
+      LEFT JOIN reviews rev ON u.id = rev.repairer_id
       WHERE u.role = 'repairer'
       GROUP BY u.id, u.email, u.name
       ORDER BY repairs_completed DESC
