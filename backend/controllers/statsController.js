@@ -6,23 +6,23 @@ const pool = require('../config/db');
  */
 async function getGlobalStats(req, res) {
   try {
-    const { period = '7d' } = req.query; // '7d', '30d', '90d', 'all'
+    const { period = '7d' } = req.query;
     
-    const dateFilter = getPeriodFilter(period);
+    const startDate = getPeriodStartDate(period);
     
+    // Utiliser des sous-requêtes simples avec des paramètres
     const stats = await pool.query(`
       SELECT 
         (SELECT COUNT(*) FROM users) as total_users,
         (SELECT COUNT(*) FROM users WHERE role = 'repairer') as total_repairers,
         (SELECT COUNT(*) FROM users WHERE role = 'client') as total_clients,
-        (SELECT COUNT(*) FROM repairs WHERE created_at ${dateFilter}) as repairs_${period},
-        (SELECT COUNT(*) FROM repairs WHERE status = 'completed' AND created_at ${dateFilter}) as repairs_completed_${period},
-        (SELECT COUNT(*) FROM reviews WHERE created_at ${dateFilter}) as reviews_${period},
-        (SELECT AVG(rating) FROM reviews WHERE created_at ${dateFilter}) as avg_rating_${period},
+        (SELECT COUNT(*) FROM repairs WHERE created_at >= $1) as repairs_period,
+        (SELECT COUNT(*) FROM repairs WHERE status = 'completed' AND created_at >= $1) as repairs_completed,
+        (SELECT COUNT(*) FROM reviews WHERE created_at >= $1) as reviews_period,
+        (SELECT AVG(rating) FROM reviews WHERE created_at >= $1) as avg_rating,
         (SELECT COUNT(*) FROM users WHERE verified = true AND role = 'repairer') as verified_repairers,
-        (SELECT COUNT(*) FROM users WHERE status = 'suspended' OR status = 'banned') as suspended_users,
-        (SELECT COUNT(*) FROM users WHERE created_at ${dateFilter}) as new_users_${period}
-    `);
+        (SELECT COUNT(*) FROM users WHERE created_at >= $1) as new_users_period
+    `, [startDate]);
     
     return res.json({
       success: true,
@@ -42,7 +42,7 @@ async function getRevenueStats(req, res) {
   try {
     const { period = '7d' } = req.query;
     
-    const dateFilter = getPeriodFilter(period);
+    const startDate = getPeriodStartDate(period);
     
     // Simuler revenue basé sur les réparations complétées
     const result = await pool.query(`
@@ -53,8 +53,8 @@ async function getRevenueStats(req, res) {
         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
         AVG(CASE WHEN status = 'completed' THEN 45 ELSE NULL END)::INTEGER as avg_repair_value
       FROM repairs
-      WHERE created_at ${dateFilter}
-    `);
+      WHERE created_at >= $1
+    `, [startDate]);
     
     const data = result.rows[0];
     const estimatedRevenue = (data.completed_repairs * data.avg_repair_value) || 0;
@@ -67,13 +67,13 @@ async function getRevenueStats(req, res) {
         AVG(rev.rating)::NUMERIC(3,2) as avg_rating,
         (COUNT(r.id) * 45)::INTEGER as estimated_revenue
       FROM users u
-      LEFT JOIN repairs r ON u.id = r.repairer_id AND r.status = 'completed' AND r.created_at ${dateFilter}
+      LEFT JOIN repairs r ON u.id = r.repairer_id AND r.status = 'completed' AND r.created_at >= $1
       LEFT JOIN reviews rev ON u.id = rev.repairer_id
       WHERE u.role = 'repairer'
       GROUP BY u.id, u.email, u.name
       ORDER BY repairs_completed DESC
       LIMIT 5
-    `);
+    `, [startDate]);
     
     return res.json({
       success: true,
@@ -139,7 +139,7 @@ async function getActivityCharts(req, res) {
   try {
     const { period = '7d' } = req.query;
     
-    const dateFilter = getPeriodFilter(period);
+    const startDate = getPeriodStartDate(period);
     
     const repairs = await pool.query(`
       SELECT 
@@ -147,10 +147,10 @@ async function getActivityCharts(req, res) {
         COUNT(*) as count,
         COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed
       FROM repairs
-      WHERE created_at ${dateFilter}
+      WHERE created_at >= $1
       GROUP BY DATE(created_at)
       ORDER BY date DESC
-    `);
+    `, [startDate]);
     
     const users = await pool.query(`
       SELECT 
@@ -159,10 +159,10 @@ async function getActivityCharts(req, res) {
         COUNT(CASE WHEN role = 'repairer' THEN 1 END) as repairers,
         COUNT(CASE WHEN role = 'client' THEN 1 END) as clients
       FROM users
-      WHERE created_at ${dateFilter}
+      WHERE created_at >= $1
       GROUP BY DATE(created_at)
       ORDER BY date DESC
-    `);
+    `, [startDate]);
     
     return res.json({
       success: true,
@@ -177,27 +177,21 @@ async function getActivityCharts(req, res) {
 }
 
 /**
- * Helper: Retourner le filtre de date pour les statistiques
+ * Helper: Retourner la date de début pour les statistiques
  */
-function getPeriodFilter(period) {
+function getPeriodStartDate(period) {
   const now = new Date();
-  let startDate;
   
   switch(period) {
     case '7d':
-      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      break;
+      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     case '30d':
-      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      break;
+      return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     case '90d':
-      startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-      break;
+      return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
     default:
-      return '> NOW() - INTERVAL \'7 days\'';
+      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   }
-  
-  return `> '${startDate.toISOString()}'`;
 }
 
 module.exports = {
