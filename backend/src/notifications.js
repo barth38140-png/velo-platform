@@ -86,7 +86,7 @@ class NotificationService {
     }
   }
 
-  async sendEmailAlert(anomaly) {
+  async sendEmailAlert() {
     try {
       // TODO: Implémenter avec nodemailer ou service mail
       logger.info('📧 Email alerte (non implémenté)');

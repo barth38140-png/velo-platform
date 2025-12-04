@@ -12,7 +12,8 @@ async function createRepairOffer(repairRequestId, repairerId, offeredPrice, esti
     );
     const cnt = Number(colCheck?.rows?.[0]?.cnt || 0);
     hasScheduled = cnt === 2;
-  } catch (e) {
+  } catch {
+    // Colonnes non détectées, valeur par défaut
     hasScheduled = false;
   }
 
@@ -51,7 +52,8 @@ async function getOffersByRepairRequest(repairRequestId) {
   try {
     const colCheck = await pool.query("SELECT 1 FROM information_schema.columns WHERE table_name = 'repair_offers' AND column_name = 'scheduled_from' LIMIT 1");
     hasScheduled = colCheck && colCheck.rowCount > 0;
-  } catch (e) {
+  } catch (err) {
+    logger.debug({ err }, 'getOffersByRepairRequest: failed to detect scheduled columns');
     hasScheduled = false;
   }
   const scheduledSelect = hasScheduled ? 'ro.scheduled_from, ro.scheduled_to,' : '';
@@ -97,7 +99,8 @@ async function getOffersByRepairer(repairerId) {
       "SELECT COUNT(*) AS cnt FROM information_schema.columns WHERE table_name = 'repair_offers' AND table_schema = 'public' AND column_name IN ('scheduled_from','scheduled_to')"
     );
     hasScheduledCols = Number(rows?.[0]?.cnt) === 2;
-  } catch (e) {
+  } catch (err) {
+    logger.debug({ err }, 'getOffersByRepairer: failed to detect scheduled columns');
     hasScheduledCols = false;
   }
 
@@ -139,7 +142,8 @@ async function getOfferById(offerId) {
     );
     const cnt = Number(colCheck?.rows?.[0]?.cnt || 0);
     hasScheduled = cnt === 2;
-  } catch (e) {
+  } catch {
+    // Colonnes non détectées, valeur par défaut
     hasScheduled = false;
   }
 
@@ -191,7 +195,8 @@ async function getOffersByClient(clientId) {
     );
     const cnt = Number(colCheck?.rows?.[0]?.cnt || 0);
     hasScheduledClient = cnt === 2;
-  } catch (e) {
+  } catch (err) {
+    logger.debug({ err }, 'getOffersByClient: failed to detect scheduled columns');
     hasScheduledClient = false;
   }
   const scheduledSelectClient = hasScheduledClient ? 'ro.scheduled_from, ro.scheduled_to,' : '';
@@ -243,7 +248,8 @@ async function proposeDates(offerId, scheduledFrom, scheduledTo, proposedBy, dat
     );
     const cnt = Number(colCheck?.rows?.[0]?.cnt || 0);
     hasNegotiation = cnt === 3;
-  } catch (e) {
+  } catch (err) {
+    logger.debug({ err }, 'proposeNewDates: failed to detect negotiation columns');
     hasNegotiation = false;
   }
 
@@ -255,7 +261,8 @@ async function proposeDates(offerId, scheduledFrom, scheduledTo, proposedBy, dat
     );
     const scnt = Number(schCheck?.rows?.[0]?.cnt || 0);
     hasScheduled = scnt === 2;
-  } catch (e) {
+  } catch (err) {
+    logger.debug({ err }, 'proposeNewDates: failed to detect scheduled columns');
     hasScheduled = false;
   }
 
@@ -318,7 +325,8 @@ async function confirmDate(offerId) {
     );
     const cnt = Number(colCheck?.rows?.[0]?.cnt || 0);
     hasNegotiation = cnt === 2;
-  } catch (e) {
+  } catch (err) {
+    logger.debug({ err }, 'confirmDates: failed to detect negotiation columns');
     hasNegotiation = false;
   }
 

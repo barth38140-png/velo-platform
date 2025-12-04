@@ -18,5 +18,13 @@ export default defineConfig([
       react: { version: 'detect' }
     },
   },
+  {
+    files: ["tests/**/*.js", "**/*.test.js", "**/*.unit.test.js", "**/*.integration.test.js"],
+    rules: {
+      "no-unused-vars": "warn",
+      "no-empty": "warn",
+      "no-unreachable": "warn"
+    }
+  },
   pluginReact.configs.flat.recommended,
 ]);

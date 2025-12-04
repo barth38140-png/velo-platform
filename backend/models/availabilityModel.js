@@ -54,14 +54,18 @@ async function reserveSlot(slotId, repairerId, repairRequestId, clientId) {
       hasScheduled = Number(sch?.rows?.[0]?.cnt || 0) === 2;
       const neg = await client.query("SELECT COUNT(*) AS cnt FROM information_schema.columns WHERE table_schema='public' AND table_name='repair_offers' AND column_name IN ('date_status','date_confirmed_at')");
       hasNegotiation = Number(neg?.rows?.[0]?.cnt || 0) === 2;
-    } catch {}
+    } catch {
+      // Colonnes absentes, on conserve les valeurs par défaut
+    }
 
     // Récupérer un offerId potentiel lié à la demande + réparateur
     let offer = null;
     try {
       const o = await client.query('SELECT * FROM repair_offers WHERE repair_request_id = $1 AND repairer_id = $2 ORDER BY created_at DESC LIMIT 1', [repairRequestId, repairerId]);
       offer = o.rows[0] || null;
-    } catch {}
+    } catch {
+      // Table repair_offers absente ou erreur DB, on continue sans offre
+    }
 
     if (offer && hasScheduled) {
       // Mettre à jour les dates planifiées depuis le slot

@@ -108,7 +108,7 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) {
     if (import.meta && import.meta.env && import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
+       
       console.warn('[AuthContext] useAuth called outside of AuthProvider; returning safe defaults');
     }
     return {

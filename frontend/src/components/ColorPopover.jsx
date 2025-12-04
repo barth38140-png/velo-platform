@@ -13,37 +13,38 @@ export default function ColorPopover({ open, onClose, palette = [], selected = [
   const ref = useRef(null);
   const [style, setStyle] = useState({});
 
-  // compute position relative to anchor and viewport
-  const computePosition = () => {
-    const anchorEl = anchorId ? document.getElementById(anchorId) : null;
-    if (!anchorEl || !ref.current) return;
-    const anchorRect = anchorEl.getBoundingClientRect();
-    const popRect = ref.current.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-
-    // mobile bottom sheet behavior
-    if (vw <= 640) {
-      setStyle({ position: 'fixed', left: 8, right: 8, bottom: 8, width: vw - 16, transform: 'translateY(0)', zIndex: 1000 });
-      return;
-    }
-
-    const margin = 8;
-    let top = anchorRect.bottom + margin;
-    let left = anchorRect.left + (anchorRect.width / 2) - (popRect.width / 2);
-    // flip up if doesn't fit below
-    if (top + popRect.height > vh - margin) {
-      top = anchorRect.top - popRect.height - margin;
-    }
-    // adjust horizontally
-    if (left + popRect.width > vw - margin) left = vw - popRect.width - margin;
-    if (left < margin) left = margin;
-
-    setStyle({ position: 'absolute', top: Math.max(margin, Math.round(top)), left: Math.round(left), zIndex: 1000 });
-  };
-
   useEffect(() => {
     if (!open) return;
+
+    // compute position relative to anchor and viewport
+    const computePosition = () => {
+      const anchorEl = anchorId ? document.getElementById(anchorId) : null;
+      if (!anchorEl || !ref.current) return;
+      const anchorRect = anchorEl.getBoundingClientRect();
+      const popRect = ref.current.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      // mobile bottom sheet behavior
+      if (vw <= 640) {
+        setStyle({ position: 'fixed', left: 8, right: 8, bottom: 8, width: vw - 16, transform: 'translateY(0)', zIndex: 1000 });
+        return;
+      }
+
+      const margin = 8;
+      let top = anchorRect.bottom + margin;
+      let left = anchorRect.left + (anchorRect.width / 2) - (popRect.width / 2);
+      // flip up if doesn't fit below
+      if (top + popRect.height > vh - margin) {
+        top = anchorRect.top - popRect.height - margin;
+      }
+      // adjust horizontally
+      if (left + popRect.width > vw - margin) left = vw - popRect.width - margin;
+      if (left < margin) left = margin;
+
+      setStyle({ position: 'absolute', top: Math.max(margin, Math.round(top)), left: Math.round(left), zIndex: 1000 });
+    };
+
     const onKey = (e) => { if (e.key === 'Escape') { onClose && onClose(); } };
     const onDoc = (e) => {
       const anchorEl = anchorId ? document.getElementById(anchorId) : null;

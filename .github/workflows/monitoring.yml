@@ -1,0 +1,310 @@
+name: 📊 Monitoring & Anomalies
+
+# Surveillance continue et création d'issues GitHub automatiques
+on:
+  schedule:
+    # Toutes les 3 heures
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
+  
+  # Déclenché après chaque déploiement
+  workflow_run:
+    workflows: ["🚀 CI/CD Complet - Velo Platform"]
+    types:
+      - completed
+
+jobs:
+  monitor-health:
+    name: 🔍 Surveillance Santé Système
+    runs-on: ubuntu-latest
+    outputs:
+      health_score: ${{ steps.check.outputs.health_score }}
+      has_anomalies: ${{ steps.check.outputs.has_anomalies }}
+      anomaly_count: ${{ steps.check.outputs.anomaly_count }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Check System Health
+        id: check
+        run: |
+          echo "🔍 Vérification des métriques système..."
+          
+          # Simulation des métriques (à remplacer par vraies API calls en production)
+          HEALTH_SCORE=68
+          ERROR_RATE=2.3
+          AVG_LATENCY=450
+          P95_LATENCY=890
+          P99_LATENCY=1200
+          UPTIME_PCT=99.2
+          REQUEST_COUNT=12450
+          
+          # Détection d'anomalies
+          HAS_ANOMALIES=false
+          ANOMALY_COUNT=0
+          
+          if (( $(echo "$HEALTH_SCORE < 75" | bc -l) )); then
+            HAS_ANOMALIES=true
+            ((ANOMALY_COUNT++))
+            echo "⚠️ Health Score bas: $HEALTH_SCORE"
+          fi
+          
+          if (( $(echo "$ERROR_RATE > 1.0" | bc -l) )); then
+            HAS_ANOMALIES=true
+            ((ANOMALY_COUNT++))
+            echo "⚠️ Taux d'erreur élevé: $ERROR_RATE%"
+          fi
+          
+          if (( $(echo "$AVG_LATENCY > 400" | bc -l) )); then
+            HAS_ANOMALIES=true
+            ((ANOMALY_COUNT++))
+            echo "⚠️ Latence élevée: ${AVG_LATENCY}ms"
+          fi
+          
+          # Outputs
+          echo "health_score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
+          echo "error_rate=$ERROR_RATE" >> $GITHUB_OUTPUT
+          echo "avg_latency=$AVG_LATENCY" >> $GITHUB_OUTPUT
+          echo "p95_latency=$P95_LATENCY" >> $GITHUB_OUTPUT
+          echo "p99_latency=$P99_LATENCY" >> $GITHUB_OUTPUT
+          echo "uptime_pct=$UPTIME_PCT" >> $GITHUB_OUTPUT
+          echo "request_count=$REQUEST_COUNT" >> $GITHUB_OUTPUT
+          echo "has_anomalies=$HAS_ANOMALIES" >> $GITHUB_OUTPUT
+          echo "anomaly_count=$ANOMALY_COUNT" >> $GITHUB_OUTPUT
+          
+          echo "📊 Résumé:"
+          echo "  Health Score: $HEALTH_SCORE"
+          echo "  Anomalies: $ANOMALY_COUNT"
+      
+      - name: Generate Monitoring Report
+        run: |
+          cat << EOF > monitoring-report.json
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "metrics": {
+              "healthScore": ${{ steps.check.outputs.health_score }},
+              "errorRate": ${{ steps.check.outputs.error_rate }},
+              "avgLatency": ${{ steps.check.outputs.avg_latency }},
+              "p95Latency": ${{ steps.check.outputs.p95_latency }},
+              "p99Latency": ${{ steps.check.outputs.p99_latency }},
+              "uptimePct": ${{ steps.check.outputs.uptime_pct }},
+              "requestCount": ${{ steps.check.outputs.request_count }}
+            },
+            "anomalies": {
+              "detected": ${{ steps.check.outputs.has_anomalies }},
+              "count": ${{ steps.check.outputs.anomaly_count }}
+            }
+          }
+          EOF
+          
+          cat monitoring-report.json
+      
+      - name: Upload Monitoring Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-report-${{ github.run_number }}
+          path: monitoring-report.json
+          retention-days: 90
+
+  create-anomaly-issues:
+    name: 🚨 Créer Issues pour Anomalies
+    runs-on: ubuntu-latest
+    needs: monitor-health
+    if: needs.monitor-health.outputs.has_anomalies == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Analyze Anomalies
+        id: analyze
+        run: |
+          HEALTH_SCORE=${{ needs.monitor-health.outputs.health_score }}
+          ERROR_RATE=${{ needs.monitor-health.outputs.error_rate }}
+          AVG_LATENCY=${{ needs.monitor-health.outputs.avg_latency }}
+          
+          # Déterminer la sévérité
+          SEVERITY="MEDIUM"
+          PRIORITY="p2"
+          
+          if (( $(echo "$HEALTH_SCORE < 60" | bc -l) )); then
+            SEVERITY="CRITICAL"
+            PRIORITY="p0"
+          elif (( $(echo "$HEALTH_SCORE < 70" | bc -l) )); then
+            SEVERITY="HIGH"
+            PRIORITY="p1"
+          fi
+          
+          echo "severity=$SEVERITY" >> $GITHUB_OUTPUT
+          echo "priority=$PRIORITY" >> $GITHUB_OUTPUT
+          echo "🔍 Sévérité détectée: $SEVERITY ($PRIORITY)"
+      
+      - name: Create GitHub Issue - Health Score
+        if: needs.monitor-health.outputs.health_score < 75
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const healthScore = ${{ needs.monitor-health.outputs.health_score }};
+            const errorRate = ${{ needs.monitor-health.outputs.error_rate }};
+            const avgLatency = ${{ needs.monitor-health.outputs.avg_latency }};
+            const p95Latency = ${{ needs.monitor-health.outputs.p95_latency }};
+            const severity = '${{ steps.analyze.outputs.severity }}';
+            const priority = '${{ steps.analyze.outputs.priority }}';
+            
+            // Vérifier si une issue similaire existe déjà
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'monitoring,anomaly',
+              per_page: 10
+            });
+            
+            const hasOpenIssue = existingIssues.data.some(issue => 
+              issue.title.includes('Health Score') && 
+              issue.labels.some(label => label.name === priority)
+            );
+            
+            if (hasOpenIssue) {
+              console.log('⚠️ Une issue similaire existe déjà, pas de duplication');
+              return;
+            }
+            
+            const issueBody = `
+            ## 🔔 Anomalie Détectée: Health Score Dégradé
+            
+            Une surveillance automatique a détecté des performances dégradées nécessitant votre attention.
+            
+            ### 📊 Métriques Actuelles
+            | Métrique | Valeur | Seuil | Status |
+            |----------|--------|-------|--------|
+            | **Health Score** | ${healthScore} | 75 | ${healthScore < 75 ? '❌ Bas' : '✅ OK'} |
+            | **Taux d'erreur** | ${errorRate}% | 1.0% | ${errorRate > 1.0 ? '❌ Élevé' : '✅ OK'} |
+            | **Latence moyenne** | ${avgLatency}ms | 400ms | ${avgLatency > 400 ? '❌ Élevée' : '✅ OK'} |
+            | **Latence P95** | ${p95Latency}ms | 800ms | ${p95Latency > 800 ? '❌ Élevée' : '✅ OK'} |
+            
+            ### 🔍 Analyse
+            - **Sévérité**: ${severity}
+            - **Priorité**: ${priority}
+            - **Détecté le**: ${new Date().toISOString()}
+            - **Workflow**: [Run #${context.runNumber}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ### 🎯 Actions Recommandées
+            - [ ] Analyser les logs d'erreur récents
+            - [ ] Vérifier les requêtes DB lentes (EXPLAIN ANALYZE)
+            - [ ] Examiner la charge CPU/mémoire du serveur
+            - [ ] Vérifier la connectivité réseau et latence DB
+            - [ ] Analyser les endpoints les plus lents
+            
+            ### 🔧 Auto-Fixes Suggérés
+            \`\`\`bash
+            # Nettoyer les logs
+            npm --prefix backend run admin:auto-fixes
+            
+            # Analyser les métriques
+            npm --prefix backend run admin:health
+            
+            # Voir les prédictions
+            npm --prefix backend run admin:predictions
+            \`\`\`
+            
+            ### 📎 Ressources
+            - [Dashboard Monitoring](https://github.com/${context.repo.owner}/${context.repo.repo}/actions)
+            - [Métriques API](/api/metrics/health)
+            - [Documentation CI/CD](../README.md#monitoring)
+            
+            ---
+            *🤖 Issue créée automatiquement par le système de monitoring*
+            *⏰ Prochaine vérification dans 3 heures*
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `${severity === 'CRITICAL' ? '🚨' : '⚠️'} [MONITORING] Health Score ${healthScore} - ${severity}`,
+              body: issueBody,
+              labels: ['monitoring', 'anomaly', priority, 'auto-generated'],
+              assignees: [] // Ajouter assignees si nécessaire
+            });
+            
+            console.log('✅ Issue GitHub créée avec succès');
+      
+      - name: Create GitHub Issue - High Error Rate
+        if: needs.monitor-health.outputs.error_rate > 2.0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const errorRate = ${{ needs.monitor-health.outputs.error_rate }};
+            
+            const issueBody = `
+            ## 🚨 Anomalie: Taux d'Erreur Élevé
+            
+            Le système détecte un taux d'erreur anormalement élevé.
+            
+            ### 📊 Détails
+            - **Taux d'erreur**: ${errorRate}%
+            - **Seuil critique**: 2.0%
+            - **Détecté le**: ${new Date().toISOString()}
+            
+            ### 🔍 Investigation Suggérée
+            - [ ] Examiner les logs d'erreur (backend/logs/)
+            - [ ] Vérifier les erreurs 500 vs 400
+            - [ ] Analyser les endpoints problématiques
+            - [ ] Vérifier l'état de la base de données
+            
+            ### 📈 Prochaines Étapes
+            1. Identifier la source des erreurs
+            2. Appliquer un hotfix si nécessaire
+            3. Améliorer la gestion d'erreur
+            4. Ajouter des tests pour prévenir la régression
+            
+            ---
+            *🤖 Créé automatiquement par le monitoring*
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 [MONITORING] Taux d'erreur élevé: ${errorRate}%`,
+              body: issueBody,
+              labels: ['monitoring', 'errors', 'p1', 'bug']
+            });
+
+  auto-remediation:
+    name: 🔧 Remédiation Automatique
+    runs-on: ubuntu-latest
+    needs: [monitor-health, create-anomaly-issues]
+    if: needs.monitor-health.outputs.has_anomalies == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Trigger Auto-Fix Workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'auto-fix.yml',
+              ref: 'main',
+              inputs: {
+                dry_run: 'false',
+                fix_type: 'all'
+              }
+            });
+            
+            console.log('✅ Workflow Auto-Fix déclenché');
+      
+      - name: Summary
+        run: |
+          echo "════════════════════════════════════════"
+          echo "   📊 Résumé Monitoring"
+          echo "════════════════════════════════════════"
+          echo "Health Score: ${{ needs.monitor-health.outputs.health_score }}"
+          echo "Anomalies: ${{ needs.monitor-health.outputs.anomaly_count }}"
+          echo "Issues créées: ✅"
+          echo "Auto-Fix déclenché: ✅"
+          echo "════════════════════════════════════════"

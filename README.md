@@ -582,6 +582,329 @@ tail -f backend/logs/app.log | jq 'select(.level >= 40)'
 # 6. Activer rate limiting avant prod
 ```
 
+## 🚀 CI/CD Automatisé - Workflow DevOps Complet
+
+### Vue d'Ensemble
+
+Le système CI/CD automatisé permet un déploiement continu avec assistance IA, corrections automatiques et monitoring en temps réel.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                  WORKFLOW CI/CD COMPLET                      │
+└──────────────────────────────────────────────────────────────┘
+         │
+         │ 1. git push (commit)
+         ▼
+┌─────────────────────────────────────────┐
+│  🚀 main-ci-cd.yml (Pipeline Principal) │
+├─────────────────────────────────────────┤
+│  ✅ Phase 1: Lint & Analyse Statique    │
+│  ✅ Phase 2: Tests Backend + Coverage    │
+│  ✅ Phase 3: Tests Frontend (Vitest)     │
+│  ✅ Phase 4: Tests E2E (Cypress)         │
+│  ✅ Phase 5: Audit Sécurité (npm audit) │
+│  ✅ Phase 6: Build Docker Images         │
+│  ✅ Phase 7: Monitoring Health Check     │
+│  ✅ Phase 8: Déploiement Production      │
+└─────────────────────────────────────────┘
+         │
+         ├──────────────> Déclenche parallèlement:
+         │
+┌────────┴────────┬──────────────┬───────────────┐
+│                 │              │               │
+│  📊 monitoring  │  🤖 auto-fix │  🚀 deploy    │
+│  .yml           │  .yml        │  .yml         │
+│                 │              │               │
+│  Toutes les 3h  │  Toutes 6h   │  Si main OK   │
+│  - Health Check │  - Rotate    │  - Staging    │
+│  - Anomalies    │    logs      │  - Production │
+│  - Create       │  - Clear     │  - Rollback   │
+│    Issues       │    cache     │  - Monitoring │
+│                 │  - Optimize  │               │
+│                 │    DB        │               │
+└─────────────────┴──────────────┴───────────────┘
+```
+
+### 🎯 Workflows Disponibles
+
+#### 1. **main-ci-cd.yml** - Pipeline CI/CD Principal
+Déclenché à chaque push/PR sur `main`, `master`, `develop`, `ci/**`
+
+**Phases d'exécution** :
+1. **Lint & Analyse** : ESLint backend + frontend
+2. **Tests Backend** : Jest avec PostgreSQL, coverage > 75%
+3. **Tests Frontend** : Vitest (tests unitaires)
+4. **Tests E2E** : Cypress (tests end-to-end complets)
+5. **Audit Sécurité** : npm audit sur dépendances
+6. **Build Docker** : Construction images backend + frontend
+7. **Monitoring** : Vérification health score post-tests
+8. **Déploiement** : Automatique si branch = main/master
+
+```bash
+# Voir le statut du pipeline
+https://github.com/barth38140-png/velo-platform/actions
+
+# Télécharger les artifacts
+# - backend-coverage/
+# - frontend-test-results/
+# - cypress-artifacts/
+# - ci-health-report.json
+```
+
+#### 2. **auto-fix.yml** - Corrections Automatiques
+Déclenché toutes les 6h OU manuellement
+
+**Corrections appliquées** :
+- ✅ **rotate-logs** : Supprime logs > 7 jours
+- ✅ **clear-cache** : Nettoie cache obsolète
+- ✅ **optimize-db** : Reconnecte pool PostgreSQL
+
+**Mode DRY-RUN** :
+```bash
+# Déclencher manuellement (simulation)
+gh workflow run auto-fix.yml \
+  --ref main \
+  -f dry_run=true \
+  -f fix_type=all
+
+# Déclencher en production
+gh workflow run auto-fix.yml \
+  --ref main \
+  -f dry_run=false \
+  -f fix_type=rotate-logs
+```
+
+**Création d'Issues automatiques** :
+- Si Health Score < 60 → Issue `p0` (CRITICAL)
+- Si Health Score < 70 → Issue `p1` (HIGH)
+- Si Health Score < 80 → Issue `p2` (MEDIUM)
+
+#### 3. **monitoring.yml** - Surveillance Continue
+Déclenché toutes les 3h OU après chaque déploiement
+
+**Métriques surveillées** :
+- 📊 Health Score (0-100)
+- ❌ Taux d'erreur (%)
+- ⏱️ Latence moyenne (ms)
+- 📈 Latence P95, P99
+- ⏰ Uptime (%)
+- 📊 Nombre de requêtes
+
+**Détection d'anomalies** :
+```javascript
+// Anomalies déclenchent actions:
+if (healthScore < 75) → Créer Issue GitHub
+if (errorRate > 1.0%) → Créer Issue + Alert
+if (avgLatency > 400ms) → Créer Issue
+if (p95Latency > 800ms) → Recommandation
+
+// Auto-remédiation
+if (anomalies détectées) → Déclencher auto-fix.yml
+```
+
+**Issues GitHub créées automatiquement** :
+- `🚨 [MONITORING] Health Score 68 - CRITICAL`
+- `🚨 [MONITORING] Taux d'erreur élevé: 2.3%`
+- Labels: `monitoring`, `anomaly`, `p0/p1/p2`, `auto-generated`
+
+#### 4. **deploy.yml** - Déploiement Production
+Déclenché automatiquement après CI/CD réussi OU manuellement
+
+**Pré-vérifications** :
+1. ✅ CI/CD passé avec succès
+2. ✅ Health Score ≥ 70
+3. ✅ Pas d'anomalies critiques
+
+**Environnements** :
+- **Staging** : Branch `develop` → staging.velo-platform.example.com
+- **Production** : Branch `main` → velo-platform.example.com
+
+**Processus de déploiement** :
+```bash
+# 1. Build & Push Docker images vers GitHub Container Registry
+ghcr.io/barth38140-png/velo-platform-backend:latest
+ghcr.io/barth38140-png/velo-platform-frontend:latest
+
+# 2. Déploiement (à personnaliser)
+# Option A: Docker Compose sur VPS
+ssh deploy@prod.example.com "cd /app && docker-compose pull && docker-compose up -d"
+
+# Option B: Kubernetes
+kubectl set image deployment/backend backend=ghcr.io/.../backend:$SHA
+kubectl rollout status deployment/backend
+
+# Option C: Cloud Provider
+# AWS ECS, Google Cloud Run, Azure Container Instances, etc.
+
+# 3. Health Check post-déploiement
+curl -f https://velo-platform.example.com/api/health
+
+# 4. Smoke Tests
+curl -f https://velo-platform.example.com/api/metrics/health
+
+# 5. Monitoring post-deploy (3h de surveillance)
+```
+
+**Rollback automatique** :
+- Si health check échoue → Rollback vers version précédente
+- Si smoke tests échouent → Rollback + Alerte
+
+**Déclenchement manuel** :
+```bash
+# Déployer sur staging
+gh workflow run deploy.yml \
+  --ref main \
+  -f environment=staging \
+  -f version=v1.2.3
+
+# Déployer sur production
+gh workflow run deploy.yml \
+  --ref main \
+  -f environment=production \
+  -f version=latest
+```
+
+### 🔄 Flow Complet - Exemple Réel
+
+```
+T+0s     👨‍💻 Développeur: git push origin main
+         ├─ Commit: "feat: ajout système de notifications push"
+         └─ Branch: main
+
+T+10s    🚀 GitHub Actions: main-ci-cd.yml démarre
+         ├─ Job 1: Lint (2 min)
+         ├─ Job 2: Backend Tests (5 min)
+         ├─ Job 3: Frontend Tests (3 min)
+         └─ Job 4: E2E Tests (8 min)
+
+T+8m     ✅ Tous les tests passent
+         └─ Coverage: 82% ✅
+
+T+10m    🐳 Build Docker Images
+         ├─ Backend: ghcr.io/.../backend:abc123
+         └─ Frontend: ghcr.io/.../frontend:abc123
+
+T+15m    📊 Health Check
+         └─ Health Score: 85 ✅
+
+T+20m    🚀 Déploiement Production automatique
+         ├─ Push images vers registry
+         ├─ Update containers
+         ├─ Health check post-deploy
+         └─ Smoke tests
+
+T+25m    ✅ Déploiement réussi
+         └─ Tag créé: deploy-2025-12-04T10-30-00Z
+
+T+30m    📊 monitoring.yml déclenché
+         ├─ Vérification métriques
+         ├─ Pas d'anomalie détectée
+         └─ Monitoring continue (toutes les 3h)
+
+T+3h     📊 monitoring.yml (vérification périodique)
+         ├─ Health Score: 78
+         ├─ Error Rate: 0.8%
+         ├─ Avg Latency: 320ms
+         └─ ✅ Tout OK
+
+T+6h     🤖 auto-fix.yml (maintenance périodique)
+         ├─ Rotation logs anciens
+         ├─ Nettoyage cache
+         └─ ✅ Maintenance OK
+```
+
+### 🛠️ Configuration Requise
+
+#### Secrets GitHub (Settings → Secrets)
+```bash
+GITHUB_TOKEN              # Créé automatiquement
+DOCKER_REGISTRY_TOKEN     # Pour push images (optionnel)
+SLACK_WEBHOOK_URL         # Pour notifications Slack (optionnel)
+```
+
+#### Variables d'Environnement
+```bash
+# Backend .env
+CONTINUOUS_IMPROVEMENT_ENABLED=true
+AUTO_FIXER_ENABLED=true
+PREDICTIVE_ANALYTICS_ENABLED=true
+GITHUB_TOKEN=ghp_xxxxxxxxxxxxx
+GITHUB_OWNER=barth38140-png
+GITHUB_REPO=velo-platform
+```
+
+#### Badges GitHub (README.md)
+```markdown
+[![CI/CD](https://github.com/barth38140-png/velo-platform/actions/workflows/main-ci-cd.yml/badge.svg)](https://github.com/barth38140-png/velo-platform/actions)
+[![Auto-Fix](https://github.com/barth38140-png/velo-platform/actions/workflows/auto-fix.yml/badge.svg)](https://github.com/barth38140-png/velo-platform/actions)
+[![Monitoring](https://github.com/barth38140-png/velo-platform/actions/workflows/monitoring.yml/badge.svg)](https://github.com/barth38140-png/velo-platform/actions)
+```
+
+### 📊 Dashboard & Visualisation
+
+**Actions GitHub** :
+- https://github.com/barth38140-png/velo-platform/actions
+- Voir tous les workflows, runs, artifacts
+
+**Artifacts téléchargeables** :
+- `backend-coverage/` - Rapport de couverture Jest
+- `cypress-artifacts/` - Vidéos et screenshots E2E
+- `ci-health-report.json` - Rapport santé système
+- `auto-fix-report-XXX.md` - Historique corrections
+- `monitoring-report-XXX.json` - Métriques détaillées
+
+**Issues GitHub automatiques** :
+- Filtre: `label:auto-generated`
+- Filtre: `label:monitoring,anomaly`
+- Filtre: `label:p0` (critique)
+
+### 🎛️ Commandes Utiles
+
+```bash
+# Lister tous les workflows
+gh workflow list
+
+# Voir runs récents d'un workflow
+gh run list --workflow=main-ci-cd.yml
+
+# Déclencher manuellement
+gh workflow run auto-fix.yml --ref main -f dry_run=true
+gh workflow run monitoring.yml --ref main
+gh workflow run deploy.yml --ref main -f environment=staging
+
+# Voir logs d'un run
+gh run view 1234567890
+
+# Télécharger artifacts
+gh run download 1234567890
+
+# Voir le statut
+gh run watch
+
+# Annuler un run
+gh run cancel 1234567890
+```
+
+### 🔧 Personnalisation
+
+Pour adapter le CI/CD à votre infrastructure :
+
+1. **Modifier deploy.yml** - Section déploiement
+2. **Configurer registre Docker** - Si pas GitHub Container Registry
+3. **Ajouter tests spécifiques** - Dans main-ci-cd.yml
+4. **Configurer notifications** - Slack, email, Discord
+5. **Ajuster fréquences** - Cron jobs dans workflows
+
+### 📈 Métriques de Succès
+
+**Objectifs** :
+- ✅ Coverage tests ≥ 75%
+- ✅ Temps CI/CD < 20 min
+- ✅ Health Score ≥ 80
+- ✅ Déploiement automatique si tests ✅
+- ✅ Rollback automatique si échec
+- ✅ 0 intervention manuelle quotidienne
+
 ## 🔧 Troubleshooting
 
 ### Le serveur ne démarre pas

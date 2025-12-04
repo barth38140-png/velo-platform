@@ -7,26 +7,21 @@ async function createRepairRequest(userId, title, description, bikeType = null, 
   // Some DB instances (older dumps) may not include the `metadata` column.
   // Try inserting including metadata first; if column is missing, fall back to insert without metadata.
   // Check whether the `metadata` column exists, avoid relying on catching an insert error
-  try {
-    const colCheck = await pool.query("SELECT 1 FROM information_schema.columns WHERE table_name = 'repair_requests' AND column_name = 'metadata' LIMIT 1");
-    const hasMetadataCol = colCheck && colCheck.rowCount > 0;
-    if (hasMetadataCol) {
-      const res = await pool.query(
-        'INSERT INTO repair_requests (user_id, title, description, bike_type, location_lat, location_lng, location_address, metadata, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-        [userId, title, description, bikeType, locationLat, locationLng, locationAddress, metadata, 'créée']
-      );
-      return res.rows[0];
-    }
-    // fallback: insert without metadata column
-    const res2 = await pool.query(
-      'INSERT INTO repair_requests (user_id, title, description, bike_type, location_lat, location_lng, location_address, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [userId, title, description, bikeType, locationLat, locationLng, locationAddress, 'créée']
+  const colCheck = await pool.query("SELECT 1 FROM information_schema.columns WHERE table_name = 'repair_requests' AND column_name = 'metadata' LIMIT 1");
+  const hasMetadataCol = colCheck && colCheck.rowCount > 0;
+  if (hasMetadataCol) {
+    const res = await pool.query(
+      'INSERT INTO repair_requests (user_id, title, description, bike_type, location_lat, location_lng, location_address, metadata, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [userId, title, description, bikeType, locationLat, locationLng, locationAddress, metadata, 'créée']
     );
-    return res2.rows[0];
-  } catch (err) {
-    // bubble up other errors
-    throw err;
+    return res.rows[0];
   }
+  // fallback: insert without metadata column
+  const res2 = await pool.query(
+    'INSERT INTO repair_requests (user_id, title, description, bike_type, location_lat, location_lng, location_address, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+    [userId, title, description, bikeType, locationLat, locationLng, locationAddress, 'créée']
+  );
+  return res2.rows[0];
 }
 
 async function getRepairRequestsByUser(userId) {

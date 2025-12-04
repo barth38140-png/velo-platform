@@ -20,7 +20,7 @@ vi.mock('../../services/api', () => ({
   authService: {
     getProfile: vi.fn(async () => {
       // debug
-      // eslint-disable-next-line no-console
+       
       console.log('mock.getProfile called');
       return ({ data: { user: { id: 1, name: 'Alice', email: 'alice@example.com', phone: '0123456789', role: 'repairer' } } });
     })
@@ -28,7 +28,7 @@ vi.mock('../../services/api', () => ({
   repairerService: {
     getRepairerProfile: vi.fn(async () => {
       // debug
-      // eslint-disable-next-line no-console
+       
       console.log('mock.getRepairerProfile called');
       return ({ data: { profile: { skills: 'Wheel repair', bio: 'I fix bikes', rating: 4.2, service_radius_km: 20, is_available: true } } });
     }),

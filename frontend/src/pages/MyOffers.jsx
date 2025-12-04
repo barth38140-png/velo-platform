@@ -35,25 +35,17 @@ export function MyOffers() {
   }, [filter]);
 
   const handleProposeDate = async (offerId, scheduledFrom, scheduledTo) => {
-    try {
-      await repairOfferService.proposeDate(offerId, scheduledFrom, scheduledTo);
-      toast.success('📅 Date proposée au client');
-      setShowDateModal(null);
-      await loadMyOffers();
-    } catch (err) {
-      throw err;
-    }
+    await repairOfferService.proposeDate(offerId, scheduledFrom, scheduledTo);
+    toast.success('📅 Date proposée au client');
+    setShowDateModal(null);
+    await loadMyOffers();
   };
 
   const handleConfirmDate = async (offerId) => {
-    try {
-      await repairOfferService.confirmDate(offerId);
-      toast.success('✅ Date confirmée !');
-      setShowDateModal(null);
-      await loadMyOffers();
-    } catch (err) {
-      throw err;
-    }
+    await repairOfferService.confirmDate(offerId);
+    toast.success('✅ Date confirmée !');
+    setShowDateModal(null);
+    await loadMyOffers();
   };
 
   // Charger immédiatement à l'ouverture de la vue et à chaque changement de filtre

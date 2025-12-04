@@ -49,7 +49,7 @@ const createError = {
 };
 
 // Middleware de gestion centralisée des erreurs
-function errorHandler(err, req, res, next) {
+function errorHandler(err, req, res) {
   // Log l'erreur avec contexte
   logger.error({
     err,

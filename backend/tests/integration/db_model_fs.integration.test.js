@@ -71,7 +71,7 @@ describe('Integration: DB <-> Model <-> FS', () => {
   test('create repair request, attach photo file and DB record, then retrieve via model and controller', async () => {
     if (!userId) {
       // Skip if no user available in DB
-      // eslint-disable-next-line no-console
+       
       console.warn('Skipping integration assertions because no userId is available');
       return;
     }
@@ -119,7 +119,7 @@ describe('Integration: DB <-> Model <-> FS', () => {
       }
     } catch (e) {
       // ignore cleanup errors
-      // eslint-disable-next-line no-console
+       
       console.error('cleanup error', e && e.stack ? e.stack : e);
     }
     try {

@@ -120,7 +120,7 @@ async function getPendingRepairs(req, res) {
     try {
       const enAttente = await getAllRepairRequests('en_attente');
       pending = [...created, ...enAttente];
-    } catch (_) {
+    } catch {
       // Si le statut 'en_attente' n'existe pas dans certains dumps, on ignore
     }
     const repairerId = req.user.id;
@@ -130,8 +130,9 @@ async function getPendingRepairs(req, res) {
       try {
         const hasOffer = await require('../models/repairOfferModel').hasExistingOffer(r.id, repairerId);
         if (!hasOffer) withExclusion.push(r);
-      } catch (e) {
+      } catch (err) {
         // En cas d'erreur DB ponctuelle, ne pas bloquer l'affichage: inclure la demande
+        logger.debug({ err }, 'hasExistingOffer check failed for repair ' + r.id);
         withExclusion.push(r);
       }
     }

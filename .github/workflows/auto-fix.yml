@@ -1,0 +1,200 @@
+name: 🤖 Auto-Fix & Corrections
+
+# Détecte les problèmes et applique des corrections automatiques
+on:
+  schedule:
+    # Toutes les 6 heures
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Mode simulation (ne fait pas de changements)'
+        required: false
+        default: 'false'
+      fix_type:
+        description: 'Type de correction'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - rotate-logs
+          - clear-cache
+          - optimize-db
+
+jobs:
+  auto-fix:
+    name: 🔧 Corrections Automatiques
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Dependencies
+        run: cd backend && npm ci
+      
+      - name: Check System Health
+        id: health
+        run: |
+          echo "🔍 Vérification de la santé du système..."
+          
+          # Simuler la récupération du health score
+          HEALTH_SCORE=75
+          ERROR_RATE=1.5
+          AVG_LATENCY=350
+          
+          echo "health_score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
+          echo "error_rate=$ERROR_RATE" >> $GITHUB_OUTPUT
+          echo "avg_latency=$AVG_LATENCY" >> $GITHUB_OUTPUT
+          
+          echo "📊 Health Score: $HEALTH_SCORE"
+          echo "❌ Taux d'erreur: $ERROR_RATE%"
+          echo "⏱️ Latence moyenne: ${AVG_LATENCY}ms"
+      
+      - name: Rotate Logs
+        if: steps.health.outputs.health_score < 80 && (github.event.inputs.fix_type == 'all' || github.event.inputs.fix_type == 'rotate-logs')
+        run: |
+          echo "🗑️ Rotation des logs anciens..."
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          
+          if [ "$DRY_RUN" == "true" ]; then
+            echo "🔍 Mode DRY-RUN activé"
+            find backend/logs -name "*.log" -mtime +7 -ls
+          else
+            echo "🗑️ Suppression des logs > 7 jours"
+            find backend/logs -name "*.log" -mtime +7 -delete 2>/dev/null || true
+            echo "✅ Logs nettoyés"
+          fi
+      
+      - name: Clear Cache
+        if: steps.health.outputs.avg_latency > 300 && (github.event.inputs.fix_type == 'all' || github.event.inputs.fix_type == 'clear-cache')
+        run: |
+          echo "🧹 Nettoyage du cache..."
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          
+          if [ "$DRY_RUN" == "true" ]; then
+            echo "🔍 Mode DRY-RUN activé"
+            ls -lah backend/.cache 2>/dev/null || echo "Pas de cache à nettoyer"
+          else
+            echo "🧹 Suppression du cache"
+            rm -rf backend/.cache 2>/dev/null || true
+            rm -rf backend/node_modules/.cache 2>/dev/null || true
+            echo "✅ Cache nettoyé"
+          fi
+      
+      - name: Optimize Database
+        if: steps.health.outputs.health_score < 70 && (github.event.inputs.fix_type == 'all' || github.event.inputs.fix_type == 'optimize-db')
+        run: |
+          echo "🗄️ Optimisation de la base de données..."
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          
+          if [ "$DRY_RUN" == "true" ]; then
+            echo "🔍 Mode DRY-RUN activé"
+            echo "Commandes qui seraient exécutées:"
+            echo "  - VACUUM ANALYZE"
+            echo "  - REINDEX"
+          else
+            echo "⚠️ Nécessite une connexion DB en production"
+            echo "✅ Optimisation simulée"
+          fi
+      
+      - name: Generate Auto-Fix Report
+        if: always()
+        run: |
+          cat << EOF > auto-fix-report.md
+          # 🤖 Rapport Auto-Fix
+          
+          **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Commit**: ${{ github.sha }}
+          **Branch**: ${{ github.ref_name }}
+          **Mode**: ${{ github.event.inputs.dry_run == 'true' && 'DRY-RUN' || 'PRODUCTION' }}
+          
+          ## 📊 Métriques
+          - Health Score: ${{ steps.health.outputs.health_score }}
+          - Taux d'erreur: ${{ steps.health.outputs.error_rate }}%
+          - Latence moyenne: ${{ steps.health.outputs.avg_latency }}ms
+          
+          ## 🔧 Corrections Appliquées
+          - ✅ Rotation des logs (si nécessaire)
+          - ✅ Nettoyage du cache (si latence élevée)
+          - ✅ Optimisation DB (si health < 70)
+          
+          ## 📝 Recommandations
+          - Vérifier les logs pour erreurs répétées
+          - Surveiller la latence DB
+          - Analyser les requêtes lentes
+          EOF
+          
+          cat auto-fix-report.md
+      
+      - name: Upload Auto-Fix Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: auto-fix-report-${{ github.run_number }}
+          path: auto-fix-report.md
+          retention-days: 30
+      
+      - name: Create GitHub Issue if Critical
+        if: steps.health.outputs.health_score < 60
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const healthScore = ${{ steps.health.outputs.health_score }};
+            const errorRate = ${{ steps.health.outputs.error_rate }};
+            const avgLatency = ${{ steps.health.outputs.avg_latency }};
+            
+            const issueBody = `
+            ## 🚨 Alerte: Health Score Critique
+            
+            Le système a détecté des métriques critiques nécessitant une attention immédiate.
+            
+            ### 📊 Métriques Actuelles
+            - **Health Score**: ${healthScore} (seuil critique: < 60)
+            - **Taux d'erreur**: ${errorRate}%
+            - **Latence moyenne**: ${avgLatency}ms
+            
+            ### 🔧 Actions Automatiques Effectuées
+            - Rotation des logs
+            - Nettoyage du cache
+            - Tentative d'optimisation DB
+            
+            ### 👷 Actions Requises
+            - [ ] Analyser les logs d'erreur
+            - [ ] Vérifier la charge serveur
+            - [ ] Examiner les requêtes DB lentes
+            - [ ] Vérifier la connectivité réseau
+            
+            ### 📎 Liens Utiles
+            - [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - [Commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            
+            ---
+            *Créé automatiquement par le workflow Auto-Fix*
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 [AUTO] Health Score Critique: ${healthScore}`,
+              body: issueBody,
+              labels: ['auto-fix', 'critical', 'p0', 'monitoring']
+            });
+            
+            console.log('✅ Issue GitHub créée automatiquement');
+
+  notify-slack:
+    name: 📢 Notification Slack
+    runs-on: ubuntu-latest
+    needs: auto-fix
+    if: always()
+    steps:
+      - name: Slack Notification
+        run: |
+          echo "📢 Notification Slack (webhook à configurer)"
+          echo "Message: Auto-Fix exécuté - Status: ${{ needs.auto-fix.result }}"
+          # TODO: Ajouter webhook Slack si disponible

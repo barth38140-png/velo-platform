@@ -65,7 +65,7 @@ describe('ExploreRepairs (integration-like)', () => {
     const openBtn = await screen.findByRole('button', { name: /Submit Offer/i });
     await user.click(openBtn);
     // debug: dump container HTML after clicking to inspect DOM
-    // eslint-disable-next-line no-console
+     
     console.log('[test-debug] container after click:\n', container.innerHTML);
 
     // Wait for the form to render and select fields using data-cy attributes

@@ -11,7 +11,7 @@ const ConversationsList = ({ token, userId, initialConversationId }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
+    // Charger les conversations sans setState initial (éviter cascading renders)
     conversationService.getConversations()
       .then(res => {
         const data = res.data?.conversations || [];
@@ -22,13 +22,11 @@ const ConversationsList = ({ token, userId, initialConversationId }) => {
           if (exists) setSelectedConv(exists.id);
           else setSelectedConv(null);
         }
-        setLoading(false);
       })
       .catch(() => {
         setConversations([]);
-        setLoading(false);
       });
-  }, [token, initialConversationId]);
+  }, [initialConversationId]);
 
   return (
     <div style={{ display: 'flex', gap: 24 }}>

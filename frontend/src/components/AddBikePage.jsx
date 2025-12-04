@@ -97,7 +97,7 @@ export default function AddBikePage({ onClose, bike, conversational = false, sta
       const listEl = document.getElementById('brand-ta-list');
       if (listEl) listEl.style.display = show ? 'block' : 'none';
     } catch {}
-  }, [brand, showBrandList]);
+  }, [brand, showBrandList, serverBrands]);
 
   useEffect(() => {
     let cancelled = false;

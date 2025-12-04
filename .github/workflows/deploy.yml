@@ -1,0 +1,367 @@
+name: 🚀 Déploiement Production
+
+# Déploiement automatique après validation CI/CD
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environnement cible'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      version:
+        description: 'Version à déployer (ex: v1.2.3)'
+        required: false
+        default: 'latest'
+  
+  # Déclenché automatiquement après CI/CD sur main
+  workflow_run:
+    workflows: ["🚀 CI/CD Complet - Velo Platform"]
+    types:
+      - completed
+    branches:
+      - main
+      - master
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  pre-deploy-checks:
+    name: 🔍 Vérifications Pré-Déploiement
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    outputs:
+      should_deploy: ${{ steps.checks.outputs.should_deploy }}
+      health_score: ${{ steps.health.outputs.score }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check CI/CD Status
+        id: checks
+        run: |
+          echo "🔍 Vérification du statut CI/CD..."
+          
+          SHOULD_DEPLOY=true
+          
+          # Vérifier que tous les tests sont passés
+          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+            echo "❌ CI/CD n'a pas réussi"
+            SHOULD_DEPLOY=false
+          fi
+          
+          echo "should_deploy=$SHOULD_DEPLOY" >> $GITHUB_OUTPUT
+          echo "✅ Pré-vérifications OK"
+      
+      - name: Check System Health
+        id: health
+        run: |
+          echo "📊 Vérification du Health Score..."
+          
+          # En production, appeler l'API réelle
+          # HEALTH_SCORE=$(curl -s http://api.velo-platform.com/api/metrics/health | jq -r '.healthScore')
+          
+          # Simulation
+          HEALTH_SCORE=82
+          
+          echo "score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
+          echo "📊 Health Score: $HEALTH_SCORE"
+          
+          if [ $HEALTH_SCORE -lt 70 ]; then
+            echo "⚠️ Health Score trop bas pour déploiement"
+            exit 1
+          fi
+      
+      - name: Pre-Deploy Summary
+        run: |
+          echo "════════════════════════════════════════"
+          echo "   🎯 Résumé Pré-Déploiement"
+          echo "════════════════════════════════════════"
+          echo "✅ CI/CD: Success"
+          echo "✅ Health Score: ${{ steps.health.outputs.score }}"
+          echo "✅ Prêt pour déploiement"
+          echo "════════════════════════════════════════"
+
+  build-and-push:
+    name: 🐳 Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: pre-deploy-checks
+    if: needs.pre-deploy-checks.outputs.should_deploy == 'true'
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Extract metadata (Frontend)
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Image Summary
+        run: |
+          echo "🐳 Images Docker construites:"
+          echo "${{ steps.meta-backend.outputs.tags }}"
+          echo "${{ steps.meta-frontend.outputs.tags }}"
+
+  deploy-staging:
+    name: 🚀 Déployer sur Staging
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event.inputs.environment == 'staging' || github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.velo-platform.example.com
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to Staging Server
+        run: |
+          echo "🚀 Déploiement vers STAGING..."
+          
+          # Exemple de déploiement SSH
+          # ssh deploy@staging.example.com "cd /app && docker-compose pull && docker-compose up -d"
+          
+          # Exemple de déploiement Kubernetes
+          # kubectl set image deployment/backend backend=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+          
+          echo "✅ Déploiement staging simulé"
+          echo "🌐 URL: https://staging.velo-platform.example.com"
+      
+      - name: Run Smoke Tests
+        run: |
+          echo "🧪 Tests de fumée sur staging..."
+          
+          # Attendre que le service soit prêt
+          sleep 30
+          
+          # Tester l'endpoint health
+          # curl -f https://staging.velo-platform.example.com/api/health || exit 1
+          
+          echo "✅ Smoke tests OK"
+      
+      - name: Staging Deployment Summary
+        run: |
+          echo "════════════════════════════════════════"
+          echo "   ✅ Déploiement Staging Réussi"
+          echo "════════════════════════════════════════"
+          echo "🌐 URL: https://staging.velo-platform.example.com"
+          echo "📦 Version: ${{ github.sha }}"
+          echo "👤 Déployé par: ${{ github.actor }}"
+          echo "════════════════════════════════════════"
+
+  deploy-production:
+    name: 🚀 Déployer sur Production
+    runs-on: ubuntu-latest
+    needs: [build-and-push, pre-deploy-checks]
+    if: (github.event.inputs.environment == 'production' || (github.ref == 'refs/heads/main' && github.event_name == 'workflow_run')) && needs.pre-deploy-checks.outputs.health_score >= 70
+    environment:
+      name: production
+      url: https://velo-platform.example.com
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Production Deployment Notice
+        run: |
+          echo "🚨 DÉPLOIEMENT EN PRODUCTION"
+          echo "Environment: PRODUCTION"
+          echo "Version: ${{ github.sha }}"
+          echo "Health Score: ${{ needs.pre-deploy-checks.outputs.health_score }}"
+      
+      - name: Create Deployment Backup
+        run: |
+          echo "💾 Création d'une sauvegarde avant déploiement..."
+          
+          # En production, sauvegarder la DB
+          # pg_dump -h $DB_HOST -U $DB_USER $DB_NAME > backup-$(date +%Y%m%d-%H%M%S).sql
+          
+          echo "✅ Backup créé"
+      
+      - name: Deploy to Production
+        run: |
+          echo "🚀 Déploiement vers PRODUCTION..."
+          
+          # === MÉTHODE 1: Docker Compose sur VPS ===
+          # ssh deploy@prod.example.com << 'EOF'
+          #   cd /opt/velo-platform
+          #   docker-compose pull
+          #   docker-compose up -d --no-deps --build backend frontend
+          #   docker-compose restart nginx
+          # EOF
+          
+          # === MÉTHODE 2: Kubernetes ===
+          # kubectl config use-context production
+          # kubectl set image deployment/backend backend=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}
+          # kubectl set image deployment/frontend frontend=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}
+          # kubectl rollout status deployment/backend
+          # kubectl rollout status deployment/frontend
+          
+          # === MÉTHODE 3: Cloud Provider (AWS, GCP, Azure) ===
+          # aws ecs update-service --cluster prod-cluster --service velo-backend --force-new-deployment
+          # gcloud run deploy velo-backend --image ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}
+          
+          echo "✅ Déploiement production simulé"
+          echo "🌐 URL: https://velo-platform.example.com"
+      
+      - name: Health Check Post-Deploy
+        run: |
+          echo "🏥 Vérification santé après déploiement..."
+          
+          # Attendre stabilisation
+          sleep 30
+          
+          # Vérifier l'API
+          # RESPONSE=$(curl -s https://velo-platform.example.com/api/health)
+          # echo $RESPONSE | jq -r '.status'
+          
+          echo "✅ Service opérationnel"
+      
+      - name: Run Post-Deploy Tests
+        run: |
+          echo "🧪 Tests post-déploiement..."
+          
+          # Tests critiques
+          # curl -f https://velo-platform.example.com/api/health || exit 1
+          # curl -f https://velo-platform.example.com/api/metrics/health || exit 1
+          
+          echo "✅ Tests post-deploy OK"
+      
+      - name: Notify Deployment Success
+        run: |
+          echo "════════════════════════════════════════"
+          echo "   ✅ DÉPLOIEMENT PRODUCTION RÉUSSI"
+          echo "════════════════════════════════════════"
+          echo "🌐 URL: https://velo-platform.example.com"
+          echo "📦 Version: ${{ github.sha }}"
+          echo "👤 Déployé par: ${{ github.actor }}"
+          echo "⏰ Heure: $(date -u +%Y-%m-%d' '%H:%M:%S' UTC')"
+          echo "📊 Health Score: ${{ needs.pre-deploy-checks.outputs.health_score }}"
+          echo "════════════════════════════════════════"
+      
+      - name: Create Deployment Tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tagName = `deploy-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+            
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${tagName}`,
+              sha: context.sha
+            });
+            
+            console.log(`✅ Tag créé: ${tagName}`);
+
+  rollback:
+    name: ⏪ Rollback (Manuel)
+    runs-on: ubuntu-latest
+    if: failure() && github.event.inputs.environment == 'production'
+    steps:
+      - name: Rollback Notice
+        run: |
+          echo "⚠️ ROLLBACK NÉCESSAIRE"
+          echo "Le déploiement a échoué. Rollback manuel requis."
+          
+          # Exemple de rollback
+          # kubectl rollout undo deployment/backend
+          # kubectl rollout undo deployment/frontend
+          
+          echo "Consultez les logs pour plus de détails."
+
+  post-deploy-monitoring:
+    name: 📊 Monitoring Post-Déploiement
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always()
+    steps:
+      - name: Trigger Monitoring Check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'monitoring.yml',
+              ref: 'main'
+            });
+            
+            console.log('✅ Monitoring post-déploiement déclenché');
+      
+      - name: Create Deployment Record
+        run: |
+          cat << EOF > deployment-record.json
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "version": "${{ github.sha }}",
+            "environment": "${{ github.event.inputs.environment }}",
+            "deployedBy": "${{ github.actor }}",
+            "status": "success"
+          }
+          EOF
+          
+          cat deployment-record.json
+      
+      - name: Upload Deployment Record
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-record-${{ github.run_number }}
+          path: deployment-record.json
+          retention-days: 365

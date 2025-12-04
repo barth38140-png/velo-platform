@@ -38,7 +38,7 @@ const createOffer = async (req, res) => {
       if (scheduledFrom && scheduledTo && scheduledTo < scheduledFrom) {
         return res.status(400).json({ success: false, error: 'La date de fin doit être postérieure à la date de début' });
       }
-    } catch (e) {
+    } catch {
       return res.status(400).json({ success: false, error: 'Dates d\'intervention invalides' });
     }
 

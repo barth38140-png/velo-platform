@@ -1,7 +1,7 @@
 const logger = require('../src/logger');
 const availabilityModel = require('../models/availabilityModel');
 
-async function list(req, res, next) {
+async function list(req, res) {
   try {
     const { repairerId } = req.params;
     const { from, to, status } = req.query;
@@ -13,7 +13,7 @@ async function list(req, res, next) {
   }
 }
 
-async function create(req, res, next) {
+async function create(req, res) {
   try {
     const repairerId = req.user.id;
     const { startsAt, endsAt } = req.body;
@@ -26,7 +26,7 @@ async function create(req, res, next) {
   }
 }
 
-async function remove(req, res, next) {
+async function remove(req, res) {
   try {
     const repairerId = req.user.id;
     const { slotId } = req.params;
@@ -39,7 +39,7 @@ async function remove(req, res, next) {
   }
 }
 
-async function reserve(req, res, next) {
+async function reserve(req, res) {
   try {
     const clientId = req.user.id;
     const { slotId } = req.params;

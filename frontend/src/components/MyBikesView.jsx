@@ -20,6 +20,7 @@ export default function MyBikesView({ resetSignal }) {
 
   // Reset to list view when external resetSignal changes (nav click)
   useEffect(() => {
+    // Grouper les setState en un seul appel pour éviter cascading renders
     setShowAdd(false);
     setSelectedBike(null);
     setIsEditing(false);

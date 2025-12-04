@@ -1,36 +1,57 @@
 const pool = require('../config/db');
+const logger = require('../src/logger');
 
 async function ensureBikeExtraColumns() {
   try {
     await pool.query('ALTER TABLE bikes ADD COLUMN IF NOT EXISTS wheel_size TEXT');
-  } catch (e) {}
+  } catch {
+    // Colonne déjà présente ou erreur DB
+  }
   try {
     await pool.query('ALTER TABLE bikes ADD COLUMN IF NOT EXISTS brand TEXT');
-  } catch (e) {}
+  } catch {
+    // Colonne déjà présente ou erreur DB
+  }
   try {
     await pool.query('ALTER TABLE bikes ADD COLUMN IF NOT EXISTS model TEXT');
-  } catch (e) {}
+  } catch {
+    // Colonne déjà présente ou erreur DB
+  }
   try {
     await pool.query('ALTER TABLE bikes ADD COLUMN IF NOT EXISTS model_ref_id INTEGER');
-  } catch (e) {}
+  } catch {
+    // Colonne déjà présente ou erreur DB
+  }
   try {
     await pool.query('ALTER TABLE bikes ADD COLUMN IF NOT EXISTS year INTEGER');
-  } catch (e) {}
+  } catch {
+    // Colonne déjà présente ou erreur DB
+  }
   try {
     await pool.query('ALTER TABLE bikes ADD COLUMN IF NOT EXISTS serial_number TEXT');
-  } catch (e) {}
+  } catch {
+    // Colonne déjà présente ou erreur DB
+  }
   try {
     await pool.query('ALTER TABLE bikes ADD COLUMN IF NOT EXISTS colors JSONB');
-  } catch (e) {}
+  } catch {
+    // Colonne déjà présente ou erreur DB
+  }
   try {
     await pool.query('ALTER TABLE bikes ADD COLUMN IF NOT EXISTS tech JSONB');
-  } catch (e) {}
+  } catch {
+    // Colonne déjà présente ou erreur DB
+  }
   try {
     await pool.query('ALTER TABLE bikes ADD COLUMN IF NOT EXISTS unknown_attributes JSONB');
-  } catch (e) {}
+  } catch {
+    // Colonne déjà présente ou erreur DB
+  }
   try {
     await pool.query('ALTER TABLE bikes ADD COLUMN IF NOT EXISTS confidence_score REAL');
-  } catch (e) {}
+  } catch {
+    // Colonne déjà présente ou erreur DB
+  }
   try {
     await pool.query(`
       DO $$
@@ -41,7 +62,9 @@ async function ensureBikeExtraColumns() {
           CREATE UNIQUE INDEX uniq_bikes_user_serial_lower ON bikes (user_id, LOWER(serial_number)) WHERE serial_number IS NOT NULL;
         END IF;
       END $$;`);
-  } catch (e) {}
+  } catch {
+    // Index déjà présent ou erreur DB
+  }
 }
 
 async function createBike(userId, name, type, frame_size, notes, wheel_size, brand, model, year, serial_number, colors, model_ref_id = null) {
@@ -52,8 +75,9 @@ async function createBike(userId, name, type, frame_size, notes, wheel_size, bra
       'INSERT INTO bikes (user_id, name, brand, model, model_ref_id, type, frame_size, notes, wheel_size, year, serial_number, colors, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,CURRENT_TIMESTAMP) RETURNING *',
       [userId, name, brand || null, model || null, model_ref_id || null, type || null, frame_size || null, notes || null, wheel_size || null, year || null, serial_number || null, colors || null]
     );
-  } catch (e) {
+  } catch (err) {
     // Fallback to minimal set if some columns are missing in legacy DBs
+    logger.debug({ err }, 'createBike: fallback to minimal columns');
     res = await pool.query(
       'INSERT INTO bikes (user_id, name, type, frame_size, notes, created_at) VALUES ($1,$2,$3,$4,$5,CURRENT_TIMESTAMP) RETURNING *',
       [userId, name, type || null, frame_size || null, notes || null]
@@ -89,7 +113,6 @@ async function getBikeById(bikeId) {
 }
 
 async function updateComponentWear(componentId, wear, replaced = false) {
-  const now = replaced ? 'CURRENT_TIMESTAMP' : 'last_replaced_at';
   const res = await pool.query(
     `UPDATE bike_components SET wear = $1 ${replaced ? ', last_replaced_at = CURRENT_TIMESTAMP' : ''} WHERE id = $2 RETURNING *`,
     [wear, componentId]
@@ -132,7 +155,7 @@ async function deleteBike(bikeId) {
 async function updateBike(bikeId, fields) {
   await ensureBikeExtraColumns();
   const allowed = ['name', 'type', 'frame_size', 'notes', 'wheel_size', 'brand', 'model', 'model_ref_id', 'year', 'serial_number', 'colors', 'tech', 'unknown_attributes', 'confidence_score'];
-  const entries = Object.entries(fields).filter(([k, v]) => allowed.includes(k));
+  const entries = Object.entries(fields).filter(([k]) => allowed.includes(k));
   if (entries.length === 0) throw new Error('no_fields');
   const setFragments = [];
   const params = [];

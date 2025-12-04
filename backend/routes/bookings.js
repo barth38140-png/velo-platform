@@ -4,7 +4,7 @@ const auth = require("../middlewares/auth");
 const ctrl = require("../src/controllers/bookingsController");
 // Sécurité : log si le contrôleur est mal importé
 if (!ctrl || typeof ctrl.createBooking !== 'function' || typeof ctrl.getBookings !== 'function') {
-	// eslint-disable-next-line no-console
+	 
 	console.error('Erreur: bookingsController mal importé ou fonctions manquantes');
 }
 
@@ -38,8 +38,10 @@ router.get("/:id", auth, async (req, res) => {
 			await client.end();
 			if (r.rows.length === 0) return res.status(404).json({ error: 'not_found' });
 			return res.json(r.rows[0]);
-		} catch (e) {
-			try { await client.end(); } catch (_) {}
+		} catch {
+			try { await client.end(); } catch {
+				// Échec de fermeture, ignoré
+			}
 			return res.status(500).json({ error: 'internal_error' });
 		}
 	} catch {

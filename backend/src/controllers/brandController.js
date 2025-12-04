@@ -98,13 +98,13 @@ exports.normalizeBrands = async (req, res) => {
     const { rows } = await client.query('SELECT id, name FROM brands');
     const groups = new Map(); // lower(name) -> { keepId, names: [{id,name}] }
     for (const r of rows) {
-      const lower = String(r.name || '').toLowerCase().trim();
-      if (!groups.has(lower)) groups.set(lower, { keepId: r.id, names: [r] });
-      else groups.get(lower).names.push(r);
+      const normalizedName = String(r.name || '').toLowerCase().trim();
+      if (!groups.has(normalizedName)) groups.set(normalizedName, { keepId: r.id, names: [r] });
+      else groups.get(normalizedName).names.push(r);
     }
     const deleteIds = [];
     const updates = [];
-    for (const [lower, data] of groups.entries()) {
+    for (const [, data] of groups.entries()) {
       // choose the smallest id as canonical row to keep
       const keep = data.names.reduce((min, x) => (x.id < min.id ? x : min), data.names[0]);
       const canon = toTitleCase(keep.name);
@@ -114,6 +114,7 @@ exports.normalizeBrands = async (req, res) => {
       updates.push({ id: keep.id, name: canon });
     }
     if (deleteIds.length) {
+      // Supprimer les marques dupliquées
       await client.query('DELETE FROM brands WHERE id = ANY($1::int[])', [deleteIds]);
     }
     for (const u of updates) {
@@ -126,7 +127,9 @@ exports.normalizeBrands = async (req, res) => {
     await logAdminAction(userId, 'normalize_brands', { deleted: deleteIds.length, updated: updates.length }, ipAddress);
     res.json({ ok: true, deleted: deleteIds.length, updated: updates.length });
   } catch (e) {
-    try { await client.query('ROLLBACK'); } catch {}
+    try { await client.query('ROLLBACK'); } catch {
+      // Ignorer les erreurs de rollback
+    }
     logger.error({ err: e }, '[brands] normalizeBrands error');
     res.status(500).json({ error: 'failed_to_normalize_brands' });
   }

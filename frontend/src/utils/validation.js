@@ -1,4 +1,6 @@
 // Utilitaires de validation frontend
+import React from 'react';
+
 export const validators = {
   // Validation d'année (entre 1900 et année actuelle + 1)
   year: (value) => {

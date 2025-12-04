@@ -220,7 +220,7 @@ try {
 try {
   const repairOfferRoutes = require('../routes/repairOfferRoutes');
   app.use('/api/repair-offers', repairOfferRoutes);
-} catch (e) {
+} catch {
   // if repair-offers routes are not present in this environment, ignore
 }
 
@@ -378,7 +378,7 @@ function start(port = PORT) {
     // Gestion des événements Socket.io pour la messagerie
     io.on('connection', (socket) => {
       // Authentification simplifiée (à améliorer en prod)
-      socket.on('join_conversation', ({ conversationId, userId }) => {
+      socket.on('join_conversation', ({ conversationId }) => {
         socket.join(`conv-${conversationId}`);
       });
       socket.on('send_message', async ({ conversationId, senderId, content }) => {
@@ -417,7 +417,7 @@ function stop() {
 
 if (require.main === module) {
   start()
-    .then(async (server) => {
+    .then(async () => {
       // Démarrer le monitoring continu
       await continuousImprovement.start();
       logger.info('✅ Système d\'amélioration continue activé');

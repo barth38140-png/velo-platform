@@ -77,7 +77,9 @@ async function main() {
     console.error('[seed] error:', e && (e.stack || e));
     process.exit(1);
   } finally {
-    try { await db.pool.end(); } catch {}
+    try { await db.pool.end(); } catch {
+      // Ignorer les erreurs de fermeture
+    }
   }
 }
 

@@ -87,7 +87,6 @@ class GitHubIntegration {
 
   async findExistingIssue(anomaly) {
     try {
-      const query = `state:open label:${this.severityToLabel[anomaly.severity]?.[0] || 'bug'} type:issue`;
       const response = await axios.get(`${this.baseUrl}/issues`, {
         params: {
           state: 'open',

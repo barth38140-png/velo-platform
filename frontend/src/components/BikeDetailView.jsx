@@ -35,16 +35,16 @@ function ComponentItem({ comp }) {
 }
 
 export default function BikeDetailView({ bike, editable = true, showSummary = true, showHeader = true }) {
-  if (!bike) return null;
-
-  const name = bike.name || '';
+  // IMPORTANT: All hooks must be called unconditionally
+  
+  const name = bike?.name || '';
   const firstSpace = name.indexOf(' ');
   const parsedBrand = firstSpace > 0 ? name.substring(0, firstSpace) : name;
   const parsedModel = firstSpace > 0 ? name.substring(firstSpace + 1).trim() : '';
-  const brand = bike.brand || parsedBrand;
-  const model = bike.model || parsedModel;
+  const brand = bike?.brand || parsedBrand;
+  const model = bike?.model || parsedModel;
 
-  const colors = Array.isArray(bike.colors) ? bike.colors : [];
+  const colors = Array.isArray(bike?.colors) ? bike.colors : [];
   const COLOR_OPTIONS = ['Noir','Blanc','Rouge','Bleu','Vert','Jaune','Orange','Violet'];
   const BRAND_OPTIONS = ['Peugeot','Giant','Cannondale','Decathlon','Specialized','Trek'];
   const TYPE_OPTIONS = ['Route','VTT','Urbain'];
@@ -52,15 +52,15 @@ export default function BikeDetailView({ bike, editable = true, showSummary = tr
   const WHEEL_SIZE_OPTIONS = ['700C','29"','27.5"','650B','26"','24"','20"'];
   const CURRENT_YEAR = new Date().getFullYear();
 
-  // Editable local state
+  // Editable local state - ALWAYS called
   const [form, setForm] = useState({
     brand: brand || '',
     model: model || '',
-    type: bike.type || '',
-    frame_size: bike.frame_size || '',
-    wheel_size: bike.wheel_size || '',
-    year: bike.year || '',
-    serial_number: bike.serial_number || '',
+    type: bike?.type || '',
+    frame_size: bike?.frame_size || '',
+    wheel_size: bike?.wheel_size || '',
+    year: bike?.year || '',
+    serial_number: bike?.serial_number || '',
     colors: colors
   });
 
@@ -68,15 +68,15 @@ export default function BikeDetailView({ bike, editable = true, showSummary = tr
     setForm({
       brand: brand || '',
       model: model || '',
-      type: bike.type || '',
-      frame_size: bike.frame_size || '',
-      wheel_size: bike.wheel_size || '',
-      year: bike.year || '',
-      serial_number: bike.serial_number || '',
-      colors: Array.isArray(bike.colors) ? bike.colors : []
+      type: bike?.type || '',
+      frame_size: bike?.frame_size || '',
+      wheel_size: bike?.wheel_size || '',
+      year: bike?.year || '',
+      serial_number: bike?.serial_number || '',
+      colors: Array.isArray(bike?.colors) ? bike.colors : []
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bike.id]);
+  }, [bike?.id]);
 
   const pendingRef = useRef(false);
   const debounceRef = useRef();
@@ -95,6 +95,7 @@ export default function BikeDetailView({ bike, editable = true, showSummary = tr
 
   // Autosave when form changes (debounced)
   useEffect(() => {
+    // Check condition INSIDE the effect, after all hooks are defined
     if (!editable) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     pendingRef.current = true;
@@ -158,18 +159,22 @@ export default function BikeDetailView({ bike, editable = true, showSummary = tr
 
   return (
     <div className="bike-detail">
-      {showHeader && (
-        <header className="bike-detail-header">
-          <h3>Détails du vélo</h3>
-          <div className="bike-id">ID: {bike.id}</div>
-          {editable && (
-            <div className="save-indicator" aria-live="polite" style={{marginLeft:8,color:'#6b7280'}}>{isSaving ? 'Enregistrement…' : ''}</div>
+      {!bike ? (
+        <div style={{ padding: '20px', color: '#9ca3af' }}>Aucun vélo sélectionné</div>
+      ) : (
+        <>
+          {showHeader && (
+            <header className="bike-detail-header">
+              <h3>Détails du vélo</h3>
+              <div className="bike-id">ID: {bike.id}</div>
+              {editable && (
+                <div className="save-indicator" aria-live="polite" style={{marginLeft:8,color:'#6b7280'}}>{isSaving ? 'Enregistrement…' : ''}</div>
+              )}
+            </header>
           )}
-        </header>
-      )}
-      {!showHeader && editable && (
-        <div className="save-indicator" aria-live="polite" style={{marginBottom:8,color:'#6b7280'}}>{isSaving ? 'Enregistrement…' : ''}</div>
-      )}
+          {!showHeader && editable && (
+            <div className="save-indicator" aria-live="polite" style={{marginBottom:8,color:'#6b7280'}}>{isSaving ? 'Enregistrement…' : ''}</div>
+          )}
 
       {showSummary && (
       <section className="bike-summary">
@@ -324,6 +329,8 @@ export default function BikeDetailView({ bike, editable = true, showSummary = tr
           </div>
         )}
       </section>
+        </>
+      )}
     </div>
   );
 }

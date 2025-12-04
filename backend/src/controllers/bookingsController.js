@@ -51,7 +51,9 @@ async function createBooking(req, res) {
         await client.end();
         return r;
       } catch (e) {
-        try { await client.end(); } catch (_) {}
+        try { await client.end(); } catch {
+          // Échec de fermeture, ignoré
+        }
         throw e;
       }
     }
@@ -98,7 +100,9 @@ async function createBooking(req, res) {
         await client.end();
         break;
       } catch (e) {
-        try { await client.end(); } catch (_) {}
+        try { await client.end(); } catch {
+          // Échec de fermeture, ignoré
+        }
         if (attempt === maxAttempts) throw e;
         if (e && e.code === 'ECONNREFUSED') {
           logger.warn({ attempt, maxAttempts }, 'createBooking: transient DB connection refused, retrying');
@@ -157,7 +161,9 @@ async function getBookings(req, res) {
       await client.end();
       return res.json(r.rows);
     } catch (e) {
-      try { await client.end(); } catch (_) {}
+      try { await client.end(); } catch {
+        // Échec de fermeture, ignoré
+      }
       throw e;
     }
   } catch (err) {

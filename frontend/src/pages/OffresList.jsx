@@ -104,25 +104,17 @@ export default function OffresList({ selectedRepair }) {
 	};
 
 	const handleProposeDate = async (offerId, scheduledFrom, scheduledTo) => {
-		try {
-			await repairOfferService.proposeDate(offerId, scheduledFrom, scheduledTo);
-			toast.success('📅 Date proposée au réparateur');
-			setShowDateModal(null);
-			await loadOffers();
-		} catch (err) {
-			throw err; // Le modal gérera l'erreur
-		}
+		await repairOfferService.proposeDate(offerId, scheduledFrom, scheduledTo);
+		toast.success('📅 Date proposée au réparateur');
+		setShowDateModal(null);
+		await loadOffers();
 	};
 
 	const handleConfirmDate = async (offerId) => {
-		try {
-			await repairOfferService.confirmDate(offerId);
-			toast.success('✅ Date confirmée ! Vous pouvez maintenant accepter l\'offre');
-			setShowDateModal(null);
-			await loadOffers();
-		} catch (err) {
-			throw err; // Le modal gérera l'erreur
-		}
+		await repairOfferService.confirmDate(offerId);
+		toast.success('✅ Date confirmée ! Vous pouvez maintenant accepter l\'offre');
+		setShowDateModal(null);
+		await loadOffers();
 	};
 
 	// Filtrage et tri des offres

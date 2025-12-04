@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { renderWithProviders, screen, waitFor } from '../../test/testUtils';
 import React from 'react';
 import OffresList from '../OffresList';
 
@@ -19,7 +19,7 @@ vi.mock('../../services/api', async () => {
 describe("OffresList affiche la date d'intervention", () => {
   it("rend 'Date d'intervention' quand scheduled_from est fourni", async () => {
     const selectedRepair = { id: 1, bike_type: 'VTT' };
-    render(<OffresList selectedRepair={selectedRepair} />);
+    renderWithProviders(<OffresList selectedRepair={selectedRepair} />);
 
     await waitFor(() => {
       expect(screen.getByText(/Date d'intervention:/i)).toBeInTheDocument();
