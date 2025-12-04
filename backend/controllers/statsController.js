@@ -17,10 +17,10 @@ async function getGlobalStats(req, res) {
         (SELECT COUNT(*) FROM users) as total_users,
         (SELECT COUNT(*) FROM users WHERE role = 'repairer') as total_repairers,
         (SELECT COUNT(*) FROM users WHERE role = 'client') as total_clients,
-        (SELECT COUNT(*) FROM repairs WHERE created_at > '${startDateStr}') as repairs_period,
-        (SELECT COUNT(*) FROM repairs WHERE status = 'completed' AND created_at > '${startDateStr}') as repairs_completed,
-        (SELECT COUNT(*) FROM reviews WHERE created_at > '${startDateStr}') as reviews_period,
-        (SELECT AVG(rating) FROM reviews WHERE created_at > '${startDateStr}') as avg_rating,
+        (SELECT COUNT(*) FROM repair_requests WHERE created_at > '${startDateStr}') as repairs_period,
+        (SELECT COUNT(*) FROM repair_requests WHERE status = 'completed' AND created_at > '${startDateStr}') as repairs_completed,
+        (SELECT COUNT(*) FROM repair_reviews WHERE created_at > '${startDateStr}') as reviews_period,
+        (SELECT AVG(rating) FROM repair_reviews WHERE created_at > '${startDateStr}') as avg_rating,
         (SELECT COUNT(*) FROM users WHERE verified = true AND role = 'repairer') as verified_repairers,
         (SELECT COUNT(*) FROM users WHERE created_at > '${startDateStr}') as new_users_period
     `);
@@ -54,7 +54,7 @@ async function getRevenueStats(req, res) {
         COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress,
         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
         AVG(CASE WHEN status = 'completed' THEN 45 ELSE NULL END)::INTEGER as avg_repair_value
-      FROM repairs
+      FROM repair_requests
       WHERE created_at > '${startDateStr}'
     `);
     
@@ -69,8 +69,8 @@ async function getRevenueStats(req, res) {
         AVG(rev.rating)::NUMERIC(3,2) as avg_rating,
         (COUNT(r.id) * 45)::INTEGER as estimated_revenue
       FROM users u
-      LEFT JOIN repairs r ON u.id = r.repairer_id AND r.status = 'completed' AND r.created_at > '${startDateStr}'
-      LEFT JOIN reviews rev ON u.id = rev.repairer_id
+      LEFT JOIN repair_requests r ON u.id = r.repairer_id AND r.status = 'completed' AND r.created_at > '${startDateStr}'
+      LEFT JOIN repair_reviews rev ON u.id = rev.repairer_id
       WHERE u.role = 'repairer'
       GROUP BY u.id, u.email, u.name
       ORDER BY repairs_completed DESC
@@ -149,7 +149,7 @@ async function getActivityCharts(req, res) {
         DATE(created_at) as date,
         COUNT(*) as count,
         COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed
-      FROM repairs
+      FROM repair_requests
       WHERE created_at > '${startDateStr}'
       GROUP BY DATE(created_at)
       ORDER BY date DESC
