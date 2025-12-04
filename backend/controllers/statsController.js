@@ -69,7 +69,7 @@ async function getRevenueStats(req, res) {
         AVG(rev.rating)::NUMERIC(3,2) as avg_rating,
         (COUNT(r.id) * 45)::INTEGER as estimated_revenue
       FROM users u
-      LEFT JOIN repair_requests r ON u.id = r.repairer_id AND r.status = 'terminée' AND r.created_at > '${startDateStr}'
+      LEFT JOIN repair_requests r ON u.id = r.assigned_repairer_id AND r.status = 'terminée' AND r.created_at > '${startDateStr}'
       LEFT JOIN reviews rev ON u.id = rev.repairer_id
       WHERE u.role = 'repairer'
       GROUP BY u.id, u.email, u.name
