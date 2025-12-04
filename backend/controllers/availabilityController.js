@@ -1,4 +1,4 @@
-const logger = require('../utils/logger');
+const logger = require('../src/logger');
 const availabilityModel = require('../models/availabilityModel');
 
 async function list(req, res, next) {

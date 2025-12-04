@@ -1,4 +1,4 @@
-﻿const pool = require('../db/db');
+﻿const pool = require('../config/db');
 
 async function findUserByEmail(email) {
   const res = await pool.query('SELECT * FROM users WHERE email = $1 LIMIT 1', [email]);
