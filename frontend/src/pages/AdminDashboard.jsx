@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { adminService } from '../services/adminService';
 import { useToast } from '../context/ToastContext';
 import UserManagement from '../components/admin/UserManagement';
@@ -12,6 +14,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const toast = useToast();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   useEffect(() => {
     loadStats();
@@ -40,8 +44,29 @@ export default function AdminDashboard() {
   return (
     <div className="admin-dashboard">
       <header className="admin-header">
-        <h1>🔧 Tableau de Bord Administration</h1>
-        <p>Gestion complète de la plateforme</p>
+        <div className="admin-header-content">
+          <div>
+            <h1>🔧 Tableau de Bord Administration</h1>
+            <p>Gestion complète de la plateforme</p>
+          </div>
+          <div className="admin-header-actions">
+            <button 
+              className="btn btn-secondary"
+              onClick={() => navigate('/dashboard')}
+            >
+              ← Retour au Dashboard
+            </button>
+            <button 
+              className="btn btn-danger"
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
       </header>
 
       <nav className="admin-tabs">

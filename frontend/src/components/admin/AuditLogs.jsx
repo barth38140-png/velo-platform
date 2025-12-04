@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminService } from '../../services/api';
+import { adminService } from '../../services/adminService';
 import { useToast } from '../../context/ToastContext';
 import '../../styles/AdminComponents.css';
 

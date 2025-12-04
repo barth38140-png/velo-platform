@@ -18,6 +18,14 @@ export function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Rediriger les admins vers le dashboard admin
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      navigate('/admin', { replace: true });
+    }
+  }, [user?.role, navigate]);
+
   const initialTab = (() => {
     const params = new URLSearchParams(location.search);
     const qtab = params.get('tab');
