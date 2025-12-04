@@ -20,5 +20,5 @@ ENV ESBUILD_BINARY_PATH=/app/node_modules/@esbuild/linux-x64/bin/esbuild
 # Copie le reste du code (sauf node_modules du host)
 COPY . .
 
-EXPOSE 3000
+EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host"]

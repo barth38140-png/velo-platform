@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
-    port: 3000,
+    port: 5173,
     // Keep allowed hosts minimal and configurable via environment.
     // DEV_ALLOW_DOCKER defaults to enabled so Compose service names are accepted unless explicitly disabled.
     allowedHosts: process.env.DEV_ALLOW_DOCKER === 'false'

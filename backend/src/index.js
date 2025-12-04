@@ -352,7 +352,7 @@ app.use(errorHandler);
 
 const http = require('http');
 const { Server } = require('socket.io');
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 let server = null;
 const db = require('./db');
 let configDbPool = null;

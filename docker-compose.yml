@@ -30,9 +30,9 @@ services:
       DB_USER: postgres
       DB_PASSWORD: test
       DB_NAME: velo_platform_test
-      PORT: 3010
+      PORT: 5000
     ports:
-      - "3010:3010"
+      - "5000:5000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,7 +41,7 @@ services:
     volumes:
       - ./backend:/app
     healthcheck:
-      test: ["CMD-SHELL", "node -e 'require(\"http\").get(\"http://localhost:3010/health\", res=>{process.exit(res.statusCode===200?0:1)})'"]
+      test: ["CMD-SHELL", "node -e 'require(\"http\").get(\"http://localhost:5000/health\", res=>{process.exit(res.statusCode===200?0:1)})'"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -55,7 +55,7 @@ services:
       VITE_API_URL: /api
       DEV_ALLOW_DOCKER: 'true'
     ports:
-      - "3000:3000"
+      - "5173:5173"
     depends_on:
       - backend
     networks:
@@ -71,7 +71,7 @@ services:
       - frontend
     working_dir: /e2e
     environment:
-      CYPRESS_baseUrl: http://frontend:3000
+      CYPRESS_baseUrl: http://frontend:5173
     volumes:
       - ./frontend:/e2e
     shm_size: 2gb
