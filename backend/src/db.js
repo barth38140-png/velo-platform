@@ -1,5 +1,6 @@
 ﻿const { Pool } = require('pg');
 const dns = require('dns').promises;
+const logger = require('./logger');
 
 let currentHost = process.env.PGHOST || process.env.DB_HOST || 'localhost';
 let currentPort = process.env.PGPORT ? Number(process.env.PGPORT) : (process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432);
@@ -20,10 +21,10 @@ function createPool(host) {
   });
 
   p.on('error', (err) => {
-    console.error('[src/db] pool error', err && (err.stack || err));
+    logger.error({ err }, '[src/db] pool error');
     // Try reinitializing pool when socket errors occur (non-blocking)
     if (err && (err.code === 'ECONNREFUSED' || (err.errors && err.errors.some(e => e.code === 'ECONNREFUSED')))) {
-      reinitPool().catch((e) => console.error('[src/db] reinitPool failed:', e && (e.stack || e)));
+      reinitPool().catch((e) => logger.error({ err: e }, '[src/db] reinitPool failed'));
     }
   });
 
@@ -38,26 +39,26 @@ async function reinitPool() {
     const records = await dns.lookup(hostToResolve, { family: 4 });
     const resolved = records && records.address ? records.address : hostToResolve;
     if (resolved && resolved !== currentHost) {
-      console.log('[src/db] reinitializing pool with resolved host:', resolved);
+      logger.info({ host: resolved }, '[src/db] reinitializing pool with resolved host');
       try {
         // Close old pool
         if (pool && typeof pool.end === 'function') {
           await pool.end();
         }
       } catch (e) {
-        console.warn('[src/db] error closing old pool:', e && (e.stack || e));
+        logger.warn({ err: e }, '[src/db] error closing old pool');
       }
       currentHost = resolved;
       pool = createPool(currentHost);
     }
   } catch (err) {
-    console.error('[src/db] reinitPool error:', err && (err.stack || err));
+    logger.error({ err }, '[src/db] reinitPool error');
     throw err;
   }
 }
 
 if (process.env.NODE_ENV === 'test') {
-  console.log('[src/db] pool config:', {
+  logger.info('[src/db] pool config:', {
     host: process.env.PGHOST || process.env.DB_HOST || currentHost,
     port: process.env.PGPORT || process.env.DB_PORT || currentPort,
     user: process.env.PGUSER || process.env.DB_USER || 'unset',

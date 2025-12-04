@@ -45,9 +45,6 @@
 - Socket.io pour les communications temps réel
 - Tests avec **Vitest** et **@testing-library/react**
 - Tests E2E avec **Cypress**
-- Séparer la logique métier des composants d'affichage
-- Gérer l'état global avec Context API si nécessaire
-- Utiliser Tailwind CSS pour le styling
 - Implémenter la gestion d'erreur dans les composants avec error boundaries si approprié
 
 ## Tests

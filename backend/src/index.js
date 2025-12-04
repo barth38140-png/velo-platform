@@ -491,7 +491,7 @@ if (require.main === module) {
       });
     })
     .catch(err => {
-      console.error(err);
+      logger.fatal({ err }, 'Erreur fatale au démarrage');
       process.exit(1);
     });
 }
