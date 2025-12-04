@@ -1,12 +1,17 @@
-import React, { useState, useRef, Suspense, lazy } from 'react';
+import React, { useState, useRef, Suspense, lazy, useEffect } from 'react';
 import { repairService, repairPhotoService, bikeService } from '../services/api';
 import StepForm from './StepForm';
 import LocationSelector from './LocationSelector';
 import MapPicker from './MapPicker';
+import { useGeolocation } from '../hooks/useGeolocation';
+import { useToast } from '../context/ToastContext';
 const LazyAddBikePage = lazy(() => import('./AddBikePage'));
 
 export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
   const [step, setStep] = useState(0);
+  const toast = useToast();
+  const { location: geoLocation, loading: geoLoading, requestLocation } = useGeolocation();
+  
   const [formData, setFormData] = useState({
     bikeType: initial.bikeType || '',
     bikeId: initial.bikeId || null,
@@ -21,6 +26,18 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
     locationAddress: initial.locationAddress || '',
     precise: initial.precise || ''
   });
+  
+  // Auto-fill location when geolocation is obtained
+  useEffect(() => {
+    if (geoLocation && !formData.locationLat) {
+      setFormData(f => ({
+        ...f,
+        locationLat: geoLocation.latitude,
+        locationLng: geoLocation.longitude
+      }));
+    }
+  }, [geoLocation]);
+  
   const [bikes, setBikes] = useState([]);
   const [showBikeModal, setShowBikeModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -272,23 +289,41 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
     if (confirmChecked) setConfirmError('');
   }, [confirmChecked]);
 
-  const useMyLocation = () => {
-    if (!navigator.geolocation) return setError('Géolocalisation non supportée');
-    setLoading(true);
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      try {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-        const data = await res.json();
-        const addr = data.display_name || '';
-        setFormData(f => ({ ...f, locationLat: lat, locationLng: lng, locationAddress: addr }));
-      } catch {
-        setError('Impossible de récupérer l\'adresse');
-      } finally {
-        setLoading(false);
+  const useMyLocation = async () => {
+    const loadingToastId = toast.loading('Géolocalisation en cours...');
+    try {
+      const loc = await requestLocation();
+      if (loc) {
+        // Reverse geocoding pour obtenir l'adresse
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${loc.latitude}&lon=${loc.longitude}`
+          );
+          const data = await res.json();
+          const addr = data.display_name || '';
+          setFormData(f => ({ 
+            ...f, 
+            locationLat: loc.latitude, 
+            locationLng: loc.longitude, 
+            locationAddress: addr 
+          }));
+          toast.removeToast(loadingToastId);
+          toast.success('Adresse trouvée', 3000, {
+            description: (addr || '').split(',')[0]
+          });
+        } catch {
+          toast.removeToast(loadingToastId);
+          toast.warning('Géolocalisation acquise mais adresse non trouvée', 3000);
+          setFormData(f => ({ 
+            ...f, 
+            locationLat: loc.latitude, 
+            locationLng: loc.longitude
+          }));
+        }
       }
-    }, () => { setLoading(false); setError('Autorisation géolocalisation refusée'); });
+    } catch {
+      toast.removeToast(loadingToastId);
+    }
   };
 
   const loadBikes = async () => {
@@ -464,7 +499,15 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
                   <LocationSelector initial={{ locationLat: formData.locationLat, locationLng: formData.locationLng, locationAddress: formData.locationAddress, precise: formData.precise }} onChange={(p) => setFormData(f => ({ ...f, locationLat: p.locationLat || f.locationLat, locationLng: p.locationLng || f.locationLng, locationAddress: p.locationAddress || f.locationAddress, precise: p.precise || f.precise }))} />
                   {!stepTopError && locationError && <div className="field-error small" style={{color:'#b00020', marginTop:6}}>{locationError}</div>}
                   <div className="location-actions">
-                    <button type="button" className="btn tertiary" onClick={useMyLocation}>Utiliser ma position</button>
+                    <button 
+                      type="button" 
+                      className="btn tertiary" 
+                      onClick={useMyLocation}
+                      disabled={geoLoading}
+                      style={{opacity: geoLoading ? 0.6 : 1}}
+                    >
+                      {geoLoading ? '⏳ Localisation...' : '📍 Utiliser ma position'}
+                    </button>
                     <small className="micro">Localisation précise aide le mécanicien.</small>
                   </div>
                 </div>

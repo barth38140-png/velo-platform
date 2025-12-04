@@ -38,7 +38,7 @@ async function registerUser(req, res) {
     // Générer le JWT
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       token,
       user: {
@@ -54,7 +54,7 @@ async function registerUser(req, res) {
     if (err.code === '23505') {
       return res.status(409).json({ error: 'Email déjà utilisé' });
     }
-    res.status(500).json({ error: 'Erreur serveur' });
+    return res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 
@@ -90,7 +90,7 @@ async function loginUser(req, res) {
     // Générer le JWT
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
-    res.json({
+    return res.status(200).json({
       success: true,
       token,
       user: {
@@ -102,8 +102,8 @@ async function loginUser(req, res) {
       }
     });
   } catch (err) {
-    logger.error({ err, email }, 'loginUser error');
-    res.status(500).json({ error: 'Erreur serveur' });
+    logger.warn({ email }, 'loginUser catch');
+    return res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 

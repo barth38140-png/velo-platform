@@ -9,6 +9,8 @@ Plateforme de gestion de vélos et de demandes de réparation, connectant client
 - **Offres de réparation** : système de mise en relation clients/réparateurs
 - **Authentification** : JWT avec rôles (client, réparateur, admin)
 - **Géolocalisation** : carte interactive pour localiser les réparations
+- **Notifications améliorées** : toasts élaborées avec actions et descriptions
+- **Géolocalisation automatique** : détection de position avec reverse geocoding
 
 ## 🤖 Système d'Amélioration Continue (Phases 1-3)
 
@@ -89,6 +91,70 @@ GET /api/admin/ci/anomalies-detected           # Anomalies actuelles
 GET /api/admin/ci/system-health                # Santé globale
 GET /api/admin/ci/status                       # État global
 ```
+
+## ✨ Améliorations Récentes (Décembre 2025)
+
+### 🔔 Notifications Toast Élaborées
+**Frontend/Context/ToastContext.jsx**
+- Toasts avec descriptions et actions supplémentaires
+- Animations smooth (slideInRight)
+- Support pour actions utilisateur (boutons d'action)
+- Types: success, error, warning, info, loading
+- Styling adaptatif avec dégradés subtils
+
+```javascript
+// Utilisation
+const toast = useToast();
+
+// Toast simple
+toast.success('Opération réussie');
+
+// Toast avec description et action
+toast.success('Localisation trouvée', 3000, {
+  description: '48.8566°N, 2.3522°E',
+  actionLabel: 'Afficher sur la carte',
+  action: () => { /* handler */ }
+});
+
+// Toast de chargement
+const id = toast.loading('Traitement en cours...');
+// ... plus tard
+toast.removeToast(id);
+```
+
+### 📍 Géolocalisation Automatique
+**Frontend/hooks/useGeolocation.js**
+- Hook React pour géolocalisation native du navigateur
+- Reverse geocoding via API Nominatim (OpenStreetMap)
+- Calcul de distance Haversine entre deux points
+- Gestion intelligente des permissions
+
+```javascript
+// Utilisation
+const { location, loading, requestLocation } = useGeolocation();
+
+// Appeler la géolocalisation
+await requestLocation();
+// → Lance automatiquement toast avec adresse trouvée
+
+// Calculer distance entre réparateurs et client
+const distance = getDistance(
+  clientLat, clientLng,
+  repairerLat, repairerLng
+); // résultat en km
+```
+
+**Intégration dans RepairForm**:
+- Bouton "📍 Utiliser ma position" dans étape localisation
+- Auto-remplissage du formulaire avec latitude/longitude
+- Adresse automatique via reverse geocoding
+- Toast de confirmation avec coordonnées
+
+**Bénéfices**:
+✅ Meilleure exp utilisateur (moins de saisie)
+✅ Données de localisation précises
+✅ Aide le matching client↔réparateur par proximité
+✅ Compatible avec tous les navigateurs modernes
 
 ## 🛠️ Technologies
 
