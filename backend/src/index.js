@@ -19,6 +19,18 @@ const logger = require('./logger');
 const pinoHttp = require('pino-http');
 const { randomUUID } = require('crypto');
 const { metricsMiddleware, getHealthMetrics } = require('./monitoring');
+const { ContinuousImprovement } = require('./continuousImprovement');
+const { AnomalyDetector } = require('./anomalyDetector');
+const { NotificationService } = require('./notifications');
+
+// Initialiser le monitoring continu
+const anomalyDetector = new AnomalyDetector();
+const notificationService = new NotificationService();
+const continuousImprovement = new ContinuousImprovement({
+  anomalyDetector,
+  notifications: notificationService,
+  enabled: process.env.CONTINUOUS_IMPROVEMENT_ENABLED !== 'false'
+});
 
 // Security headers avec configuration stricte
 app.use(helmet({
@@ -96,6 +108,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use((req, res, next) => {
   req.id = req.headers['x-request-id'] || randomUUID();
   res.setHeader('x-request-id', req.id);
+  
+  // Enregistrer la requête pour le monitoring
+  const startTime = Date.now();
+  
+  res.on('finish', () => {
+    const latency = Date.now() - startTime;
+    continuousImprovement.recordRequest(req.method, req.path, latency, res.statusCode);
+  });
+  
+  next();
   next();
 });
 
@@ -250,6 +272,15 @@ try {
   logger.error({ err: e }, '[startup] failed to mount /api/availability');
 }
 
+// Mount metrics & monitoring API
+try {
+  const metricsRoutes = require('../routes/metricsRoutes')(continuousImprovement);
+  app.use('/api/metrics', metricsRoutes);
+  logger.info('[startup] mounted /api/metrics');
+} catch (e) {
+  logger.error({ err: e }, '[startup] failed to mount /api/metrics');
+}
+
 // NOTE: /api/velos alias removed to avoid duplicate mounts
 
 
@@ -356,10 +387,30 @@ function stop() {
 }
 
 if (require.main === module) {
-  start().catch(err => {
-    console.error(err);
-    process.exit(1);
-  });
+  start()
+    .then(async (server) => {
+      // Démarrer le monitoring continu
+      await continuousImprovement.start();
+
+      // Gestion de l'arrêt gracieux
+      process.on('SIGTERM', async () => {
+        logger.info('SIGTERM reçu, arrêt gracieux...');
+        await continuousImprovement.stop();
+        await stop().catch(err => logger.error({ err }, 'Erreur lors de l\'arrêt'));
+        process.exit(0);
+      });
+
+      process.on('SIGINT', async () => {
+        logger.info('SIGINT reçu, arrêt gracieux...');
+        await continuousImprovement.stop();
+        await stop().catch(err => logger.error({ err }, 'Erreur lors de l\'arrêt'));
+        process.exit(0);
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      process.exit(1);
+    });
 }
 
 module.exports = { start, stop, app };

@@ -13,7 +13,10 @@
         "lint": "eslint .",
         "seed:models": "node ./scripts/seed_bike_models.js",
         "db:migrate:messages": "psql -U postgres -d velo_platform -f ./sql/patch_add_conversations_and_messages.sql",
-        "db:migrate:messages:test": "psql -U postgres -d velo_platform_test -f ./sql/patch_add_conversations_and_messages.sql"
+        "db:migrate:messages:test": "psql -U postgres -d velo_platform_test -f ./sql/patch_add_conversations_and_messages.sql",
+        "metrics:health": "curl http://localhost:5000/api/metrics/health | jq .",
+        "metrics:detailed": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/metrics/metrics | jq .",
+        "metrics:recommendations": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/metrics/recommendations | jq ."
     },
     "dependencies": {
         "axios": "^1.13.2",
