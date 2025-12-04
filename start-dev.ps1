@@ -15,10 +15,10 @@ if (-not $Backend -and -not $Frontend -and -not $All) {
 $rootPath = Split-Path -Parent $MyInvocation.MyCommandPath
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-Write-Host "════════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "🚀 Velo Platform - Démarrage du serveur de développement" -ForegroundColor Green
-Write-Host "════════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "⏰ $timestamp" -ForegroundColor Gray
+Write-Host "====================================================================" -ForegroundColor Cyan
+Write-Host "Velo Platform - Demarrage du serveur de developpement" -ForegroundColor Green
+Write-Host "====================================================================" -ForegroundColor Cyan
+Write-Host "Time: $timestamp" -ForegroundColor Gray
 Write-Host ""
 
 $processes = @()
@@ -31,19 +31,19 @@ function Start-DevServer {
         [string]$Command
     )
     
-    Write-Host "📋 Lancement de $Name..." -ForegroundColor Yellow
+    Write-Host "Lancement de $Name..." -ForegroundColor Yellow
     
     try {
         $pinfo = New-Object System.Diagnostics.ProcessStartInfo
         $pinfo.FileName = "powershell.exe"
-        $pinfo.Arguments = "-NoExit", "-Command", "cd `"$Path`"; $Command"
+        $pinfo.Arguments = @("-NoExit", "-Command", "cd '$Path'; $Command")
         $pinfo.UseShellExecute = $false
         $pinfo.RedirectStandardOutput = $false
         $pinfo.RedirectStandardError = $false
         
         $p = [System.Diagnostics.Process]::Start($pinfo)
         
-        Write-Host "✅ $Name lancé (PID: $($p.Id))" -ForegroundColor Green
+        Write-Host "[OK] $Name lance (PID: $($p.Id))" -ForegroundColor Green
         
         return @{
             Name = $Name
@@ -52,12 +52,12 @@ function Start-DevServer {
         }
     }
     catch {
-        Write-Host "❌ Erreur au lancement de $Name : $_" -ForegroundColor Red
+        Write-Host "[ERROR] Erreur au lancement de $Name : $_" -ForegroundColor Red
         return $null
     }
 }
 
-# Démarrer le backend
+# Demarrer le backend
 if ($All -or $Backend) {
     $bp = Start-DevServer -Name "Backend" -Path "$rootPath\backend" -Command "npm run dev"
     if ($bp) { $processes += $bp }
@@ -73,49 +73,49 @@ if ($All -or $Frontend) {
 }
 
 Write-Host ""
-Write-Host "════════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "====================================================================" -ForegroundColor Cyan
 
 if ($processes.Count -eq 0) {
-    Write-Host "⚠️  Aucun serveur n'a pu être lancé" -ForegroundColor Red
+    Write-Host "[WARNING] Aucun serveur n'a pu etre lance" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✨ Serveurs en cours d'exécution :" -ForegroundColor Green
+Write-Host "Serveurs en cours d'execution :" -ForegroundColor Green
 foreach ($p in $processes) {
     Write-Host "  - $($p.Name) (PID: $($p.Process.Id))" -ForegroundColor Cyan
 }
 
 Write-Host ""
-Write-Host "📡 URLs :" -ForegroundColor Cyan
+Write-Host "URLs :" -ForegroundColor Cyan
 Write-Host "  Frontend:  http://localhost:5173" -ForegroundColor Cyan
 Write-Host "  Backend:   http://localhost:5000" -ForegroundColor Cyan
 Write-Host "  API Docs:  http://localhost:5000/health" -ForegroundColor Cyan
 
 Write-Host ""
-Write-Host "🛑 Pour arrêter les serveurs :" -ForegroundColor Yellow
-Write-Host "  - Fermer les fenêtres des serveurs" -ForegroundColor Gray
-Write-Host "  - Ou exécuter: Stop-DevServers (voir plus bas)" -ForegroundColor Gray
+Write-Host "Pour arreter les serveurs :" -ForegroundColor Yellow
+Write-Host "  - Fermer les fenetres des serveurs" -ForegroundColor Gray
+Write-Host "  - Ou executer: Stop-DevServers (voir plus bas)" -ForegroundColor Gray
 
 Write-Host ""
-Write-Host "════════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "====================================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Fonction pour arrêter tous les serveurs
+# Fonction pour arreter tous les serveurs
 function Stop-DevServers {
-    Write-Host "🛑 Arrêt des serveurs..." -ForegroundColor Yellow
+    Write-Host "Arret des serveurs..." -ForegroundColor Yellow
     foreach ($p in $processes) {
         try {
             $p.Process | Stop-Process -Force
-            Write-Host "✅ $($p.Name) arrêté" -ForegroundColor Green
+            Write-Host "[OK] $($p.Name) arrete" -ForegroundColor Green
         }
         catch {
-            Write-Host "⚠️  Erreur lors de l'arrêt de $($p.Name)" -ForegroundColor Red
+            Write-Host "[WARNING] Erreur lors de l'arret de $($p.Name)" -ForegroundColor Red
         }
     }
 }
 
 # Garder le script actif et surveiller les processus
-Write-Host "💡 Astuce: Utilisez 'Stop-DevServers' pour arrêter tous les serveurs" -ForegroundColor Blue
+Write-Host "Astuce: Utilisez 'Stop-DevServers' pour arreter tous les serveurs" -ForegroundColor Blue
 Write-Host ""
 
 # Attendre que tous les processus se terminent
@@ -129,11 +129,11 @@ while ($true) {
     
     if ($allExited) {
         Write-Host ""
-        Write-Host "⚠️  Tous les serveurs se sont arrêtés" -ForegroundColor Yellow
+        Write-Host "[WARNING] Tous les serveurs se sont arretes" -ForegroundColor Yellow
         break
     }
     
     Start-Sleep -Seconds 5
 }
 
-Write-Host "👋 Script de développement terminé" -ForegroundColor Cyan
+Write-Host "Script de developpement termine" -ForegroundColor Cyan

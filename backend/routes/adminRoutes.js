@@ -2,8 +2,8 @@
 // Routes d'administration pour le système d'amélioration continue
 
 const express = require('express');
-const { auth } = require('../middlewares/auth');
-const { isAdmin } = require('../middlewares/isAdmin');
+const auth = require('../middlewares/auth');
+const isAdmin = require('../middlewares/isAdmin');
 
 module.exports = (config = {}) => {
   const router = express.Router();
