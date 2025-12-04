@@ -16,7 +16,13 @@
         "db:migrate:messages:test": "psql -U postgres -d velo_platform_test -f ./sql/patch_add_conversations_and_messages.sql",
         "metrics:health": "curl http://localhost:5000/api/metrics/health | jq .",
         "metrics:detailed": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/metrics/metrics | jq .",
-        "metrics:recommendations": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/metrics/recommendations | jq ."
+        "metrics:recommendations": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/metrics/recommendations | jq .",
+        "admin:status": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/admin/ci/status | jq .",
+        "admin:auto-fixes": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/admin/auto-fixes | jq .",
+        "admin:predictions": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/admin/predictions | jq .",
+        "admin:health": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/admin/ci/system-health | jq .",
+        "admin:anomalies": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/admin/ci/anomalies-detected | jq .",
+        "admin:github-issues": "curl -H 'Authorization: Bearer $TOKEN' http://localhost:5000/api/admin/github-issues | jq ."
     },
     "dependencies": {
         "axios": "^1.13.2",

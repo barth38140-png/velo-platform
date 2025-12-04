@@ -1,5 +1,10 @@
 # Instructions pour GitHub Copilot
 
+## Règle de documentation IA
+- Toute suggestion, documentation ou prompt généré par un agent IA doit être intégré dans le README.md principal (racine) ou dans le README.md du dossier concerné.
+- Il est interdit de créer ou enrichir d'autres fichiers .md.
+- Le README.md central fait office de journal de bord et de référence unique.
+
 ## Langue
 - **Toujours communiquer en français** pour les réponses, commentaires et explications
 - Utiliser le français pour la documentation et les messages de commit

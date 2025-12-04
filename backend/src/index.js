@@ -22,10 +22,25 @@ const { metricsMiddleware, getHealthMetrics } = require('./monitoring');
 const { ContinuousImprovement } = require('./continuousImprovement');
 const { AnomalyDetector } = require('./anomalyDetector');
 const { NotificationService } = require('./notifications');
+const { AutoFixer } = require('./autoFixer');
+const { GitHubIntegration } = require('./githubIntegration');
+const { PredictiveAnalytics } = require('./predictiveAnalytics');
 
 // Initialiser le monitoring continu
 const anomalyDetector = new AnomalyDetector();
 const notificationService = new NotificationService();
+const autoFixer = new AutoFixer({
+  enabled: process.env.AUTO_FIXER_ENABLED !== 'false',
+  dryRun: process.env.AUTO_FIXER_DRY_RUN === 'true'
+});
+const githubIntegration = new GitHubIntegration({
+  token: process.env.GITHUB_TOKEN,
+  owner: process.env.GITHUB_OWNER,
+  repo: process.env.GITHUB_REPO
+});
+const predictiveAnalytics = new PredictiveAnalytics({
+  enabled: process.env.PREDICTIVE_ANALYTICS_ENABLED !== 'false'
+});
 const continuousImprovement = new ContinuousImprovement({
   anomalyDetector,
   notifications: notificationService,
@@ -281,6 +296,20 @@ try {
   logger.error({ err: e }, '[startup] failed to mount /api/metrics');
 }
 
+// Mount admin routes for continuous improvement system
+try {
+  const adminRoutes = require('../routes/adminRoutes')({
+    continuousImprovement,
+    autoFixer,
+    githubIntegration,
+    predictiveAnalytics
+  });
+  app.use('/api/admin', adminRoutes);
+  logger.info('[startup] mounted /api/admin with CI components');
+} catch (e) {
+  logger.error({ err: e }, '[startup] failed to mount /api/admin');
+}
+
 // NOTE: /api/velos alias removed to avoid duplicate mounts
 
 
@@ -391,6 +420,60 @@ if (require.main === module) {
     .then(async (server) => {
       // Démarrer le monitoring continu
       await continuousImprovement.start();
+      logger.info('✅ Système d\'amélioration continue activé');
+
+      // Démarrer les prédictions ML si activées
+      if (predictiveAnalytics.config.enabled) {
+        // Générer les prédictions toutes les heures
+        setInterval(async () => {
+          try {
+            const forecasts = await predictiveAnalytics.generateForecast();
+            if (forecasts) {
+              logger.debug({ forecasts }, '🔮 Prédictions ML générées');
+              
+              // Vérifier les recommandations et créer des issues si nécessaire
+              const recommendations = predictiveAnalytics.generateRecommendations();
+              if (recommendations.length > 0 && githubIntegration.enabled) {
+                for (const rec of recommendations.filter(r => r.priority === 1)) {
+                  logger.info(`📝 Recommandation: ${rec.title}`);
+                }
+              }
+            }
+          } catch (error) {
+            logger.error({ error }, 'Erreur lors de la génération des prédictions');
+          }
+        }, 60 * 60 * 1000); // Toutes les heures
+      }
+
+      // Gérer les anomalies détectées avec auto-fixes
+      setInterval(async () => {
+        try {
+          const metrics = continuousImprovement.calculateMetrics();
+          const anomalies = anomalyDetector.analyze(metrics);
+
+          if (anomalies.length > 0) {
+            logger.warn({ anomalies }, `🚨 ${anomalies.length} anomalie(s) détectée(s)`);
+
+            // Exécuter les auto-fixes appropriés
+            const fixResults = await autoFixer.executeAutoFixes(anomalies);
+            if (fixResults.length > 0) {
+              logger.info({ fixResults }, `✅ ${fixResults.filter(f => f.status === 'success').length} auto-fix(es) exécuté(s)`);
+            }
+
+            // Créer des issues GitHub pour les anomalies critiques
+            if (githubIntegration.enabled) {
+              for (const anomaly of anomalies.filter(a => a.severity === 'CRITICAL')) {
+                const issueResult = await githubIntegration.createIssueForAnomaly(anomaly);
+                if (issueResult.created) {
+                  logger.info(`📝 Issue GitHub créée: #${issueResult.issueNumber}`);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          logger.error({ error }, 'Erreur lors du traitement des anomalies');
+        }
+      }, 5 * 60 * 1000); // Toutes les 5 minutes
 
       // Gestion de l'arrêt gracieux
       process.on('SIGTERM', async () => {

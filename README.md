@@ -47,18 +47,8 @@ npm install
 ```
 
 Créer un fichier `.env` :
-```env
-PORT=3010
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
 DB_PASSWORD=votre_mot_de_passe
 DB_NAME=velo_platform
-JWT_SECRET=votre_secret_jwt
-NODE_ENV=development
-```
-
-Initialiser la base de données :
 ```bash
 # Créer la base
 psql -U postgres -c "CREATE DATABASE velo_platform;"
