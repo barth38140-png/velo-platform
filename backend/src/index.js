@@ -501,6 +501,15 @@ if (require.main === module) {
     });
 }
 
+/* Mount skills API for shared skill suggestions */
+try {
+  const skillRoutes = require('../routes/skillRoutes');
+  app.use('/api/skills', skillRoutes);
+  logger.info('[startup] mounted /api/skills');
+} catch (e) {
+  logger.error({ err: e }, '[startup] failed to mount /api/skills');
+}
+
 module.exports = { start, stop, app };
 
 

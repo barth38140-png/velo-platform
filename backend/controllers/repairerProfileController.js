@@ -5,9 +5,9 @@ const logger = require('../src/logger');
  * Créer ou mettre à jour un profil de réparateur
  */
 async function createRepaireProfile(req, res) {
-    logger.debug({ body: req.body, userId }, 'Profil réparateur - payload reçu');
   const { skills, bio, service_radius_km, is_available, location_lat, location_lng, location_address } = req.body;
   const userId = req.user.id;
+  logger.debug({ body: req.body, userId }, 'Profil réparateur - payload reçu');
 
   try {
     // Vérifier que c'est un réparateur

@@ -5,6 +5,7 @@ import SkillsInput from "../components/SkillsInput";
 import MapPicker from '../components/MapPicker.jsx';
 import { useAuth } from '../context/AuthContext';
 import { authService, repairerService } from '../services/api';
+import { fetchSkills, addSkill } from '../services/api';
 import '../styles/ProfileModern.css';
 
 export function Profile() {
@@ -18,20 +19,20 @@ export function Profile() {
     service_radius_km: 10,
     is_available: true
   });
-  // Suggestions de compétences courantes
-  const skillSuggestions = [
-    'freinage',
-    'purge hydraulique',
-    'transmission',
-    'diagnostic',
-    'réglage dérailleur',
-    'changement de pneu',
-    'entretien fourche',
-    'montage vélo',
-    'électricité',
-      'réglage suspension',
-      'réglage suspension'
-    ]; // Fin du tableau skillSuggestions
+  // Suggestions de compétences dynamiques
+  const [skillSuggestions, setSkillSuggestions] = useState([]);
+    // Charger les suggestions de compétences partagées
+    useEffect(() => {
+      async function loadSkills() {
+        try {
+          const skills = await fetchSkills();
+          setSkillSuggestions(skills.map(s => s.name));
+        } catch (e) {
+          // Optionnel : logger ou ignorer
+        }
+      }
+      loadSkills();
+    }, []);
   
     // États pour la gestion du formulaire
     const [isEditing, setIsEditing] = useState(false);
@@ -63,11 +64,48 @@ export function Profile() {
           if (repairerId) {
             try {
               const { data: repairerData } = await repairerService.getRepairerProfile(repairerId);
+              // Correction : utiliser la clé 'repairer' si présente
+              const rep = repairerData.repairer || repairerData;
+              // Correction robuste : désérialisation multi-niveaux pour garantir un tableau de chaînes
+              let skills = [];
+              if (Array.isArray(rep.skills)) {
+                skills = rep.skills;
+              } else if (typeof rep.skills === 'string') {
+                let str = rep.skills;
+                try {
+                  // Si la string est un JSON imbriqué, on désérialise plusieurs fois
+                  while (typeof str === 'string') {
+                    const parsed = JSON.parse(str);
+                    if (Array.isArray(parsed)) {
+                      skills = parsed;
+                      break;
+                    } else if (typeof parsed === 'string') {
+                      str = parsed;
+                    } else {
+                      break;
+                    }
+                  }
+                  // Si skills n'est toujours pas un tableau, fallback
+                  if (!Array.isArray(skills) || skills.length === 0) {
+                    // Séparer par virgule ou crochets
+                    let cleaned = rep.skills.replace(/\[|\]|"|'/g,"");
+                    skills = cleaned.split(',').map(s => s.trim()).filter(Boolean);
+                  }
+                } catch {
+                  // fallback : séparer par virgule si string simple
+                  let cleaned = rep.skills.replace(/\[|\]|"|'/g,"");
+                  skills = cleaned.split(',').map(s => s.trim()).filter(Boolean);
+                }
+              }
+              // Filtrage des doublons (unicité insensible à la casse)
+              skills = skills.filter((item, idx, arr) =>
+                arr.findIndex(s => s.toLowerCase() === item.toLowerCase()) === idx
+              );
               setRepairerProfile({
-                skills: Array.isArray(repairerData.skills) ? repairerData.skills : [],
-                bio: repairerData.bio || '',
-                service_radius_km: repairerData.service_radius_km || 10,
-                is_available: typeof repairerData.is_available === 'boolean' ? repairerData.is_available : true
+                skills,
+                bio: rep.bio || '',
+                service_radius_km: rep.service_radius_km || 10,
+                is_available: typeof rep.is_available === 'boolean' ? rep.is_available : true
               });
             } catch (e) {
               setError("Impossible de charger le profil réparateur (ID non trouvé ou API vide). Veuillez vérifier l'API ou contacter un admin.");
@@ -203,12 +241,18 @@ export function Profile() {
                       {isEditing ? (
                         <div>
                           <div style={{display:'flex',flexWrap:'wrap',gap:8,minHeight:36,marginBottom:8}}>
-                            {repairerProfile.skills.map((skill, idx) => (
-                              <span key={skill+idx} style={{background:'#e0e7ef',color:'#764ba2',borderRadius:8,padding:'4px 10px',display:'flex',alignItems:'center',fontWeight:500,gap:4}}>
-                                {skill}
-                                <button type="button" aria-label="Supprimer" style={{background:'none',border:'none',color:'#764ba2',marginLeft:4,cursor:'pointer',fontSize:'1em'}} onClick={() => setRepairerProfile(p => ({ ...p, skills: p.skills.filter((s, i) => i !== idx) }))}>×</button>
-                              </span>
-                            ))}
+                            {repairerProfile.skills.length === 0 ? (
+                              <span style={{color:'#aaa'}}>Aucune compétence</span>
+                            ) : repairerProfile.skills.map((skill, idx) => {
+                              // Nettoyage de la compétence pour enlever accolades et espaces
+                              const cleanSkill = skill.replace(/^[{\[\(]+|[}\]\)]+$/g, '').trim();
+                              return (
+                                <span key={skill+idx} style={{background:'#d1e7dd',color:'#176c3a',borderRadius:12,padding:'6px 14px',display:'flex',alignItems:'center',fontWeight:500,gap:4,boxShadow:'0 1px 4px #d1e7dd'}}>
+                                  {cleanSkill}
+                                  <button type="button" aria-label="Supprimer" style={{background:'none',border:'none',color:'#176c3a',marginLeft:4,cursor:'pointer',fontSize:'1em'}} onClick={() => setRepairerProfile(p => ({ ...p, skills: p.skills.filter((s, i) => i !== idx) }))}>×</button>
+                                </span>
+                              );
+                            })}
                           </div>
                           <input
                             className="profile-modern-input"
@@ -219,9 +263,13 @@ export function Profile() {
                             onKeyDown={e => {
                               if ((e.key === 'Enter' || e.key === ',') && skillInput.trim()) {
                                 e.preventDefault();
-                                const val = skillInput.trim();
-                                if (val && !repairerProfile.skills.includes(val)) {
+                                let val = skillInput.trim();
+                                val = val.replace(/^[{\[\(]+|[}\]\)]+$/g, '').trim();
+                                const exists = repairerProfile.skills.some(s => s.toLowerCase() === val.toLowerCase());
+                                if (val && !exists) {
                                   setRepairerProfile(p => ({ ...p, skills: [...p.skills, val] }));
+                                  // Ajout côté backend si nouvelle
+                                  addSkill(val).catch(() => {});
                                 }
                                 setSkillInput('');
                               }
@@ -231,8 +279,12 @@ export function Profile() {
                           />
                           <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
                             {skillSuggestions.filter(s => !repairerProfile.skills.includes(s) && (!skillInput || s.toLowerCase().includes(skillInput.toLowerCase()))).slice(0,6).map(s => (
-                              <button key={s} type="button" style={{background:'#f5f6fa',color:'#764ba2',border:'1px solid #e0e7ef',borderRadius:8,padding:'3px 10px',marginBottom:2,cursor:'pointer',fontSize:'0.98em'}} onClick={() => {
-                                setRepairerProfile(p => ({ ...p, skills: [...p.skills, s] }));
+                              <button key={s} type="button" style={{background:'#e0e7ef',color:'#764ba2',border:'1px solid #d1e7dd',borderRadius:12,padding:'5px 12px',marginBottom:2,cursor:'pointer',fontSize:'0.98em'}} onClick={() => {
+                                const exists = repairerProfile.skills.some(skill => skill.toLowerCase() === s.toLowerCase());
+                                if (!exists) {
+                                  setRepairerProfile(p => ({ ...p, skills: [...p.skills, s] }));
+                                  addSkill(s).catch(() => {});
+                                }
                                 setSkillInput('');
                               }}>{s}</button>
                             ))}
@@ -240,22 +292,32 @@ export function Profile() {
                         </div>
                       ) : (
                         <div className="profile-modern-input" style={{background:'#f5f6fa',minHeight:32,display:'flex',flexWrap:'wrap',gap:8}}>
-                          {repairerProfile.skills.length === 0 ? <span style={{color:'#aaa'}}>Aucune compétence</span> : repairerProfile.skills.map((skill, idx) => (
-                            <span key={skill+idx} style={{background:'#e0e7ef',color:'#764ba2',borderRadius:8,padding:'4px 10px',fontWeight:500}}>{skill}</span>
-                          ))}
+                          {repairerProfile.skills.length === 0 ? (
+                            <span style={{color:'#aaa'}}>Aucune compétence</span>
+                          ) : repairerProfile.skills.map((skill, idx) => {
+                            // Nettoyage de la compétence pour enlever accolades et espaces
+                            const cleanSkill = skill.replace(/^[{\[\(]+|[}\]\)]+$/g, '').trim();
+                            return (
+                              <span key={skill+idx} style={{background:'#d1e7dd',color:'#176c3a',borderRadius:12,padding:'6px 14px',fontWeight:500,boxShadow:'0 1px 4px #d1e7dd'}}>{cleanSkill}</span>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
                     <div>
                       <label className="profile-modern-label">Bio</label>
                       {isEditing ? (
-                        <textarea
-                          className="profile-modern-input"
-                          value={repairerProfile.bio}
-                          onChange={e => setRepairerProfile(p => ({ ...p, bio: e.target.value }))}
-                          rows={2}
-                          maxLength={200}
-                        />
+                        <div style={{position:'relative'}}>
+                          <textarea
+                            className="profile-modern-input"
+                            value={repairerProfile.bio}
+                            onChange={e => setRepairerProfile(p => ({ ...p, bio: e.target.value }))}
+                            rows={3}
+                            maxLength={200}
+                            style={{paddingRight:'60px'}}
+                          />
+                          <span style={{position:'absolute',right:8,top:8,fontSize:'0.95em',color:'#888'}}>{repairerProfile.bio.length}/200</span>
+                        </div>
                       ) : (
                         <div className="profile-modern-input" style={{background:'#f5f6fa',minHeight:32}}>{repairerProfile.bio}</div>
                       )}
@@ -294,7 +356,7 @@ export function Profile() {
                       <>
                         <button
                           className="profile-modern-btn"
-                          style={{background:'linear-gradient(90deg,#764ba2,#667eea)',color:'#fff',fontWeight:600,padding:'12px 28px'}}
+                          style={{background:'linear-gradient(90deg,#764ba2,#667eea)',color:'#fff',fontWeight:600,padding:'12px 28px',transition:'0.2s',boxShadow:'0 2px 8px #764ba233'}}
                           onClick={async () => {
                             setSaving(true);
                             setError('');
@@ -305,8 +367,19 @@ export function Profile() {
                               setSaving(false);
                               return;
                             }
-                                    // Suppression de la validation bloquante sur skills et bio
                             try {
+                              // Log du payload pour debug
+                              const userId = (profile && profile.role === 'repairer' && profile.email) ? (user?.id || user?.user_id || user?._id) : undefined;
+                              console.debug('[DEBUG] Payload envoyé à createProfile:', {
+                                user_id: userId,
+                                skills: repairerProfile.skills,
+                                bio: repairerProfile.bio,
+                                service_radius_km: repairerProfile.service_radius_km,
+                                is_available: repairerProfile.is_available,
+                                location_lat: null,
+                                location_lng: null,
+                                location_address: ''
+                              });
                               await repairerService.createProfile(
                                 repairerProfile.skills,
                                 repairerProfile.bio,
@@ -314,24 +387,32 @@ export function Profile() {
                                 repairerProfile.is_available,
                                 null,
                                 null,
-                                ''
+                                '',
+                                userId
                               );
                               setSuccess('Profil réparateur mis à jour !');
                               setIsEditing(false);
-                              // Recharge les données depuis l'API pour cohérence
                               await loadProfile();
                             } catch (e) {
-                              setError('Erreur lors de la sauvegarde.');
+                              // Extraction du message d'erreur du backend si disponible
+                              let apiError = 'Erreur lors de la sauvegarde.';
+                              if (e?.response?.data?.error) {
+                                apiError = e.response.data.error;
+                              } else if (e?.response?.data?.errors && Array.isArray(e.response.data.errors) && e.response.data.errors.length > 0) {
+                                // Si le backend retourne un tableau d'erreurs
+                                apiError = e.response.data.errors.map(err => err.msg).join(' | ');
+                              }
+                              setError(apiError);
                             }
                             setSaving(false);
                           }}
                           disabled={saving}
                         >
-                          💾 Enregistrer
+                          <span role="img" aria-label="enregistrer" style={{marginRight:8}}>💾</span> Enregistrer
                         </button>
                         <button
                           className="profile-modern-btn"
-                          style={{background:'#eee',color:'#764ba2',fontWeight:600,padding:'12px 28px'}}
+                          style={{background:'#eee',color:'#764ba2',fontWeight:600,padding:'12px 28px',transition:'0.2s'}}
                           onClick={() => {
                             setIsEditing(false);
                             setError('');
@@ -344,13 +425,19 @@ export function Profile() {
                         </button>
                       </>
                     ) : (
-                      <button className="profile-modern-btn" style={{fontSize:'1.08em',padding:'12px 32px',display:'flex',alignItems:'center',gap:8}} onClick={() => setIsEditing(true)}>
+                      <button className="profile-modern-btn" style={{fontSize:'1.08em',padding:'12px 32px',display:'flex',alignItems:'center',gap:8,background:'linear-gradient(90deg,#764ba2,#667eea)',color:'#fff',fontWeight:600,boxShadow:'0 2px 8px #764ba233',transition:'0.2s'}} onClick={() => setIsEditing(true)}>
                         <span role="img" aria-label="éditer">✏️</span> Modifier mon profil
                       </button>
                     )}
                   </div>
-                  {success && <div style={{color:'#388e3c',marginTop:18,textAlign:'center',fontWeight:500}}>{success}</div>}
-                  {error && <div style={{color:'#e53935',marginTop:12,textAlign:'center',fontWeight:500}}>{error}</div>}
+                  {success && (
+                    <div style={{color:'#388e3c',marginTop:18,textAlign:'center',fontWeight:500,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+                      <span role="img" aria-label="succès">✅</span>{success}
+                    </div>
+                  )}
+                  {error && (
+                    <div style={{color:'#e53935',marginTop:12,textAlign:'center',fontWeight:500}}>{error}</div>
+                  )}
                 </>
               )}
             </>
