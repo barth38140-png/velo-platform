@@ -23,7 +23,7 @@ describe('listingsController', () => {
       req.body = { title: '', description: '', price: null };
       await listingsController.createListing(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: expect.any(String) });
+      expect(res.json).toHaveBeenCalledWith({ error: 'missing_repairer_or_title', message: 'ID réparateur et titre requis' });
     });
 
     it('should return 500 on db error', async () => {
@@ -31,7 +31,7 @@ describe('listingsController', () => {
       db.query.mockRejectedValueOnce(new Error('fail'));
       await listingsController.createListing(req, res);
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ error: 'internal_error' });
+      expect(res.json).toHaveBeenCalledWith({ error: 'internal_error', message: 'Erreur serveur' });
     });
   });
 
@@ -48,7 +48,7 @@ describe('listingsController', () => {
       db.query.mockRejectedValueOnce(new Error('fail'));
       await listingsController.getListings(req, res);
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ error: 'internal_error' });
+      expect(res.json).toHaveBeenCalledWith({ error: 'internal_error', message: 'Erreur serveur' });
     });
   });
 });

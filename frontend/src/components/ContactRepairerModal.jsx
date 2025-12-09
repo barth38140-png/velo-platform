@@ -47,7 +47,7 @@ export const ContactRepairerModal = ({ repairer, repairs = [], onClose, onSubmit
           </label>
           <div className="modal-actions">
             <button type="button" className="secondary" onClick={onClose} disabled={submitting}>Annuler</button>
-            <button type="submit" className="primary" disabled={submitting || !message.trim() || !repairId}>
+            <button type="submit" className="primary" disabled={submitting || !message.trim()}>
               {submitting ? 'Envoi…' : 'Envoyer'}
             </button>
           </div>

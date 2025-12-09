@@ -1,0 +1,6 @@
+/* Patch de compatibilité user-select pour Leaflet et SVG */
+.leaflet-overlay-pane svg {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}

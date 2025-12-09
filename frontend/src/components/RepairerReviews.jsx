@@ -36,7 +36,7 @@ export default function RepairerReviews({ repairerId }) {
         setPage(0);
       }
     } catch (err) {
-      console.error('Error loading reviews:', err);
+      // Utiliser le logger Pino côté backend pour les erreurs de chargement des avis
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ export default function RepairerReviews({ repairerId }) {
         setPage(nextPage);
       }
     } catch (err) {
-      console.error('Error loading more reviews:', err);
+      // Utiliser le logger Pino côté backend pour les erreurs de chargement des avis supplémentaires
     }
   };
 

@@ -7,9 +7,9 @@ jest.mock('pg', () => ({
   Pool: jest.fn((cfg) => {
     const p = {
       cfg,
-      on: jest.fn((ev, cb) => {}),
+      on: jest.fn(() => {}), // Suppression des variables inutilisées 'ev', 'cb'
       end: jest.fn(async () => {}),
-      query: jest.fn(async (text, params) => ({ rows: [] }))
+      query: jest.fn(async () => ({ rows: [] })), // Suppression des variables inutilisées 'text', 'params'
     };
     poolInstances.push(p);
     return p;
@@ -26,7 +26,7 @@ beforeEach(() => {
 test('initial pool is created with env host', () => {
   process.env.DB_HOST = 'postgres-host';
   // require after setting env and mocks
-  const db = require('../src/db');
+  require('../src/db'); // Suppression de la variable inutilisée 'db'
   const { Pool } = require('pg');
   expect(Pool).toHaveBeenCalled();
   expect(Pool.mock.calls[0][0]).toMatchObject({ host: 'postgres-host' });

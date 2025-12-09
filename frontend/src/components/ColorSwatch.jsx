@@ -11,7 +11,7 @@ export default function ColorSwatch({ color, size = 18, selected = false, onClic
     borderRadius: 9999,
     padding: 4,
     background: '#fff',
-    border: selected ? `2px solid var(--primary)` : '1px solid #ccc',
+    border: selected ? '2px solid var(--primary)' : '1px solid #ccc',
     boxShadow: selected ? '0 6px 14px rgba(46,124,255,0.10)' : 'none',
     cursor: 'pointer',
     transition: 'transform .18s ease, box-shadow .18s ease, border-color .18s ease'

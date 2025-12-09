@@ -29,6 +29,7 @@ describe('bookingsController extra error branches', () => {
     const req = { body: { listing_id: 1, client_id: 2, start_date: '2025-01-01', end_date: '2025-01-02' } };
     const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
     await controller.createBooking(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ success: false, error: 'internal_error', message: 'Erreur interne du serveur' });
   });
 });

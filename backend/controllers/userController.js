@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const logger = require('../src/logger');
 const { logAdminAction } = require('../src/audit');
-
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS || '10', 10);
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
 
@@ -20,7 +19,7 @@ async function registerUser(req, res) {
   try {
     // Vérifier si l'email existe déjà
     const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (existingUser.rows.length > 0) {
+      if (existingUser.rows.length > 0) { // Suppression de la variable non utilisée 'err'
       return res.status(409).json({ error: 'Email déjà utilisé' });
     }
 
@@ -101,7 +100,7 @@ async function loginUser(req, res) {
         role: user.role
       }
     });
-  } catch (err) {
+  } catch {
     logger.warn({ email }, 'loginUser catch');
     return res.status(500).json({ error: 'Erreur serveur' });
   }
@@ -112,7 +111,7 @@ async function loginUser(req, res) {
  */
 async function getUsers(req, res) {
   try {
-    const r = await pool.query('SELECT id, email, name, phone, role, created_at FROM users ORDER BY id DESC LIMIT 50');
+    const r = await pool.query('SELECT id, email, name, phone, role, created_at, location_lat, location_lng FROM users ORDER BY id DESC LIMIT 50');
     res.json({ success: true, users: r.rows });
   } catch (e) {
     logger.error({ err: e }, 'getUsers error');
@@ -154,20 +153,32 @@ async function getProfile(req, res) {
   }
 }
 
-async function elevateToAdmin(req, res) {
+async function elevateToAdmin(req, res, next) {
   try {
     if (process.env.NODE_ENV === 'production') {
-      return res.status(403).json({ error: 'Accès interdit' });
+      const err = new Error('Accès interdit');
+      err.statusCode = 403;
+      return next(err);
     }
     const secret = req.headers['x-admin-secret'];
     const expected = process.env.ADMIN_ELEVATE_SECRET || 'dev-elevate';
     if (!secret || secret !== expected) {
-      return res.status(403).json({ error: 'Accès interdit' });
+      const err = new Error('Accès interdit');
+      err.statusCode = 403;
+      return next(err);
     }
     const userId = req.user && req.user.id;
-    if (!userId) return res.status(401).json({ error: 'Non authentifié' });
+    if (!userId) {
+      const err = new Error('Non authentifié');
+      err.statusCode = 401;
+      return next(err);
+    }
     const r = await pool.query('UPDATE users SET role = $1 WHERE id = $2 RETURNING id, email, name, phone, role', ['admin', userId]);
-    if (r.rows.length === 0) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    if (r.rows.length === 0) {
+      const err = new Error('Utilisateur introuvable');
+      err.statusCode = 404;
+      return next(err);
+    }
     const user = r.rows[0];
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     // Audit log
@@ -176,7 +187,8 @@ async function elevateToAdmin(req, res) {
     res.json({ success: true, token, user });
   } catch (e) {
     logger.error({ err: e, userId: req.user?.id }, 'elevateToAdmin error');
-    res.status(500).json({ error: 'Erreur serveur' });
+    e.statusCode = 500;
+    return next(e);
   }
 }
 
@@ -187,7 +199,7 @@ async function getAllUsersAdmin(req, res) {
   try {
     const { status = 'all', role = 'all', search = '', limit = 50, offset = 0 } = req.query;
     
-    let query = 'SELECT id, email, name, phone, role, status, created_at, last_login FROM users WHERE 1=1';
+    let query = 'SELECT id, email, name, phone, role, status, created_at, last_login, location_lat, location_lng FROM users WHERE 1=1';
     const params = [];
     
     if (status !== 'all') {
@@ -269,50 +281,68 @@ async function verifyRepairerProfile(req, res) {
   try {
     const { userId } = req.params;
     const { verified, verificationNotes } = req.body;
+        const result = await pool.query(
+          'UPDATE users SET verified = $1, verification_notes = $2, verified_at = NOW(), verified_by = $3 WHERE id = $4 AND role = $5 RETURNING id, email, verified',
+          [verified, verificationNotes || null, req.user.id, userId, 'repairer']
+        );
     
-    const result = await pool.query(
-      'UPDATE users SET verified = $1, verification_notes = $2, verified_at = NOW(), verified_by = $3 WHERE id = $4 AND role = $5 RETURNING id, email, verified',
-      [verified, verificationNotes || null, req.user.id, userId, 'repairer']
-    );
+        if (result.rows.length === 0) {
+          return res.status(404).json({ error: 'Utilisateur réparateur non trouvé' });
+        }
     
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Réparateur non trouvé' });
+        // Log d'audit
+        await logAdminAction(req.user.id, 'REPAIRER_PROFILE_VERIFIED', `Repairer ${userId} verified: ${verified}`, { userId, verified, verificationNotes });
+    
+        return res.json({
+          success: true,
+          user: result.rows[0],
+          message: verified
+            ? 'Profil réparateur vérifié avec succès'
+            : 'Profil réparateur marqué comme non vérifié'
+        });
+      } catch (err) {
+        logger.error({ err }, 'verifyRepairerProfile error');
+        return res.status(500).json({ error: 'Erreur serveur' });
+      }
     }
     
-    await logAdminAction(req.user.id, 'REPAIRER_VERIFICATION', `Repairer ${userId} verification: ${verified}`, { userId, verified });
-    
-    return res.json({
-      success: true,
-      user: result.rows[0],
-      message: verified ? 'Réparateur vérifié' : 'Vérification annulée'
-    });
+    /**
+ * Met à jour la géolocalisation d'un utilisateur (réparateur)
+ * @route PUT /users/:id/location
+ */
+async function updateUserLocation(req, res) {
+  const userId = parseInt(req.params.id, 10);
+  const { lat, lng } = req.body;
+  if (!userId || typeof lat !== 'number' || typeof lng !== 'number') {
+    return res.status(400).json({ error: 'Paramètres invalides' });
+  }
+  try {
+    await require('../models/userModel').updateUserLocation(userId, lat, lng);
+    logger.info({ userId, lat, lng }, 'updateUserLocation');
+    res.json({ success: true });
   } catch (err) {
-    logger.error({ err }, 'verifyRepairerProfile error');
-    return res.status(500).json({ error: 'Erreur serveur' });
+    logger.error({ err, userId }, 'updateUserLocation error');
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 
 /**
- * Admin: Obtenir les utilisateurs en attente de vérification
+ * Admin: Récupérer les utilisateurs en attente de vérification
  */
 async function getPendingVerifications(req, res) {
   try {
     const result = await pool.query(
-      'SELECT id, email, name, phone, role, verified, created_at FROM users WHERE role = $1 AND verified = false ORDER BY created_at ASC',
+      'SELECT id, email, name, role, verified, verification_notes FROM users WHERE role = $1 AND verified = false',
       ['repairer']
     );
-    
-    return res.json({
-      success: true,
-      pending: result.rows,
-      count: result.rows.length
-    });
+    res.json({ success: true, pending: result.rows });
   } catch (err) {
     logger.error({ err }, 'getPendingVerifications error');
-    return res.status(500).json({ error: 'Erreur serveur' });
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 }
 
+// Export des fonctions du contrôleur
 module.exports = {
   registerUser,
   loginUser,
@@ -322,6 +352,7 @@ module.exports = {
   getAllUsersAdmin,
   toggleUserStatus,
   verifyRepairerProfile,
-  getPendingVerifications
+  updateUserLocation,
+  getPendingVerifications,
 };
 

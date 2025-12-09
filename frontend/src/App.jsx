@@ -2,12 +2,16 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { ConfirmProvider } from './context/ConfirmContext';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { Dashboard } from './pages/Dashboard';
-import { Presentation } from './pages/Presentation';
-import AdminDashboard from './pages/AdminDashboard';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
+const Login = lazy(() => import('./pages/Login.jsx'));
+const Register = lazy(() => import('./pages/Register.jsx'));
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
+const Presentation = lazy(() => import('./pages/Presentation.jsx'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
 import './App.css';
+import Loader from './components/Loader';
+import './styles/Loader.css';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function ProtectedRoute({ children }) {
   const { token, loading } = useAuth();
@@ -26,6 +30,8 @@ function AdminRoute({ children }) {
 }
 
 function AppRoutes() {
+  const Repairers = React.lazy(() => import('./pages/Repairers.jsx'));
+  const RepairersMap = React.lazy(() => import('./pages/RepairersMap.jsx'));
   return (
     <Routes>
       <Route path="/presentation" element={<Presentation />} />
@@ -47,20 +53,47 @@ function AppRoutes() {
           </AdminRoute>
         }
       />
-      {/* Direct route to /demandes-offres removed: redirect to dashboard to force inline tab usage */}
+      <Route path="/repairers" element={<Repairers />} />
+      <Route path="/repairers/map" element={<RepairersMapWrapper />} />
       <Route path="/demandes-offres" element={<Navigate to="/dashboard" replace />} />
       <Route path="/" element={<Navigate to="/dashboard" />} />
     </Routes>
   );
 }
 
+// Wrapper pour passer les réparateurs via location.state
+import { useLocation } from 'react-router-dom';
+import RepairersMap from './pages/RepairersMap.jsx';
+const RepairersMapWrapper = () => {
+  const location = useLocation();
+  const repairers = location.state?.repairers || [];
+  return <React.Suspense fallback={<Loader message="Chargement de la carte..." />}><RepairersMap repairers={repairers} /></React.Suspense>;
+};
+
 function App() {
+  // Exemple d'état de chargement global
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simule un chargement initial (à remplacer par la logique réelle)
+    const timer = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Loader message="Chargement de la plateforme..." />;
+  }
+
   return (
     <Router>
       <AuthProvider>
         <ToastProvider>
           <ConfirmProvider>
-            <AppRoutes />
+            <ErrorBoundary>
+              <Suspense fallback={<Loader message="Chargement de la page..." />}> 
+                <AppRoutes />
+              </Suspense>
+            </ErrorBoundary>
           </ConfirmProvider>
         </ToastProvider>
       </AuthProvider>

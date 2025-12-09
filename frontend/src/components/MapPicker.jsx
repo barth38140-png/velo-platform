@@ -1,64 +1,133 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+// Composant pour forcer le flyTo sur la carte à chaque sélection d'adresse
+function FlyToHandler({ target, zoom, action }) {
+  const map = useMap();
+  useEffect(() => {
+    if (
+      target &&
+      typeof target.lat === 'number' &&
+      typeof target.lng === 'number' &&
+      !isNaN(target.lat) &&
+      !isNaN(target.lng) &&
+      zoom
+    ) {
+      map.flyTo([target.lat, target.lng], zoom, { animate: true, duration: 1.2 });
+    }
+    // eslint-disable-next-line
+  }, [action]);
+  return null;
+}
 import 'leaflet/dist/leaflet.css';
 import '../styles/MapPicker.css';
 
-// Fix default icon paths for Vite bundling
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
-
-function ClickHandler({ onSelect }) {
-  useMapEvents({
-    click(e) {
-      onSelect(e.latlng);
-    }
-  });
-  return null;
-}
-
-export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.3522 }, onChange, resetTrigger, showConfirm = true, showAddress = true, showSearch = true, showCoords = true }) {
-  const [marker, setMarker] = useState(initialPosition);
-  const [address, setAddress] = useState('');
-  const [loadingAddr, setLoadingAddr] = useState(false);
+function MapPicker(props) {
+    // Effet pour lancer le reverse geocode dès le premier render si initialPosition est fournie
+    useEffect(() => {
+      if (props.initialPosition && marker && typeof marker.lat === 'number' && typeof marker.lng === 'number') {
+        fetchAddress(marker.lat, marker.lng);
+      }
+      // Ce useEffect ne dépend que de l'initialisation
+      // eslint-disable-next-line
+    }, []);
+  // États principaux
   const [query, setQuery] = useState('');
+  const [marker, setMarker] = useState(props.initialPosition || null); // Initialisé avec initialPosition si fournie
+  const [shouldPan, setShouldPan] = useState(true); // Contrôle du recentrage
+  const [pendingZoom, setPendingZoom] = useState(null); // Zoom à appliquer lors d'une recherche
+  const [searchTarget, setSearchTarget] = useState(null); // Position à centrer lors d'une recherche
+  const [flyToAction, setFlyToAction] = useState(0); // Compteur pour forcer l'effet
+  const [address, setAddress] = useState('');
+  const [mapZoom, setMapZoom] = useState(13);
   const [results, setResults] = useState([]);
+  const [loadingAddr, setLoadingAddr] = useState(false);
+  const [hasSelected, setHasSelected] = useState(false);
   const searchRef = useRef(null);
+  const { onChange, resetTrigger, initialPosition } = props;
 
-  // explicit default icon to avoid missing/broken marker images
-  const defaultIcon = L.icon({
-    iconRetinaUrl: markerIcon2x,
-    iconUrl: markerIcon,
-    shadowUrl: markerShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    tooltipAnchor: [16, -28],
-    shadowSize: [41, 41]
-  });
-
+  // À l'ouverture, on récupère la position utilisateur ou fallback Grenoble
   useEffect(() => {
-    // reverse geocode initial position
-    fetchAddress(marker.lat, marker.lng);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    let isMounted = true;
+    if (typeof resetTrigger === 'undefined') return;
+    setQuery('');
+    setResults([]);
+    if (searchRef && searchRef.current) {
+      try { searchRef.current.value = ''; } catch { /* ignore DOM access errors */ }
+    }
+    let fallbackTimeout;
+    const fallback = () => {
+      if (isMounted) {
+        setMarker(props.initialPosition || { lat: 45.1885, lng: 5.7245 });
+        fetchAddress((props.initialPosition || { lat: 45.1885, lng: 5.7245 }).lat, (props.initialPosition || { lat: 45.1885, lng: 5.7245 }).lng);
+      }
+    };
+    if (navigator.geolocation) {
+      fallbackTimeout = setTimeout(fallback, 2000); // 2s max d'attente
+      navigator.geolocation.getCurrentPosition(pos => {
+        clearTimeout(fallbackTimeout);
+        if (isMounted) {
+          setMarker({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          fetchAddress(pos.coords.latitude, pos.coords.longitude);
+        }
+      }, fallback);
+    } else {
+      fallback();
+    }
+    return () => { isMounted = false; clearTimeout(fallbackTimeout); };
+  }, [resetTrigger]);
 
-  const onSelect = (latlng) => {
+  // Effet pour centrer la carte et placer le marker lors d'une géolocalisation
+  useEffect(() => {
+    // Si le trigger change et qu'une position valide est fournie, on centre la carte et place le marker
+    const pos = props.geolocatePosition;
+    if (
+      props.geolocateTrigger &&
+      pos &&
+      typeof pos.lat === 'number' &&
+      typeof pos.lng === 'number' &&
+      !isNaN(pos.lat) &&
+      !isNaN(pos.lng)
+    ) {
+      setMarker(pos);
+      setPendingZoom(16); // Zoom fort sur la position géolocalisée
+      setMapZoom(16);
+      setSearchTarget(pos);
+      setFlyToAction(f => f + 1);
+      setShouldPan(true);
+      fetchAddress(pos.lat, pos.lng);
+    }
+    // eslint-disable-next-line
+  }, [props.geolocateTrigger]);
+
+  // Sélection sur la carte
+  // Lors d'un clic sur la carte, on ne centre pas la carte
+  const handleMapClick = (latlng) => {
     setMarker(latlng);
+    setHasSelected(true);
+    setShouldPan(false); // Désactive le recentrage
     fetchAddress(latlng.lat, latlng.lng);
   };
 
+  // Handler pour clic sur la carte (interne)
+  function MapClickHandler({ onClick }) {
+    useMapEvents({
+      click: (e) => {
+        if (e && e.latlng) onClick({ lat: e.latlng.lat, lng: e.latlng.lng });
+      }
+    });
+    return null;
+  }
+
+  // Lors d'une recherche, on centre la carte
   const onSelectSearch = (item) => {
     const lat = parseFloat(item.lat);
     const lon = parseFloat(item.lon);
     const display = item.display_name || '';
+    setPendingZoom(16); // On veut zoomer lors d'une recherche
+    setMapZoom(16); // On force le zoom du MapContainer
+    setSearchTarget({ lat, lng: lon }); // On stocke la cible de recherche
+    setFlyToAction(f => f + 1); // Incrémente pour forcer l'effet
+    setShouldPan(true); // Active le recentrage AVANT de changer le marker
     setMarker({ lat, lng: lon });
     setResults([]);
     setQuery(display);
@@ -66,7 +135,7 @@ export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.352
     if (onChange) onChange({ lat, lng: lon, address: display });
   };
 
-  // search Nominatim
+  // Recherche Nominatim (auto-complétion)
   useEffect(() => {
     if (!query || query.length < 3) { setResults([]); return; }
     const ac = new AbortController();
@@ -83,6 +152,7 @@ export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.352
     return () => { clearTimeout(t); ac.abort(); };
   }, [query]);
 
+  // Récupération adresse depuis coordonnées
   const fetchAddress = async (lat, lng) => {
     setLoadingAddr(true);
     try {
@@ -91,64 +161,119 @@ export default function MapPicker({ initialPosition = { lat: 48.8566, lng: 2.352
       const data = await res.json();
       const display = data.display_name || '';
       setAddress(display);
-      if (onChange) onChange({ lat, lng, address: display });
+      // Appel systématique du callback onChange
+      if (typeof onChange === 'function') {
+        onChange({ lat, lng, address: display });
+      }
     } catch {
       setAddress('');
-      if (onChange) onChange({ lat, lng, address: '' });
+      if (typeof onChange === 'function') {
+        onChange({ lat, lng, address: '' });
+      }
     } finally {
       setLoadingAddr(false);
     }
   };
 
-  // Allow parent to request a reset of the picker (clears marker/address and re-fetches initial address)
+  // Ref pour contrôler la carte
+  const mapRef = useRef();
+
+  // Effet pour centrer la carte uniquement lors d'une recherche ou géoloc, jamais lors d'un clic utilisateur
+
+  // Effet pour centrer/zoomer même si le marker n'a pas changé (cas recherche sur même point)
+
+  // Effet dédié pour le centrage/zoom lors d'une recherche (toujours déclenché sur searchTarget/pendingZoom)
   useEffect(() => {
-    if (typeof resetTrigger === 'undefined') return;
-    setMarker(initialPosition);
-    setQuery('');
-    setResults([]);
-    if (searchRef && searchRef.current) {
-      try { searchRef.current.value = ''; } catch { /* ignore DOM access errors */ }
+    if (mapRef.current && pendingZoom && searchTarget) {
+      const map = mapRef.current;
+      map.flyTo([searchTarget.lat, searchTarget.lng], pendingZoom, { animate: true, duration: 1.2 });
+      setPendingZoom(null);
+      setSearchTarget(null);
+      setShouldPan(false);
     }
-    fetchAddress(initialPosition.lat, initialPosition.lng);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetTrigger]);
+     
+  }, [pendingZoom, searchTarget, flyToAction]);
+
+  // Effet pour panTo lors d'un clic utilisateur (shouldPan true mais sans searchTarget/pendingZoom)
+  useEffect(() => {
+    if (mapRef.current && shouldPan && marker && !pendingZoom && !searchTarget) {
+      const map = mapRef.current;
+      map.panTo([marker.lat, marker.lng]);
+      setShouldPan(false);
+    }
+  }, [shouldPan, marker, pendingZoom, searchTarget]);
+
+
+  // Calcul du centre à afficher (toujours défini et valide)
+  const isValidLatLng = v => v && typeof v.lat === 'number' && typeof v.lng === 'number' && !isNaN(v.lat) && !isNaN(v.lng);
+  const mapCenter = isValidLatLng(marker)
+    ? marker
+    : isValidLatLng(props.initialPosition)
+      ? props.initialPosition
+      : { lat: 45.1885, lng: 5.7245 };
+  // La clé doit rester constante pour éviter tout reset/recentrage de la carte
+  const mapKey = 'static-map-key';
 
   return (
     <div className="map-picker">
-      {showSearch && (
-        <div className="map-search">
-          <input data-cy="map-search-input" ref={searchRef} placeholder="Rechercher une adresse..." value={query} onChange={(e) => setQuery(e.target.value)} />
-          {results && results.length > 0 && (
-            <ul className="map-search-results" data-cy="map-search-results">
-              {results.slice(0, 8).map((r, i) => (
-                <li key={i} data-cy={`map-search-result-${i}`} onClick={() => onSelectSearch(r)}>
-                  {r.display_name}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-      <MapContainer center={[marker.lat, marker.lng]} zoom={13} style={{ height: 300, width: '100%' }}>
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      {/* Barre de recherche avec autocomplétion */}
+      <div style={{marginBottom:8, textAlign:'center', position:'relative'}}>
+        <input
+          ref={searchRef}
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Ville ou adresse pour centrer la carte"
+          style={{width:'80%', padding:'8px', borderRadius:'6px', border:'1px solid #dfecee', margin:'0 auto'}}
+          autoComplete="off"
         />
-        <ClickHandler onSelect={onSelect} />
-        {marker && <Marker position={[marker.lat, marker.lng]} icon={defaultIcon} />}
+        {results.length > 0 && (
+          <ul style={{position:'absolute', left:'10%', width:'80%', background:'#fff', border:'1px solid #dfecee', borderRadius:6, zIndex:1000, maxHeight:180, overflowY:'auto', margin:0, padding:0, listStyle:'none', boxShadow:'0 4px 16px rgba(0,0,0,0.12)'}}>
+            {results.map(item => (
+              <li key={item.place_id} style={{padding:'8px', cursor:'pointer'}} onClick={() => onSelectSearch(item)}>
+                {item.display_name}
+              </li>
+            ))}
+          </ul>
+        )}
+        <small className="micro" style={{color:'#888', display:'block', marginTop:4}}>Cliquez sur la carte pour sélectionner le lieu précis.</small>
+      </div>
+      {/* Carte Leaflet toujours affichée */}
+      <MapContainer
+        key={mapKey}
+        center={mapCenter}
+        zoom={mapZoom}
+        style={{ height: '300px', width: '100%' }}
+        whenCreated={mapInstance => { mapRef.current = mapInstance; }}
+      >
+        {/* Force le flyTo à chaque sélection d'adresse */}
+        <FlyToHandler target={searchTarget} zoom={pendingZoom} action={flyToAction} />
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <MapClickHandler onClick={handleMapClick} />
+        {isValidLatLng(marker) && <Marker position={marker} />}
       </MapContainer>
-
-      <div className="map-picker-meta">
-        {showCoords && (
-          <div className="coords">Lat: {marker.lat.toFixed(6)}, Lng: {marker.lng.toFixed(6)}</div>
-        )}
-        {showAddress && (
-          <div className="address">{loadingAddr ? 'Recherche d\'adresse...' : (address || 'Adresse non trouvée')}</div>
-        )}
-        {showConfirm && (
-          <button data-cy="map-pick-confirm" type="button" className="btn primary" onClick={() => onChange && onChange({ lat: marker.lat, lng: marker.lng, address })}>Confirmer la position</button>
-        )}
+      {/* Affichage de l'adresse récupérée */}
+      <div style={{textAlign:'center', marginTop:'10px'}}>
+        <span data-testid="address-display" style={{color:'#1976d2', fontWeight:500}}>{address}</span>
+      </div>
+      {/* Bouton de confirmation de la position */}
+      <div style={{textAlign:'center', marginTop:'12px'}}>
+        <button
+          type="button"
+          onClick={() => {
+            if (onChange && isValidLatLng(marker)) {
+              onChange({ lat: marker.lat, lng: marker.lng, address });
+            }
+          }}
+          aria-label="Confirmer la position"
+        >
+          Confirmer la position
+        </button>
       </div>
     </div>
   );
 }
+
+export default MapPicker;
+
+

@@ -64,14 +64,17 @@ app.use(helmet({
   }
 }));
 
-// Rate limiting global
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limite de 100 requêtes par IP
-  message: 'Trop de requêtes, veuillez réessayer plus tard',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Rate limiting global (désactivé en développement)
+let globalLimiter = (req, res, next) => next();
+if (process.env.NODE_ENV === 'production') {
+  globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limite de 100 requêtes par IP
+    message: 'Trop de requêtes, veuillez réessayer plus tard',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+}
 app.use(globalLimiter);
 
 // CORS configuration - restrict to known origins in production
@@ -168,13 +171,16 @@ app.use(metricsMiddleware);
 const userRoutes = require('../routes/userRoutes');
 app.use('/api/users', userRoutes);
 
-/* Rate limiting strict pour les routes sensibles */
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limite de 5 tentatives
-  message: 'Trop de tentatives de connexion, réessayez plus tard',
-  skipSuccessfulRequests: true,
-});
+/* Rate limiting strict pour les routes sensibles (désactivé en développement) */
+let authLimiter = (req, res, next) => next();
+if (process.env.NODE_ENV === 'production') {
+  authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // limite de 5 tentatives
+    message: 'Trop de tentatives de connexion, réessayez plus tard',
+    skipSuccessfulRequests: true,
+  });
+}
 
 /* AJOUT: monter le router d'auth */
 const authRoutes = require('../routes/authRoutes');

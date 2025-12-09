@@ -7,7 +7,6 @@ describe('bookingsController idempotence', () => {
 
   test('createBooking returns existing booking (idempotent) when checkBooking.rowCount > 0', async () => {
     // Provide a mocked db with sequenced responses for the various queries
-    const seq = [];
     jest.doMock('../src/db', () => ({
       query: jest.fn((sql, params) => {
         // SELECT 1 FROM listings
@@ -29,6 +28,6 @@ describe('bookingsController idempotence', () => {
     await createBooking(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ id: 111 }));
+    expect(res.json).toHaveBeenCalledWith({ success: true, booking: { id: 111, listing_id: 1, client_id: 2 } });
   });
 });

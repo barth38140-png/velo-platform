@@ -15,7 +15,7 @@ socket.on('connect', () => {
   // socket connected
 });
 socket.on('connect_error', (err) => {
-  console.error('[socket] connect_error', err && err.message ? err.message : err);
+  // logger.error('[socket] connect_error', err && err.message ? err.message : err);
 });
 socket.on('disconnect', () => {
   // socket disconnected

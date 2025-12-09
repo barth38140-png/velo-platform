@@ -7,20 +7,62 @@
 .error-banner { background: #ffe6e6; color: #b20000; border: 1px solid #ffb3b3; padding: 10px 12px; border-radius: 6px; margin-top: 12px; }
 .empty { padding: 20px; color: #666; }
 
-.repairers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
-.repairer-card { border: 1px solid #e6e6e6; border-radius: 10px; padding: 12px; background: white; display: flex; flex-direction: column; gap: 10px; }
+.repairers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 22px; margin-top: 18px; }
+.repairer-card { border: 1px solid #e6e6e6; border-radius: 12px; padding: 16px; background: #fff; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: box-shadow 0.2s; }
+.repairer-card:hover { box-shadow: 0 4px 16px rgba(14,165,233,0.10); }
 .repairer-card.unavailable { opacity: 0.6; }
-.repairer-card-header { display: flex; gap: 12px; align-items: center; }
-.repairer-card .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9, #22c55e); }
-.repairer-card .title h3 { margin: 0; }
-.repairer-card .muted { color: #777; font-size: 12px; }
-.availability-badge { margin-left: auto; font-size: 12px; padding: 4px 8px; border-radius: 999px; }
-.availability-badge.on { background: #e7f9ee; color: #0c7a2b; border: 1px solid #bde5c8; }
-.availability-badge.off { background: #fff3f3; color: #9c1c1c; border: 1px solid #f3c3c3; }
-.repairer-card .bio { margin: 0; color: #333; }
-.skills { display: flex; gap: 6px; flex-wrap: wrap; }
-.skill-badge { background: #f0f7ff; color: #0b74d1; border: 1px solid #cfe6ff; padding: 4px 8px; border-radius: 999px; font-size: 12px; }
-.actions { display: flex; justify-content: flex-end; }
+.repairer-card-header { display: flex; gap: 14px; align-items: center; }
+.repairer-card .avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9, #22c55e); border: 2px solid #e0e7ef; display: flex; align-items: center; justify-content: center; font-size: 2em; color: #fff; font-weight: 700; }
+.repairer-card .title h3 { margin: 0; font-size: 1.35em; color: #0b3a5e; letter-spacing: 0.5px; }
+.repairer-card .muted { color: #555; font-size: 13px; }
+.availability-badge { margin-left: auto; font-size: 13px; padding: 4px 12px; border-radius: 999px; box-shadow: 0 1px 4px rgba(14,165,233,0.08); }
+.availability-badge.on { background: #e7f9ee; color: #0c7a2b; border: 1px solid #bde5c8; font-weight: 600; }
+.availability-badge.off { background: #fff3f3; color: #9c1c1c; border: 1px solid #f3c3c3; font-weight: 600; }
+.repairer-card .bio { margin: 0 0 4px 0; color: #333; font-size: 1em; font-style: italic; }
+.skills { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 4px; }
+.skill-badge { background: #e6f4ff; color: #0b74d1; border: 1px solid #b6e0fe; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; box-shadow: 0 1px 4px rgba(14,165,233,0.08); }
+.actions { display: flex; justify-content: flex-end; margin-top: 12px; position: relative; gap: 8px; }
+
+/* Menu déroulant d'actions sur la carte réparateur */
+.repairer-actions-menu {
+	position: absolute;
+	top: 110%;
+	right: 0;
+	min-width: 150px;
+	background: #fff;
+	border: 1px solid #e6e6e6;
+	border-radius: 8px;
+	box-shadow: 0 4px 16px rgba(14,165,233,0.10);
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	padding: 4px 0;
+}
+.repairer-actions-menu .menu-item {
+	background: none;
+	border: none;
+	text-align: left;
+	padding: 10px 16px;
+	font-size: 15px;
+	color: #0b3a5e;
+	cursor: pointer;
+	transition: background 0.15s;
+}
+.repairer-actions-menu .menu-item:hover:not(:disabled) {
+	background: #e6f4ff;
+}
+.repairer-actions-menu .menu-item:disabled {
+	color: #aaa;
+	cursor: not-allowed;
+}
+@media (max-width: 800px) {
+	.repairers-grid { grid-template-columns: 1fr; }
+	.repairers-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+	.repairer-card { padding: 10px; margin-bottom: 8px; }
+	.repairers-controls { flex-direction: column; align-items: stretch; gap: 8px; }
+}
+
+.search-loader { font-size: 1.2em; color: #0ea5e9; vertical-align: middle; }
 button.primary { background: #0ea5e9; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
 button.primary:disabled { background: #a3d6f4; cursor: not-allowed; }
 button.secondary { background: #f3f4f6; color: #111827; border: 1px solid #e5e7eb; padding: 8px 12px; border-radius: 6px; cursor: pointer; }

@@ -64,6 +64,7 @@ export default function BikeDetailView({ bike, editable = true, showSummary = tr
     colors: colors
   });
 
+  // Correction exhaustive-deps : ajout des dépendances nécessaires
   useEffect(() => {
     setForm({
       brand: brand || '',
@@ -75,8 +76,7 @@ export default function BikeDetailView({ bike, editable = true, showSummary = tr
       serial_number: bike?.serial_number || '',
       colors: Array.isArray(bike?.colors) ? bike.colors : []
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bike?.id]);
+  }, [bike?.id, brand, model, bike?.type, bike?.frame_size, bike?.wheel_size, bike?.year, bike?.serial_number, bike?.colors]);
 
   const pendingRef = useRef(false);
   const debounceRef = useRef();
@@ -103,7 +103,7 @@ export default function BikeDetailView({ bike, editable = true, showSummary = tr
     debounceRef.current = setTimeout(async () => {
       try {
         await bikeService.updateBike(bike.id, payload);
-      } catch (e) {
+      } catch {
         // ignore errors for now; could show a toast
       } finally {
         pendingRef.current = false;
@@ -114,10 +114,7 @@ export default function BikeDetailView({ bike, editable = true, showSummary = tr
   }, [payload, editable, bike.id]);
 
   const updateField = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
-  const updateColorsText = (text) => {
-    const arr = text.split(',').map(s => s.trim()).filter(Boolean);
-    setForm(prev => ({ ...prev, colors: arr }));
-  };
+  // Fonction inutilisée, suppression
 
   // Normalize raw component type strings to stable category keys
   function normalizeTypeToKey(t) {
@@ -176,159 +173,159 @@ export default function BikeDetailView({ bike, editable = true, showSummary = tr
             <div className="save-indicator" aria-live="polite" style={{marginBottom:8,color:'#6b7280'}}>{isSaving ? 'Enregistrement…' : ''}</div>
           )}
 
-      {showSummary && (
-      <section className="bike-summary">
-        <div className="detail-row">
-          <div className="detail-label">Marque</div>
-          <div className="detail-value">
-            {editable ? (
-              <>
-                <input list="brands" value={form.brand} onChange={e => updateField('brand', e.target.value)} placeholder="ex: Trek" />
-                <datalist id="brands">
-                  {BRAND_OPTIONS.map(b => (<option key={b} value={b} />))}
-                </datalist>
-              </>
-            ) : (<span style={{ color: !brand ? '#9ca3af' : undefined }}>{brand || 'Inconnu'}</span>)}
-          </div>
-        </div>
-        <div className="detail-row">
-          <div className="detail-label">Modèle</div>
-          <div className="detail-value">
-            {editable ? (
-              <input value={form.model} onChange={e => updateField('model', e.target.value)} placeholder="ex: Domane" />
-            ) : (<span style={{ color: !model ? '#9ca3af' : undefined }}>{model || 'Inconnu'}</span>)}
-          </div>
-        </div>
-        <div className="detail-row">
-          <div className="detail-label">Type de roues</div>
-          <div className="detail-value">
-            {editable ? (
-              <>
-                <input list="types" value={form.type} onChange={e => updateField('type', e.target.value)} placeholder="ex: VTT / Ville" />
-                <datalist id="types">
-                  {TYPE_OPTIONS.map(t => (<option key={t} value={t} />))}
-                </datalist>
-              </>
-            ) : (<span style={{ color: !bike.type ? '#9ca3af' : undefined }}>{bike.type || 'Inconnu'}</span>)}
-          </div>
-        </div>
-        <div className="detail-row">
-          <div className="detail-label">Taille du cadre</div>
-          <div className="detail-value">
-            {editable ? (
-              <>
-                <input list="frameSizes" value={form.frame_size} onChange={e => updateField('frame_size', e.target.value)} placeholder="ex: M / L / 54" />
-                <datalist id="frameSizes">
-                  {FRAME_SIZE_OPTIONS.map(s => (<option key={s} value={s} />))}
-                </datalist>
-              </>
-            ) : (<span style={{ color: !bike.frame_size ? '#9ca3af' : undefined }}>{bike.frame_size || 'Inconnu'}</span>)}
-          </div>
-        </div>
-        <div className="detail-row">
-          <div className="detail-label">Taille des roues</div>
-          <div className="detail-value">
-            {editable ? (
-              <>
-                <input list="wheelSizes" value={form.wheel_size} onChange={e => updateField('wheel_size', e.target.value)} placeholder="ex: 700C / 29" />
-                <datalist id="wheelSizes">
-                  {WHEEL_SIZE_OPTIONS.map(s => (<option key={s} value={s} />))}
-                </datalist>
-              </>
-            ) : (<span style={{ color: !bike.wheel_size ? '#9ca3af' : undefined }}>{bike.wheel_size || 'Inconnu'}</span>)}
-          </div>
-        </div>
-        <div className="detail-row">
-          <div className="detail-label">Année</div>
-          <div className="detail-value">
-            {editable ? (
-              <>
-                <input list="years" value={form.year} onChange={e => updateField('year', e.target.value)} placeholder="ex: 2023" />
-                <datalist id="years">
-                  {Array.from({ length: 40 }, (_, i) => CURRENT_YEAR - i).map(y => (<option key={y} value={y} />))}
-                </datalist>
-              </>
-            ) : (<span style={{ color: !bike.year ? '#9ca3af' : undefined }}>{bike.year || 'Inconnu'}</span>)}
-          </div>
-        </div>
-        <div className="detail-row">
-          <div className="detail-label">N° de série</div>
-          <div className="detail-value">
-            {editable ? (
-              <input value={form.serial_number} onChange={e => updateField('serial_number', e.target.value)} placeholder="ex: SN12345ABC" />
-            ) : (<span style={{ color: !bike.serial_number ? '#9ca3af' : undefined }}>{bike.serial_number || 'Inconnu'}</span>)}
-          </div>
-        </div>
+          {showSummary && (
+            <section className="bike-summary">
+              <div className="detail-row">
+                <div className="detail-label">Marque</div>
+                <div className="detail-value">
+                  {editable ? (
+                    <>
+                      <input list="brands" value={form.brand} onChange={e => updateField('brand', e.target.value)} placeholder="ex: Trek" />
+                      <datalist id="brands">
+                        {BRAND_OPTIONS.map(b => (<option key={b} value={b} />))}
+                      </datalist>
+                    </>
+                  ) : (<span style={{ color: !brand ? '#9ca3af' : undefined }}>{brand || 'Inconnu'}</span>)}
+                </div>
+              </div>
+              <div className="detail-row">
+                <div className="detail-label">Modèle</div>
+                <div className="detail-value">
+                  {editable ? (
+                    <input value={form.model} onChange={e => updateField('model', e.target.value)} placeholder="ex: Domane" />
+                  ) : (<span style={{ color: !model ? '#9ca3af' : undefined }}>{model || 'Inconnu'}</span>)}
+                </div>
+              </div>
+              <div className="detail-row">
+                <div className="detail-label">Type de roues</div>
+                <div className="detail-value">
+                  {editable ? (
+                    <>
+                      <input list="types" value={form.type} onChange={e => updateField('type', e.target.value)} placeholder="ex: VTT / Ville" />
+                      <datalist id="types">
+                        {TYPE_OPTIONS.map(t => (<option key={t} value={t} />))}
+                      </datalist>
+                    </>
+                  ) : (<span style={{ color: !bike.type ? '#9ca3af' : undefined }}>{bike.type || 'Inconnu'}</span>)}
+                </div>
+              </div>
+              <div className="detail-row">
+                <div className="detail-label">Taille du cadre</div>
+                <div className="detail-value">
+                  {editable ? (
+                    <>
+                      <input list="frameSizes" value={form.frame_size} onChange={e => updateField('frame_size', e.target.value)} placeholder="ex: M / L / 54" />
+                      <datalist id="frameSizes">
+                        {FRAME_SIZE_OPTIONS.map(s => (<option key={s} value={s} />))}
+                      </datalist>
+                    </>
+                  ) : (<span style={{ color: !bike.frame_size ? '#9ca3af' : undefined }}>{bike.frame_size || 'Inconnu'}</span>)}
+                </div>
+              </div>
+              <div className="detail-row">
+                <div className="detail-label">Taille des roues</div>
+                <div className="detail-value">
+                  {editable ? (
+                    <>
+                      <input list="wheelSizes" value={form.wheel_size} onChange={e => updateField('wheel_size', e.target.value)} placeholder="ex: 700C / 29" />
+                      <datalist id="wheelSizes">
+                        {WHEEL_SIZE_OPTIONS.map(s => (<option key={s} value={s} />))}
+                      </datalist>
+                    </>
+                  ) : (<span style={{ color: !bike.wheel_size ? '#9ca3af' : undefined }}>{bike.wheel_size || 'Inconnu'}</span>)}
+                </div>
+              </div>
+              <div className="detail-row">
+                <div className="detail-label">Année</div>
+                <div className="detail-value">
+                  {editable ? (
+                    <>
+                      <input list="years" value={form.year} onChange={e => updateField('year', e.target.value)} placeholder="ex: 2023" />
+                      <datalist id="years">
+                        {Array.from({ length: 40 }, (_, i) => CURRENT_YEAR - i).map(y => (<option key={y} value={y} />))}
+                      </datalist>
+                    </>
+                  ) : (<span style={{ color: !bike.year ? '#9ca3af' : undefined }}>{bike.year || 'Inconnu'}</span>)}
+                </div>
+              </div>
+              <div className="detail-row">
+                <div className="detail-label">N° de série</div>
+                <div className="detail-value">
+                  {editable ? (
+                    <input value={form.serial_number} onChange={e => updateField('serial_number', e.target.value)} placeholder="ex: SN12345ABC" />
+                  ) : (<span style={{ color: !bike.serial_number ? '#9ca3af' : undefined }}>{bike.serial_number || 'Inconnu'}</span>)}
+                </div>
+              </div>
 
-        <div className="detail-row">
-          <div className="detail-label">Couleurs</div>
-          <div className="detail-value">
-            {editable ? (
-              <div className="color-swatches">
-                {COLOR_OPTIONS.map((c) => {
-                  const selected = Array.isArray(form.colors) && form.colors.includes(c);
+              <div className="detail-row">
+                <div className="detail-label">Couleurs</div>
+                <div className="detail-value">
+                  {editable ? (
+                    <div className="color-swatches">
+                      {COLOR_OPTIONS.map((c) => {
+                        const selected = Array.isArray(form.colors) && form.colors.includes(c);
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            className="color-swatch"
+                            onClick={() => {
+                              setForm(prev => {
+                                const prevColors = Array.isArray(prev.colors) ? prev.colors : [];
+                                return ({
+                                  ...prev,
+                                  colors: selected ? prevColors.filter(x => x !== c) : [...prevColors, c]
+                                });
+                              });
+                            }}
+                            aria-pressed={selected}
+                            title={c}
+                            style={{ outline: selected ? '2px solid #3b82f6' : 'none' }}
+                          >
+                            <span className="swatch-dot" data-color={c}></span>
+                            <span className="swatch-label">{c}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    colors.length ? (
+                      <div className="color-swatches">
+                        {colors.map((c) => (
+                          <div key={c} className="color-swatch" title={c}>
+                            <span className="swatch-dot" data-color={c}></span>
+                            <span className="swatch-label">{c}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <span style={{ color: '#9ca3af' }}>Aucune</span>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
+          <section className="components-section">
+            <div className="section-title">Composants installés</div>
+            {!bike.components || bike.components.length === 0 ? (
+              <div className="empty-note">Aucun composant enregistré.</div>
+            ) : (
+              <div className="component-groups">
+                {Object.entries(groups).map(([key, items]) => {
+                  const label = labelByKey[key] || key.charAt(0).toUpperCase() + key.slice(1);
+                  const icon = iconByLabel[label] || 'material-symbols:category';
                   return (
-                    <button
-                      key={c}
-                      type="button"
-                      className="color-swatch"
-                      onClick={() => {
-                        setForm(prev => {
-                          const prevColors = Array.isArray(prev.colors) ? prev.colors : [];
-                          return ({
-                            ...prev,
-                            colors: selected ? prevColors.filter(x => x !== c) : [...prevColors, c]
-                          });
-                        });
-                      }}
-                      aria-pressed={selected}
-                      title={c}
-                      style={{ outline: selected ? '2px solid #3b82f6' : 'none' }}
-                    >
-                      <span className="swatch-dot" data-color={c}></span>
-                      <span className="swatch-label">{c}</span>
-                    </button>
+                    <div key={key} className="component-group">
+                      <div className="group-header"><Icon icon={icon} className="group-icon" width="18" height="18" aria-hidden />{label}</div>
+                      <div className="component-list">
+                        {items.map(comp => <ComponentItem key={comp.id} comp={comp} />)}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
-            ) : (
-              colors.length ? (
-                <div className="color-swatches">
-                  {colors.map((c) => (
-                    <div key={c} className="color-swatch" title={c}>
-                      <span className="swatch-dot" data-color={c}></span>
-                      <span className="swatch-label">{c}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : <span style={{ color: '#9ca3af' }}>Aucune</span>
             )}
-          </div>
-        </div>
-      </section>
-      )}
-
-      <section className="components-section">
-        <div className="section-title">Composants installés</div>
-        {!bike.components || bike.components.length === 0 ? (
-          <div className="empty-note">Aucun composant enregistré.</div>
-        ) : (
-          <div className="component-groups">
-            {Object.entries(groups).map(([key, items]) => {
-              const label = labelByKey[key] || key.charAt(0).toUpperCase() + key.slice(1);
-              const icon = iconByLabel[label] || 'material-symbols:category';
-              return (
-                <div key={key} className="component-group">
-                  <div className="group-header"><Icon icon={icon} className="group-icon" width="18" height="18" aria-hidden />{label}</div>
-                  <div className="component-list">
-                    {items.map(comp => <ComponentItem key={comp.id} comp={comp} />)}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+          </section>
         </>
       )}
     </div>

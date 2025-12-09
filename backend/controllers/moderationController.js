@@ -1,3 +1,36 @@
+/**
+ * Admin: Modérer un message signalé
+ */
+async function moderateMessage(req, res) {
+  try {
+    const { messageId } = req.params;
+    const { action, notes } = req.body; // action: 'approve', 'reject', 'delete'
+
+    if (!['approve', 'reject', 'delete'].includes(action)) {
+      return res.status(400).json({ error: 'Action invalide' });
+    }
+
+    if (action === 'delete') {
+      await pool.query('DELETE FROM messages WHERE id = $1', [messageId]);
+      await pool.query('DELETE FROM message_flags WHERE message_id = $1', [messageId]);
+    } else {
+      await pool.query(
+        'UPDATE message_flags SET status = $1, moderation_notes = $2, moderated_at = NOW(), moderated_by = $3 WHERE message_id = $4',
+        [action === 'approve' ? 'approved' : 'rejected', notes || null, req.user.id, messageId]
+      );
+    }
+
+    await logAdminAction(req.user.id, 'MESSAGE_MODERATION', `Message ${messageId} ${action}ed`, { messageId, action });
+
+    return res.json({
+      success: true,
+      message: `Message ${action === 'approve' ? 'approuvé' : action === 'reject' ? 'rejeté' : 'supprimé'}`
+    });
+  } catch (err) {
+    logger.error({ err }, 'moderateMessage error');
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
 const logger = require('../src/logger');
 const pool = require('../config/db');
 const { logAdminAction } = require('../src/audit');
@@ -9,6 +42,8 @@ async function getFlaggedReviews(req, res) {
   try {
     const { status = 'pending', limit = 50, offset = 0 } = req.query;
     
+    // Correction : inclure les reviews sans flag si le statut demandé est 'pending'
+    // Explication : le WHERE doit permettre d'afficher tous les avis non modérés quand rf.status est NULL
     const result = await pool.query(`
       SELECT 
         r.id, r.repair_id, r.repairer_id, r.rating, r.comment, r.created_at,
@@ -21,11 +56,12 @@ async function getFlaggedReviews(req, res) {
       LEFT JOIN users u ON r.user_id = u.id
       LEFT JOIN users rep ON r.repairer_id = rep.id
       LEFT JOIN (
-        SELECT review_id, COUNT(*) as count, ARRAY_AGG(DISTINCT reason) as reasons
+        SELECT review_id, COUNT(*) as count, ARRAY_AGG(DISTINCT reason) as reasons, MAX(status) as status
         FROM review_flags
         GROUP BY review_id
       ) rf ON r.id = rf.review_id
-      WHERE rf.status = $1 OR (rf.status IS NULL AND $1 = 'pending')
+      WHERE ($1 = 'pending' AND (rf.status = 'pending' OR rf.status IS NULL))
+         OR ($1 <> 'pending' AND rf.status = $1)
       ORDER BY rf.count DESC, r.created_at DESC
       LIMIT $2 OFFSET $3
     `, [status === 'pending' ? 'pending' : status, limit, offset]);
@@ -88,10 +124,11 @@ async function moderateReview(req, res) {
  * Admin: Obtenir les messages signalés
  */
 async function getFlaggedMessages(req, res) {
+  logger.info({ params: req.query, user: req.user?.id }, 'Entrée dans getFlaggedMessages');
+  let query, params;
   try {
     const { status = 'pending', limit = 50, offset = 0 } = req.query;
-    
-    const result = await pool.query(`
+    query = `
       SELECT 
         m.id, m.conversation_id, m.sender_id, m.content, m.created_at,
         s.email as sender_email, s.name as sender_name,
@@ -108,13 +145,13 @@ async function getFlaggedMessages(req, res) {
       WHERE mf.status = $1 OR (mf.status IS NULL AND $1 = 'pending')
       ORDER BY mf.count DESC, m.created_at DESC
       LIMIT $2 OFFSET $3
-    `, [status === 'pending' ? 'pending' : status, limit, offset]);
-    
+    `;
+    params = [status === 'pending' ? 'pending' : status, limit, offset];
+    const result = await pool.query(query, params);
     const countRes = await pool.query(
       'SELECT COUNT(*) as total FROM message_flags WHERE status = $1',
       [status === 'pending' ? 'pending' : status]
     );
-    
     return res.json({
       success: true,
       messages: result.rows,
@@ -123,42 +160,12 @@ async function getFlaggedMessages(req, res) {
       offset: parseInt(offset)
     });
   } catch (err) {
-    logger.error({ err }, 'getFlaggedMessages error');
-    return res.status(500).json({ error: 'Erreur serveur' });
-  }
-}
-
-/**
- * Admin: Modérer un message signalé
- */
-async function moderateMessage(req, res) {
-  try {
-    const { messageId } = req.params;
-    const { action, notes } = req.body; // action: 'approve', 'reject', 'delete'
-    
-    if (!['approve', 'reject', 'delete'].includes(action)) {
-      return res.status(400).json({ error: 'Action invalide' });
-    }
-    
-    if (action === 'delete') {
-      await pool.query('DELETE FROM messages WHERE id = $1', [messageId]);
-      await pool.query('DELETE FROM message_flags WHERE message_id = $1', [messageId]);
-    } else {
-      await pool.query(
-        'UPDATE message_flags SET status = $1, moderation_notes = $2, moderated_at = NOW(), moderated_by = $3 WHERE message_id = $4',
-        [action === 'approve' ? 'approved' : 'rejected', notes || null, req.user.id, messageId]
-      );
-    }
-    
-    await logAdminAction(req.user.id, 'MESSAGE_MODERATION', `Message ${messageId} ${action}ed`, { messageId, action });
-    
-    return res.json({
-      success: true,
-      message: `Message ${action === 'approve' ? 'approuvé' : action === 'reject' ? 'rejeté' : 'supprimé'}`
-    });
-  } catch (err) {
-    logger.error({ err }, 'moderateMessage error');
-    return res.status(500).json({ error: 'Erreur serveur' });
+    logger.error({
+      err,
+      query: typeof query !== 'undefined' ? query : undefined,
+      params: typeof params !== 'undefined' ? params : undefined
+    }, 'Erreur getFlaggedMessages');
+    return res.status(500).json({ error: err && err.stack ? err.stack : JSON.stringify(err) });
   }
 }
 

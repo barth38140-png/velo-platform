@@ -1,0 +1,169 @@
+/* ProfileModern.css : style moderne, responsive, accessible pour la page profil réparateur */
+
+.profile-modern {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  display: flex;
+  gap: 32px;
+  background: #f7f8fa;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(80,80,120,0.07);
+}
+
+.profile-modern-main {
+  flex: 2;
+  min-width: 320px;
+}
+
+.profile-modern-preview {
+  flex: 1;
+  min-width: 260px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(80,80,120,0.08);
+  padding: 24px 18px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-modern-section {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(80,80,120,0.08);
+  padding: 28px 24px 18px 24px;
+  margin-bottom: 28px;
+}
+
+.profile-modern-section h3 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  color: #3b3b4f;
+  font-size: 1.18em;
+  font-weight: 700;
+}
+
+.profile-modern-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 32px;
+}
+
+@media (max-width: 900px) {
+  .profile-modern {
+    flex-direction: column;
+    gap: 0;
+    padding: 12px 2vw;
+  }
+  .profile-modern-preview {
+    margin-top: 24px;
+    min-width: 0;
+    width: 100%;
+  }
+  .profile-modern-fields {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.profile-modern-label {
+  font-weight: 600;
+  color: #2d2d3a;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.profile-modern-input, .profile-modern-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 7px;
+  font-size: 1em;
+  background: #f9fafb;
+  transition: border 0.2s;
+}
+.profile-modern-input:focus, .profile-modern-textarea:focus {
+  border-color: #667eea;
+  outline: none;
+}
+.profile-modern-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.profile-modern-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.profile-modern-btn {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 7px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(90deg, #667eea 60%, #764ba2 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(102,126,234,0.07);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.profile-modern-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.profile-modern-btn.cancel {
+  background: #e0e7ef;
+  color: #3b3b4f;
+}
+
+.profile-modern-error, .profile-modern-success {
+  padding: 12px 18px;
+  border-radius: 7px;
+  margin-bottom: 18px;
+  font-weight: 600;
+  font-size: 1em;
+}
+.profile-modern-error {
+  background: #ffeaea;
+  color: #d32f2f;
+  border: 1.5px solid #f5c6cb;
+}
+.profile-modern-success {
+  background: #e8f5e9;
+  color: #388e3c;
+  border: 1.5px solid #c3e6cb;
+}
+
+.profile-modern-map {
+  margin-top: 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(80,80,120,0.07);
+}
+
+.profile-modern-rating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #ffb300;
+}
+
+.profile-modern-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.profile-modern-instructions {
+  font-size: 0.98em;
+  color: #667eea;
+  margin-bottom: 8px;
+}

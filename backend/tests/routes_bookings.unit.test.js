@@ -1,4 +1,4 @@
-const express = require('express');
+// Suppression de l'import inutilisé 'express' pour lint clean
 
 describe('routes/bookings GET /:id handler branches', () => {
   beforeEach(() => {
@@ -45,7 +45,7 @@ describe('routes/bookings GET /:id handler branches', () => {
     jest.doMock('pg', () => ({ Client: class {
       constructor() {}
       connect() { return Promise.resolve(); }
-      query(q, params) { return Promise.resolve({ rows: [{ id: 77 }] }); }
+      query() { return Promise.resolve({ rows: [{ id: 77 }] }); }
       end() { return Promise.resolve(); }
     } }));
 

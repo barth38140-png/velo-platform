@@ -1,0 +1,198 @@
+.filters-actions-center {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.filters-toggles-row {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 12px 0 10px 0;
+}
+.filters-sort-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  margin-bottom: 0;
+}
+.filter-label {
+  font-size: 1em;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 4px;
+  display: block;
+}
+.filters-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 18px;
+  font-weight: 600;
+  color: #2563eb;
+  font-size: 1.08em;
+}
+/*
+  Style moderne pour le panneau de filtres des réparateurs
+  - Fond blanc, ombre marquée
+  - Bordures et arrondis prononcés
+  - Sections séparées, titres en bleu
+  - Icônes, labels visibles, champs larges
+  - Boutons stylés, animation ouverture/fermeture
+*/
+
+.filters-panel {
+  background: #f8fafc;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(30,64,175,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  padding: 18px 24px 18px 24px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  animation: fadeInPanel 0.35s cubic-bezier(.4,2,.6,1);
+  position: relative;
+}
+@keyframes fadeInPanel {
+  from { opacity: 0; transform: translateY(-18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.25em;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 18px;
+}
+.close-filters {
+  background: none;
+  color: #64748b;
+  border: none;
+  border-radius: 0;
+  width: 28px;
+  height: 28px;
+  font-size: 1.5em;
+  cursor: pointer;
+  box-shadow: none;
+  transition: color 0.18s;
+  line-height: 1;
+  padding: 0;
+}
+.close-filters:hover {
+  color: #1e293b;
+  background: none;
+}
+.filters-section {
+  margin-bottom: 22px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.filters-section:last-child {
+  border-bottom: none;
+}
+.filters-section-title {
+  font-size: 1.08em;
+  font-weight: 600;
+  color: #0ea5e9;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.filter-input, .filter-select {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 1em;
+  background: #f8fafc;
+  transition: border-color 0.2s;
+}
+.filter-input:focus, .filter-select:focus {
+  border-color: #0ea5e9;
+  outline: none;
+}
+.skills-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.chip {
+  background: #e0f2fe;
+  color: #0ea5e9;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 0.97em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.chip button {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 1.1em;
+  cursor: pointer;
+  margin-left: 2px;
+}
+.autocomplete-list {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  margin-top: 2px;
+  padding: 0;
+  list-style: none;
+  max-height: 160px;
+  overflow-y: auto;
+  z-index: 100;
+}
+.autocomplete-list li {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 1em;
+  color: #222;
+}
+.autocomplete-list li:hover {
+  background: #e0f2fe;
+  color: #0ea5e9;
+}
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 1em;
+  margin-top: 6px;
+}
+.toggle input[type="checkbox"] {
+  accent-color: #0ea5e9;
+  width: 18px;
+  height: 18px;
+}
+.filters-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+}
+.btn {
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  transition: background 0.2s;
+}
+.btn:hover {
+  background: #2563eb;
+}

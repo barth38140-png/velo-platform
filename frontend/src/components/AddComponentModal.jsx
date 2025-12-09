@@ -27,7 +27,7 @@ export default function AddComponentModal({ bikeId, onClose, onAdded }) {
       onAdded && onAdded();
       onClose && onClose();
     } catch (err) {
-      console.error('create component', err);
+      // Utiliser le logger Pino côté backend pour les erreurs de création de composant
       setError(err?.response?.data?.error || 'Erreur');
     } finally {
       setLoading(false);

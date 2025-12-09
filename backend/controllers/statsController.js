@@ -1,103 +1,72 @@
-const logger = require('../src/logger');
+const adminStatsModel = require('../models/adminStatsModel');
+const logger = require('pino')();
 const pool = require('../config/db');
 
 /**
  * Admin: Obtenir les statistiques globales
+ * GET /api/admin/stats/global?period=7d
  */
 async function getGlobalStats(req, res) {
   try {
-    const { period = '7d' } = req.query;
+    const period = req.query.period || '7d';
     
-    const startDate = getPeriodStartDate(period);
-    const startDateStr = startDate.toISOString();
+    // Validation de la période
+    if (!['7d', '30d', '90d', 'all'].includes(period)) {
+      return res.status(400).json({ 
+        error: 'Période invalide. Valeurs acceptées: 7d, 30d, 90d, all' 
+      });
+    }
+
+    logger.info({ period }, 'Fetching global stats');
+    const stats = await adminStatsModel.getGlobalStats(period);
     
-    // Récupérer les statistiques
-    const stats = await pool.query(`
-      SELECT 
-        (SELECT COUNT(*) FROM users) as total_users,
-        (SELECT COUNT(*) FROM users WHERE role = 'repairer') as total_repairers,
-        (SELECT COUNT(*) FROM users WHERE role = 'client') as total_clients,
-        (SELECT COUNT(*) FROM repair_requests WHERE created_at > '${startDateStr}') as repairs_period,
-        (SELECT COUNT(*) FROM repair_requests WHERE status = 'terminée' AND created_at > '${startDateStr}') as repairs_completed,
-        (SELECT COUNT(*) FROM reviews WHERE created_at > '${startDateStr}') as reviews_period,
-        (SELECT AVG(rating) FROM reviews WHERE created_at > '${startDateStr}') as avg_rating,
-        (SELECT COUNT(*) FROM repairer_profiles WHERE is_available = true) as verified_repairers,
-        (SELECT COUNT(*) FROM users WHERE created_at > '${startDateStr}') as new_users_period
-    `);
-    
-    return res.json({
+    res.json({
       success: true,
-      stats: stats.rows[0],
-      period
+      data: stats
     });
-  } catch (err) {
-    logger.error({ err }, 'getGlobalStats error');
-    return res.status(500).json({ error: 'Erreur serveur' });
+  } catch (error) {
+    logger.error({ error: error.message, stack: error.stack }, 'Error fetching global stats');
+    res.status(500).json({ 
+      error: 'Erreur lors de la récupération des statistiques globales',
+      details: error.message 
+    });
   }
 }
 
 /**
- * Admin: Obtenir les statistiques de revenue (simulé)
+ * Admin: Obtenir les statistiques de revenus
+ * GET /api/admin/stats/revenue?period=7d
  */
 async function getRevenueStats(req, res) {
   try {
-    const { period = '7d' } = req.query;
+    const period = req.query.period || '7d';
     
-    const startDate = getPeriodStartDate(period);
-    const startDateStr = startDate.toISOString();
+    // Validation de la période
+    if (!['7d', '30d', '90d', 'all'].includes(period)) {
+      return res.status(400).json({ 
+        error: 'Période invalide. Valeurs acceptées: 7d, 30d, 90d, all' 
+      });
+    }
+
+    logger.info({ period }, 'Fetching revenue stats');
+    const stats = await adminStatsModel.getRevenueStats(period);
     
-    // Simuler revenue basé sur les réparations complétées
-    const result = await pool.query(`
-      SELECT 
-        COUNT(*) as total_repairs,
-        COUNT(CASE WHEN status = 'terminée' THEN 1 END) as completed_repairs,
-        COUNT(CASE WHEN status = 'en_cours' THEN 1 END) as in_progress,
-        COUNT(CASE WHEN status = 'en_attente' THEN 1 END) as pending,
-        AVG(CASE WHEN status = 'terminée' THEN 45 ELSE NULL END)::INTEGER as avg_repair_value
-      FROM repair_requests
-      WHERE created_at > '${startDateStr}'
-    `);
-    
-    const data = result.rows[0];
-    const estimatedRevenue = (data.completed_repairs * data.avg_repair_value) || 0;
-    
-    // Statistiques par réparateur (top 5)
-    const topRepairers = await pool.query(`
-      SELECT 
-        u.id, u.email, u.name,
-        COUNT(r.id) as repairs_completed,
-        AVG(rev.rating)::NUMERIC(3,2) as avg_rating,
-        (COUNT(r.id) * 45)::INTEGER as estimated_revenue
-      FROM users u
-      LEFT JOIN repair_requests r ON u.id = r.assigned_repairer_id AND r.status = 'terminée' AND r.created_at > '${startDateStr}'
-      LEFT JOIN reviews rev ON u.id = rev.repairer_id
-      WHERE u.role = 'repairer'
-      GROUP BY u.id, u.email, u.name
-      ORDER BY repairs_completed DESC
-      LIMIT 5
-    `);
-    
-    return res.json({
+    res.json({
       success: true,
-      revenue: {
-        period,
-        total_repairs: data.total_repairs,
-        completed_repairs: data.completed_repairs,
-        in_progress: data.in_progress,
-        pending: data.pending,
-        estimated_revenue: estimatedRevenue,
-        avg_repair_value: data.avg_repair_value || 0
-      },
-      top_repairers: topRepairers.rows
+      data: stats
     });
-  } catch (err) {
-    logger.error({ err }, 'getRevenueStats error');
-    return res.status(500).json({ error: 'Erreur serveur' });
+  } catch (error) {
+    logger.error({ error: error.message, stack: error.stack }, 'Error fetching revenue stats');
+    res.status(500).json({ 
+      error: 'Erreur lors de la récupération des statistiques de revenus',
+      details: error.message 
+    });
   }
 }
 
 /**
  * Admin: Obtenir les logs d'audit
+ * GET /api/admin/stats/audit-logs
  */
 async function getAuditLogs(req, res) {
   try {
@@ -112,7 +81,7 @@ async function getAuditLogs(req, res) {
     }
     
     const countRes = await pool.query(
-      query.replace('SELECT *', 'SELECT COUNT(*) as total') + ' FROM audit_logs',
+      query.replace('SELECT *', 'SELECT COUNT(*) as total'),
       params
     );
     
@@ -124,7 +93,7 @@ async function getAuditLogs(req, res) {
     return res.json({
       success: true,
       logs: result.rows,
-      total: parseInt(countRes.rows[0].total),
+      total: parseInt(countRes.rows[0]?.total || 0),
       limit: parseInt(limit),
       offset: parseInt(offset)
     });
@@ -135,65 +104,33 @@ async function getAuditLogs(req, res) {
 }
 
 /**
- * Admin: Obtenir les statistiques d'activité par jour
+ * Admin: Obtenir les graphiques d'activité
+ * GET /api/admin/stats/activity-charts?period=7d
  */
 async function getActivityCharts(req, res) {
   try {
-    const { period = '7d' } = req.query;
+    const period = req.query.period || '7d';
     
-    const startDate = getPeriodStartDate(period);
-    const startDateStr = startDate.toISOString();
-    
-    const repairs = await pool.query(`
-      SELECT 
-        DATE(created_at) as date,
-        COUNT(*) as count,
-        COUNT(CASE WHEN status = 'terminée' THEN 1 END) as completed
-      FROM repair_requests
-      WHERE created_at > '${startDateStr}'
-      GROUP BY DATE(created_at)
-      ORDER BY date DESC
-    `);
-    
-    const users = await pool.query(`
-      SELECT 
-        DATE(created_at) as date,
-        COUNT(*) as count,
-        COUNT(CASE WHEN role = 'repairer' THEN 1 END) as repairers,
-        COUNT(CASE WHEN role = 'client' THEN 1 END) as clients
-      FROM users
-      WHERE created_at > '${startDateStr}'
-      GROUP BY DATE(created_at)
-      ORDER BY date DESC
-    `);
-    
-    return res.json({
-      success: true,
-      repairs: repairs.rows,
-      users: users.rows,
-      period
-    });
-  } catch (err) {
-    logger.error({ err }, 'getActivityCharts error');
-    return res.status(500).json({ error: 'Erreur serveur' });
-  }
-}
+    // Validation de la période
+    if (!['7d', '30d', '90d', 'all'].includes(period)) {
+      return res.status(400).json({ 
+        error: 'Période invalide. Valeurs acceptées: 7d, 30d, 90d, all' 
+      });
+    }
 
-/**
- * Helper: Retourner la date de début pour les statistiques
- */
-function getPeriodStartDate(period) {
-  const now = new Date();
-  
-  switch(period) {
-    case '7d':
-      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    case '30d':
-      return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    case '90d':
-      return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-    default:
-      return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    logger.info({ period }, 'Fetching activity charts data');
+    const stats = await adminStatsModel.getActivityCharts(period);
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    logger.error({ error: error.message, stack: error.stack }, 'Error fetching activity charts');
+    res.status(500).json({ 
+      error: 'Erreur lors de la récupération des graphiques d\'activité',
+      details: error.message 
+    });
   }
 }
 

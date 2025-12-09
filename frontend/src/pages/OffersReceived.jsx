@@ -25,7 +25,7 @@ export function OffersReceived() {
       }
       setOffers(filtered);
     } catch (err) {
-      console.error('Erreur lors du chargement des offres :', err);
+      // Utiliser le logger Pino côté backend pour les erreurs de chargement d'offres
       setError('Failed to load offers');
     } finally {
       setLoading(false);
@@ -68,7 +68,7 @@ export function OffersReceived() {
       await repairOfferService.acceptOffer(offerId);
       await loadReceivedOffers();
     } catch (err) {
-      console.error('Erreur lors de l\'acceptation de l\'offre :', err);
+      // Utiliser le logger Pino côté backend pour les erreurs d'acceptation d'offre
       setError(err.response?.data?.error || 'Failed to accept offer');
     }
   };

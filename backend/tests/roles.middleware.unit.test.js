@@ -9,7 +9,7 @@ function createAppWithMiddleware(mw) {
     // allow test to set req.user via header
     const userHeader = req.headers['x-test-user'];
     if (userHeader) {
-      try { req.user = JSON.parse(userHeader); } catch (e) { req.user = null; }
+        try { req.user = JSON.parse(userHeader); } catch { req.user = null; }
     }
     next();
   });

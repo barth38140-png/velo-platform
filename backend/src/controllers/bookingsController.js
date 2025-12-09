@@ -27,7 +27,7 @@ async function createBooking(req, res) {
     if (!end_date)   { missing.push("end_date"); }
     if (missing.length) {
       logger.warn({ missing }, 'createBooking validation failed');
-      return res.status(400).json({ error: "Champs manquants", required: missing });
+      return res.status(400).json({ success: false, error: "missing_fields", message: "Champs manquants", required: missing });
     }
 
     // Decide whether to use the mocked db (unit tests) or a direct Client for integration/runtime.
@@ -61,12 +61,12 @@ async function createBooking(req, res) {
     const checkListing = await qExec("SELECT 1 FROM listings WHERE id = $1", [listing_id]);
     if (checkListing.rowCount === 0) {
       logger.warn({ listing_id }, 'createBooking: invalid listing_id');
-      return res.status(400).json({ error: "Annonce invalide" });
+      return res.status(400).json({ success: false, error: "invalid_listing_id", message: "Annonce invalide" });
     }
     const checkUser = await qExec("SELECT 1 FROM users WHERE id = $1", [client_id]);
     if (checkUser.rowCount === 0) {
       logger.warn({ client_id }, 'createBooking: invalid client_id');
-      return res.status(400).json({ error: "Client invalide" });
+      return res.status(400).json({ success: false, error: "invalid_client_id", message: "Client invalide" });
     }
 
     // Idempotence: check if booking already exists for same listing, client, start_date, end_date
@@ -76,7 +76,7 @@ async function createBooking(req, res) {
     );
     if (checkBooking.rowCount > 0) {
       // Already exists, return it (idempotent)
-      return res.status(200).json(checkBooking.rows[0]);
+      return res.status(200).json({ success: true, booking: checkBooking.rows[0] });
     }
     const q = `INSERT INTO bookings (listing_id, client_id, start_date, end_date, status)
                VALUES ($1,$2,$3,$4,$5) RETURNING *`;
@@ -86,7 +86,7 @@ async function createBooking(req, res) {
     // Use mocked db in unit tests; otherwise perform insert with a direct Client and retries.
     if (shouldUseMock) {
       const r = await db.query(q, params);
-      return res.status(201).json(r.rows[0]);
+      return res.status(201).json({ success: true, booking: r.rows[0] });
     }
 
     let rows;
@@ -112,7 +112,7 @@ async function createBooking(req, res) {
         throw e;
       }
     }
-    return res.status(201).json(rows[0]);
+    return res.status(201).json({ success: true, booking: rows[0] });
   } catch (err) {
     logger.error({ 
       err,
@@ -124,9 +124,9 @@ async function createBooking(req, res) {
     }, 'createBooking error');
     
     if (err && err.code === "23503") {
-      return res.status(400).json({ error: "Violation de clé étrangère" });
+      return res.status(400).json({ success: false, error: "foreign_key_violation", message: "Violation de clé étrangère" });
     }
-    return res.status(500).json({ error: "Erreur serveur" });
+    return res.status(500).json({ success: false, error: "internal_error", message: "Erreur serveur" });
   }
 }
 
@@ -144,7 +144,7 @@ async function getBookings(req, res) {
     const shouldUseMock = db && db.query && (db.query._isMockFunction || db.query.mock || db.query.mockImplementation);
     if (shouldUseMock) {
       const { rows } = await db.query(q, params);
-      return res.json(rows);
+      return res.json({ success: true, bookings: rows });
     }
     const { Client } = require('pg');
     const clientConfig = {
@@ -159,7 +159,7 @@ async function getBookings(req, res) {
     try {
       const r = await client.query(q, params);
       await client.end();
-      return res.json(r.rows);
+      return res.json({ success: true, bookings: r.rows });
     } catch (e) {
       try { await client.end(); } catch {
         // Échec de fermeture, ignoré
@@ -168,7 +168,7 @@ async function getBookings(req, res) {
     }
   } catch (err) {
     logger.error({ err }, 'getBookings error');
-    return res.status(500).json({ error: 'Erreur serveur' });
+    return res.status(500).json({ error: 'internal_error', message: 'Erreur serveur' });
   }
 }
 

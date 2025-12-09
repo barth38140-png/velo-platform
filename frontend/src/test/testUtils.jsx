@@ -23,4 +23,4 @@ export function renderWithProviders(ui, options = {}) {
   return render(ui, { wrapper: Wrapper, ...options });
 }
 
-export * from '@testing-library/react';
+export { render, screen, fireEvent, waitFor, act } from '@testing-library/react';

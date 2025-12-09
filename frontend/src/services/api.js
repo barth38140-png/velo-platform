@@ -2,7 +2,10 @@ import axios from 'axios';
 
 // Utiliser un chemin relatif pour profiter du proxy Vite en dev
 // En production, VITE_API_URL sera défini pour pointer vers l'API backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Patch Vitest : éviter crash si import.meta.env absent
+const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL)
+  ? import.meta.env.VITE_API_URL
+  : '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -21,12 +24,17 @@ api.interceptors.request.use((config) => {
 });
 
 // Intercepteur de réponse pour supprimer les logs d'erreurs 404
+// Intercepteur de réponse pour supprimer les logs d'erreurs 404
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Ne pas logger les 404 en console (erreurs attendues pour données non créées)
     if (error?.response?.status !== 404) {
-      console.error('API Error:', error);
+      if (import.meta.env.MODE === 'development') {
+        // Log uniquement en dev
+         
+        // logger.error('API Error:', error);
+      }
     }
     return Promise.reject(error);
   }
@@ -59,8 +67,16 @@ export const repairService = {
 };
 
 export const repairerService = {
-  createProfile: (skills, bio, serviceRadiusKm, isAvailable) =>
-    api.post('/repairers/profile', { skills, bio, service_radius_km: serviceRadiusKm, is_available: isAvailable }),
+  createProfile: (skills, bio, serviceRadiusKm, isAvailable, locationLat, locationLng, locationAddress) =>
+    api.post('/repairers/profile', {
+      skills,
+      bio,
+      service_radius_km: serviceRadiusKm,
+      is_available: isAvailable,
+      location_lat: locationLat,
+      location_lng: locationLng,
+      location_address: locationAddress
+    }),
   getRepairerProfile: (repairerId) =>
     api.get(`/repairers/${repairerId}`),
   getAllRepairers: () =>
@@ -87,8 +103,10 @@ export const messageService = {
 
 // Nouveau service de conversations (messagerie structurée)
 export const conversationService = {
-  createConversation: (repairerId, repairRequestId) =>
-    api.post('/conversations', { repairerId, repairRequestId }),
+  createConversation: (clientId, repairerId, repairRequestId) =>
+    api.post('/conversations', { clientId, repairerId, repairRequestId }, {
+      headers: { 'Content-Type': 'application/json' }
+    }),
   getConversations: () =>
     api.get('/conversations'),
   getMessages: (conversationId) =>
@@ -136,20 +154,22 @@ export const repairOfferService = {
 export const availabilityService = {
   async list(repairerId, params = {}) {
     const query = new URLSearchParams(params).toString();
-    const url = `/api/availability/${repairerId}${query ? `?${query}` : ''}`;
+    const url = `/availability/${repairerId}${query ? `?${query}` : ''}`;
     const res = await api.get(url);
     return res.data;
   },
   async create(startsAt, endsAt) {
-    const res = await api.post(`/api/availability`, { startsAt, endsAt });
+    // Log du payload pour debug
+    console.debug('[DEBUG] Payload création disponibilité:', { startsAt, endsAt });
+    const res = await api.post('/availability', { startsAt, endsAt });
     return res.data;
   },
   async remove(slotId) {
-    const res = await api.delete(`/api/availability/${slotId}`);
+    const res = await api.delete(`/availability/${slotId}`);
     return res.data;
   },
   async reserve(slotId, repairerId, repairRequestId) {
-    const res = await api.post(`/api/availability/${slotId}/reserve`, { repairerId, repairRequestId });
+    const res = await api.post(`/availability/${slotId}/reserve`, { repairerId, repairRequestId });
     return res.data;
   }
 };

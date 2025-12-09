@@ -1,3 +1,19 @@
+/**
+ * Vérifie s'il existe déjà une conversation entre client et réparateur (optionnellement pour une demande)
+ */
+async function findConversation(clientId, repairerId, repairRequestId) {
+  let query = 'SELECT * FROM conversations WHERE client_id = $1 AND repairer_id = $2';
+  let params = [clientId, repairerId];
+  if (repairRequestId) {
+    query += ' AND repair_request_id = $3';
+    params.push(repairRequestId);
+  } else {
+    query += ' AND repair_request_id IS NULL';
+  }
+  const res = await pool.query(query, params);
+  return res.rows[0];
+}
+
 const pool = require('../config/db');
 
 /**
@@ -33,5 +49,6 @@ async function getConversationById(conversationId) {
 module.exports = {
   createConversation,
   getConversationsByUser,
-  getConversationById
+  getConversationById,
+  findConversation
 };

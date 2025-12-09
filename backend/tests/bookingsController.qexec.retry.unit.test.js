@@ -1,4 +1,3 @@
-const path = require('path');
 
 describe('bookingsController qExec fallback and retry', () => {
   beforeEach(() => {
@@ -46,7 +45,7 @@ describe('bookingsController qExec fallback and retry', () => {
 
     await createBooking(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ id: 555 }));
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, id: 555 }));
   });
 });

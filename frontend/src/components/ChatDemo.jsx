@@ -19,7 +19,7 @@ const ChatDemo = ({ conversationId, token }) => {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMessages(res.data.messages);
-      } catch (e) {
+      } catch {
         setMessages([]);
       }
     };
@@ -27,8 +27,7 @@ const ChatDemo = ({ conversationId, token }) => {
   }, [conversationId, token]);
 
   // Envoie un message
-  const sendMessage = async (e) => {
-    e.preventDefault();
+  const sendMessage = async () => {
     if (!input.trim()) return;
     setLoading(true);
     try {
@@ -41,7 +40,7 @@ const ChatDemo = ({ conversationId, token }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessages(res.data.messages);
-    } catch (e) {
+    } catch {
       // Erreur d'envoi
     }
     setLoading(false);

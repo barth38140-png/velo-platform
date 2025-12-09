@@ -4,12 +4,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 
 // Mock react-leaflet to avoid map rendering in tests
-vi.mock('react-leaflet', () => ({
-  MapContainer: ({ children }) => <div data-testid="map">{children}</div>,
-  TileLayer: () => <div data-testid="tilelayer" />,
-  Marker: ({ children }) => <div data-testid="marker">{children}</div>,
-  useMapEvents: () => null
-}));
+vi.mock('react-leaflet', async () => {
+  const actual = await vi.importActual('react-leaflet');
+  return {
+    ...actual,
+    MapContainer: ({ children }) => <div data-testid="map">{children}</div>,
+    TileLayer: () => <div data-testid="tilelayer" />,
+    Marker: ({ children }) => <div data-testid="marker">{children}</div>,
+    useMapEvents: () => null,
+    useMap: () => ({
+      setView: vi.fn(),
+      getCenter: () => ({ lat: 0, lng: 0 })
+    })
+  };
+});
 
 import MapPicker from '../MapPicker';
 

@@ -1,20 +1,18 @@
-import './server.js';
 
-// The server exported by ./server.js registers a `server` variable.
-// Importing this file will cause the server lifecycle hooks to be
-// registered in the importing test file's runtime via the beforeAll/afterAll
-// calls defined below.
-
+import { beforeAll, afterAll, afterEach } from 'vitest';
 import { server } from './server.js';
 
+// Démarre MSW avant tous les tests
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'warn' });
 });
 
+// Réinitialise les handlers après chaque test
 afterEach(() => {
   server.resetHandlers();
 });
 
+// Arrête MSW après tous les tests
 afterAll(() => {
   server.close();
 });

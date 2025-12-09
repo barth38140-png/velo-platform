@@ -6,7 +6,7 @@ jest.mock('../models/repairOfferModel');
 jest.mock('../models/repairModel');
 
 describe('repairOfferController', () => {
-  let req, res, next;
+  let req, res;
   beforeEach(() => {
     jest.resetAllMocks();
     req = { body: {}, params: {}, user: { id: 10 }, app: { get: () => null } };

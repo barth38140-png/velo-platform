@@ -14,10 +14,10 @@ const LoadingFallback = ({ message = 'Chargement...' }) => (
 );
 
 // Lazy load des composants lourds
-const LazyBikeModal = lazy(() => import('../components/BikeModal'));
-const LazyAddBikePage = lazy(() => import('../components/AddBikePage'));
-const LazyRepairForm = lazy(() => import('../components/RepairForm'));
-const LazyMapPicker = lazy(() => import('../components/MapPicker'));
+const LazyBikeModal = lazy(() => import('../components/BikeModal.jsx'));
+const LazyAddBikePage = lazy(() => import('../components/AddBikePage.jsx'));
+const LazyRepairForm = lazy(() => import('../components/RepairForm.jsx'));
+const LazyMapPicker = lazy(() => import('../components/MapPicker.jsx'));
 
 // HOC pour wrapper les composants lazy avec Suspense
 function withLazyLoading(LazyComponent, fallbackMessage) {

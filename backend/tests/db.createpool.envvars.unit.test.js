@@ -5,7 +5,7 @@ jest.mock('pg', () => ({
   Pool: jest.fn((cfg) => {
     const p = {
       cfg,
-      on: jest.fn((ev, cb) => {}),
+      on: jest.fn(() => {}), // Suppression des variables inutilisées 'ev' et 'cb'
       end: jest.fn(async () => {}),
       query: jest.fn(async () => ({ rows: [] }))
     };
@@ -27,7 +27,6 @@ test('Pool called with PG env variables when provided', () => {
   process.env.PGDATABASE = 'pgdb';
   process.env.PGPORT = '5433';
 
-  const db = require('../src/db');
   const Pool = require('pg').Pool;
   expect(Pool).toHaveBeenCalled();
   const cfg = Pool.mock.calls[0][0];

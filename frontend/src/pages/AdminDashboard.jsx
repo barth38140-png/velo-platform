@@ -28,7 +28,7 @@ export default function AdminDashboard() {
       setStats(res.data.stats);
     } catch (err) {
       toast.error('Impossible de charger les statistiques');
-      console.error(err);
+      // Utiliser le logger Pino côté backend pour les erreurs de chargement des statistiques
     } finally {
       setLoading(false);
     }

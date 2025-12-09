@@ -17,7 +17,7 @@ export default function BikeCard({ bike, onView, onUpdated }) {
       await bikeService.deleteComponent(componentId);
       onUpdated && onUpdated();
     } catch (err) {
-      console.error('delete component', err);
+      // Utiliser le logger Pino côté backend pour les erreurs de suppression de composant
       addToast(err?.response?.data?.error || 'Erreur lors de la suppression', 'error');
     }
   };
@@ -39,7 +39,7 @@ export default function BikeCard({ bike, onView, onUpdated }) {
               addToast('Le vélo a été supprimé avec succès.', 'success');
               onUpdated && onUpdated();
             } catch (err) {
-              console.error('delete bike', err);
+              // Utiliser le logger Pino côté backend pour les erreurs de suppression de vélo
               addToast(err?.response?.data?.error || 'Erreur lors de la suppression du vélo', 'error');
             }
           }}>🗑 Supprimer le vélo</button>

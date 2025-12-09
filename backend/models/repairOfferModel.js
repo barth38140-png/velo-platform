@@ -31,7 +31,7 @@ async function createRepairOffer(repairRequestId, repairerId, offeredPrice, esti
     const res = hasScheduled
       ? await pool.query(sqlWithDates, [repairRequestId, repairerId, offeredPrice, estimatedDurationHours, message, scheduledFrom, scheduledTo])
       : await pool.query(sqlWithoutDates, [repairRequestId, repairerId, offeredPrice, estimatedDurationHours, message]);
-    return res.rows[0];
+    return res && res.rows && res.rows.length > 0 ? res.rows[0] : null;
   } catch (err) {
     logger.error({ err, repairRequestId, repairerId }, 'createRepairOffer query error');
     throw err;

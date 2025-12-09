@@ -30,7 +30,7 @@ async function createDemoUsers() {
       if (existing.rows.length === 0) {
         const password_hash = await bcrypt.hash(user.password, SALT_ROUNDS);
         
-        const result = await pool.query(
+        await pool.query(
           'INSERT INTO users (email, password_hash, name, phone, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, role',
           [user.email, password_hash, user.name, user.phone, user.role]
         );

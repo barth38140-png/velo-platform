@@ -26,7 +26,7 @@ ALTER TABLE availability_slots
   ADD CONSTRAINT availability_slots_no_overlap
   EXCLUDE USING gist (
     repairer_id WITH =,
-    tsrange(starts_at, ends_at) WITH &&
+    tstzrange(starts_at, ends_at) WITH &&
   ) WHERE (status = 'free');
 
 -- Trigger pour updated_at

@@ -1,3 +1,14 @@
+// Mock du hook useState uniquement pour userLocation
+const originalUseState = React.useState;
+beforeAll(() => {
+  vi.spyOn(React, 'useState').mockImplementation((init) => {
+    const stack = new Error().stack;
+    if (init === null && stack && stack.includes('ExploreRepairs')) {
+      return [{ latitude: 48.8566, longitude: 2.3522 }, vi.fn()];
+    }
+    return originalUseState(init);
+  });
+});
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';

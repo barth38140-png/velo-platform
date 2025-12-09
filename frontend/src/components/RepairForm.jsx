@@ -1,11 +1,21 @@
 import React, { useState, useRef, Suspense, lazy, useEffect } from 'react';
 import { repairService, repairPhotoService, bikeService } from '../services/api';
 import StepForm from './StepForm';
+// Barre de progression visuelle simple
+function StepProgressBar({ steps, current }) {
+  return (
+    <div className="step-progress-bar" style={{ display: 'flex', gap: 8, marginBottom: 16, justifyContent: 'center' }}>
+      {steps.map((label, idx) => (
+        <div key={label} className={`step-dot${idx <= current ? ' active' : ''}`} style={{ width: 28, height: 28, borderRadius: '50%', background: idx <= current ? '#2a9d8f' : '#eee', color: idx <= current ? '#fff' : '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{idx + 1}</div>
+      ))}
+    </div>
+  );
+}
 import LocationSelector from './LocationSelector';
 import MapPicker from './MapPicker';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useToast } from '../context/ToastContext';
-const LazyAddBikePage = lazy(() => import('./AddBikePage'));
+import AddBikePage from './AddBikePage';
 
 export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
   const [step, setStep] = useState(0);
@@ -39,7 +49,7 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
   }, [geoLocation]);
   
   const [bikes, setBikes] = useState([]);
-  const [showBikeModal, setShowBikeModal] = useState(false);
+  const [showAddBikeInline, setShowAddBikeInline] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -69,7 +79,7 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
   const handleSubmit = async (e) => {
     e && e.preventDefault();
     setError('');
-    if (!formData.bikeId || !formData.problem) return setError('Veuillez sélectionner un vélo et un besoin principal');
+    if (!formData.problem) return setError('Veuillez sélectionner un besoin principal');
     setLoading(true);
     try {
       const title = (generateTitle() || '').toString().trim();
@@ -101,7 +111,7 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
             created.photos = up.data.photos;
           }
         } catch (uperr) {
-          console.warn('Photo upload failed', uperr);
+          // Utiliser le logger Pino côté backend pour les erreurs d'upload photo
         }
       }
       setSuccess('Demande envoyée');
@@ -111,7 +121,7 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
       try { window.dispatchEvent(new CustomEvent('repairCreated', { detail: resp?.data?.repair || resp })); } catch (e) { /* ignore */ }
       onSuccess && onSuccess(resp?.data?.repair || resp);
     } catch (err) {
-      console.error('create repair', err);
+      // Utiliser le logger Pino côté backend pour les erreurs de création de réparation
       // If backend returned detailed validation errors, show them
       const resp = err && err.response && err.response.data;
       if (resp && Array.isArray(resp.errors)) {
@@ -143,7 +153,8 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
   };
 
   const canProceed = (currentStep) => {
-    if (currentStep === 0) return !!(formData.bikeId && formData.problem && !(formData.problem === 'autre' && !formData.problemText));
+    // Permettre d'avancer même sans vélo enregistré
+    if (currentStep === 0) return !!(formData.problem && !(formData.problem === 'autre' && !formData.problemText));
     if (currentStep === 1) return !!(formData.subNeed && !(formData.subNeed === 'autre_besoin' && !formData.subNeedText));
     if (currentStep === 2) return isLocationValid(formData);
     return true;
@@ -156,16 +167,8 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
     setStepTopError('');
     // Step 0 contains bike selection AND besoin selection
     if (step === 0) {
-      if (!formData.bikeId) {
-        const msg = "Veuillez sélectionner un vélo avant de continuer.";
-        // show single top-banner message
-        setBikeError('');
-        setProblemError('');
-        setStepTopError(msg);
-        return;
-      }
       if (!formData.problem || (formData.problem === 'autre' && !formData.problemText)) {
-        const msg = "Veuillez sélectionner votre besoin principal avant de continuer.";
+        const msg = 'Veuillez sélectionner votre besoin principal avant de continuer.';
         setBikeError('');
         setProblemError('');
         setStepTopError(msg);
@@ -206,14 +209,7 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
       setStepTopError(msg);
       return;
     }
-    // also ensure bike/problem/location present
-    if (!formData.bikeId) {
-      const msg = 'Veuillez sélectionner un vélo avant de valider.';
-      setBikeError(msg);
-      setStepTopError(msg);
-      setStep(0);
-      return;
-    }
+    // aussi assurer que le besoin principal est présent
     if (!formData.problem || (formData.problem === 'autre' && !formData.problemText)) {
       const msg = 'Veuillez sélectionner un besoin principal avant de valider.';
       setProblemError(msg);
@@ -333,7 +329,7 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
       setBikes(list || []);
       return list || [];
     } catch (e) {
-      console.error('loadBikes', e);
+      // Utiliser le logger Pino côté backend pour les erreurs de chargement de vélos
       setBikes([]);
       return [];
     }
@@ -373,11 +369,11 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
       { key: 'peinture_abimee', label: 'Peinture abîmée', icon: '🎨' },
     ],
     eclairage: [
-      { key: 'eclairage_ne_fonctionne_pas', label: "Éclairage qui ne fonctionne pas", icon: '💡' },
+      { key: 'eclairage_ne_fonctionne_pas', label: 'Éclairage qui ne fonctionne pas', icon: '💡' },
       { key: 'batterie_faible', label: 'Batterie faible', icon: '🔋' },
       { key: 'fixation_cassee', label: 'Fixation cassée', icon: '🔧' },
       { key: 'eclairage_faible', label: 'Éclairage trop faible', icon: '🌙' },
-      { key: 'eclairage_s_etient', label: "Éclairage qui s’éteint en roulant", icon: '🚫' },
+      { key: 'eclairage_s_etient', label: 'Éclairage qui s’éteint en roulant', icon: '🚫' },
     ],
     revision: [
       { key: 'revision_complete', label: 'Révision complète', icon: '🔁' },
@@ -392,43 +388,80 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
       {error && <div className="error-toast small">{error}</div>}
       {success && <div className="success-toast">{success}</div>}
 
-      <StepForm steps={["Catégorie", "Précisez votre besoin", "Localisation", "Confirmation"]} current={step}>
+      <StepProgressBar steps={['Catégorie', 'Précisez votre besoin', 'Localisation', 'Confirmation']} current={step} />
+      <StepForm steps={['Catégorie', 'Précisez votre besoin', 'Localisation', 'Confirmation']} current={step}>
         {({ current, total }) => (
           <div>
             {stepTopError && <div className="step-top-error" style={{background:'#ffefef', color:'#b00020', padding:8, borderRadius:6, marginBottom:8}}>{stepTopError}</div>}
             <div className="step-panel-content">
               {current === 0 && (
                 <div>
-                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                    <label className="label">Sélectionnez le vélo concerné par votre demande</label>
-                    <div style={{fontSize:'0.9rem', color:'#555'}}>Étape 1/4</div>
-                  </div>
-
+                  <label className="label">Sélectionnez le vélo concerné par votre demande</label>
                   {bikes && bikes.length > 0 ? (
-                    <div className="bike-grid" style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:12, marginTop:8}}>
-                      {bikes.map(b => (
-                        <button key={b.id} type="button" className={`bike-card ${formData.bikeId === b.id ? 'selected' : ''}`} onClick={() => { setFormData({ ...formData, bikeId: b.id, bikeType: b.type || formData.bikeType }); }} style={{padding:12, borderRadius:10, border: formData.bikeId === b.id ? '2px solid #2a9d8f' : '1px solid #e6eef0', background:'#fff', textAlign:'left', cursor:'pointer', position:'relative'}}>
-                          <div style={{display:'flex', alignItems:'center', gap:10}}>
-                            <div style={{width:48, height:48, borderRadius:6, background:'#f1f5f5', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18}} aria-hidden>🚲</div>
-                            <div>
-                              <div style={{fontWeight:700}}>{b.name || b.model || 'Vélo'}</div>
-                              <div style={{fontSize:12, color:'#666'}}>{b.type || ''} {b.frame_size ? `• ${b.frame_size}` : ''}</div>
+                    <>
+                      <div className="bike-grid" style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:12, marginTop:8}}>
+                        {bikes.map(b => (
+                          <button key={b.id} type="button" className={`bike-card ${formData.bikeId === b.id ? 'selected' : ''}`} onClick={() => { setFormData({ ...formData, bikeId: b.id, bikeType: b.type || formData.bikeType }); }} style={{padding:12, borderRadius:10, border: formData.bikeId === b.id ? '2px solid #2a9d8f' : '1px solid #e6eef0', background:'#fff', textAlign:'left', cursor:'pointer', position:'relative'}}>
+                            <div style={{display:'flex', alignItems:'center', gap:10}}>
+                              <div style={{width:48, height:48, borderRadius:6, background:'#f1f5f5', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18}} aria-hidden>🚲</div>
+                              <div>
+                                <div style={{fontWeight:700}}>{b.name || b.model || 'Vélo'}</div>
+                                <div style={{fontSize:12, color:'#666'}}>{b.type || ''} {b.frame_size ? `• ${b.frame_size}` : ''}</div>
+                              </div>
                             </div>
-                          </div>
-                          {formData.bikeId === b.id && <div style={{position:'absolute', right:8, top:8}}>✅</div>}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{marginTop:8}}>
-                      <div className="empty-list">Vous n'avez pas encore de vélo enregistré.</div>
-                      <div style={{marginTop:10}}>
-                        <button type="button" className="btn primary" onClick={() => setShowBikeModal(true)}>➕ Ajouter un vélo</button>
+                            {formData.bikeId === b.id && <div style={{position:'absolute', right:8, top:8}}>✅</div>}
+                          </button>
+                        ))}
                       </div>
-                    </div>
+                      <div style={{margin:'16px 0'}}>
+                        <button type="button" className="btn tertiary" onClick={() => setShowAddBikeInline(v => !v)}>
+                          {showAddBikeInline ? 'Annuler l’ajout de vélo' : '➕ Ajouter un vélo'}
+                        </button>
+                      </div>
+                      {showAddBikeInline && (
+                        <div style={{margin:'16px 0', background:'#f8f9fa', borderRadius:8, padding:16}}>
+                          <AddBikePage
+                            conversational
+                            onClose={async () => {
+                              setShowAddBikeInline(false);
+                              const list = await loadBikes();
+                              if (list && list.length) {
+                                const last = list[list.length - 1];
+                                setFormData(f => ({ ...f, bikeId: last.id, bikeType: last.type || f.bikeType }));
+                              }
+                            }}
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="empty-list" style={{marginBottom:8}}>Vous n'avez pas encore de vélo enregistré.</div>
+                      <div style={{marginBottom:10}}>
+                        <button type="button" className="btn primary" onClick={() => setShowAddBikeInline(v => !v)}>
+                          {showAddBikeInline ? 'Annuler l’ajout de vélo' : '➕ Ajouter un vélo'}
+                        </button>
+                      </div>
+                      {showAddBikeInline && (
+                        <div style={{margin:'16px 0', background:'#f8f9fa', borderRadius:8, padding:16}}>
+                          <AddBikePage
+                            conversational
+                            onClose={async () => {
+                              setShowAddBikeInline(false);
+                              const list = await loadBikes();
+                              if (list && list.length) {
+                                const last = list[list.length - 1];
+                                setFormData(f => ({ ...f, bikeId: last.id, bikeType: last.type || f.bikeType }));
+                              }
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div style={{marginTop:8, color:'#666'}}>Vous pouvez créer une demande sans sélectionner de vélo.</div>
+                    </>
                   )}
                   {/* Show either top-banner or per-field error, not both */}
-                  {!stepTopError && bikeError && <div className="field-error small" style={{color:'#b00020', marginTop:8}}>{bikeError}</div>}
+                  {!stepTopError && bikeError && bikes && bikes.length > 0 && <div className="field-error small" style={{color:'#b00020', marginTop:8}}>{bikeError}</div>}
 
                   <div style={{marginTop:16}}>
                     <label className="label">Quel est votre besoin principal ?</label>
@@ -461,11 +494,6 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
 
               {current === 1 && (
                 <div>
-                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                    <label className="label">Précisez votre besoin</label>
-                    <div style={{fontSize:'0.9rem', color:'#555'}}>Étape {current + 1}/{total}</div>
-                  </div>
-
                   {!formData.problem && <div style={{marginTop:8}} className="field-note">Veuillez d'abord sélectionner votre besoin principal à l'étape précédente.</div>}
 
                   {formData.problem && (
@@ -495,31 +523,45 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
 
               {current === 2 && (
                 <div>
-                  <label className="label">Localisation</label>
                   <LocationSelector initial={{ locationLat: formData.locationLat, locationLng: formData.locationLng, locationAddress: formData.locationAddress, precise: formData.precise }} onChange={(p) => setFormData(f => ({ ...f, locationLat: p.locationLat || f.locationLat, locationLng: p.locationLng || f.locationLng, locationAddress: p.locationAddress || f.locationAddress, precise: p.precise || f.precise }))} />
                   {!stepTopError && locationError && <div className="field-error small" style={{color:'#b00020', marginTop:6}}>{locationError}</div>}
-                  <div className="location-actions">
-                    <button 
-                      type="button" 
-                      className="btn tertiary" 
-                      onClick={useMyLocation}
-                      disabled={geoLoading}
-                      style={{opacity: geoLoading ? 0.6 : 1}}
-                    >
-                      {geoLoading ? '⏳ Localisation...' : '📍 Utiliser ma position'}
-                    </button>
-                    <small className="micro">Localisation précise aide le mécanicien.</small>
-                  </div>
+                  {/* Bouton 'Utiliser ma position' supprimé, la géolocalisation est automatique */}
                 </div>
               )}
 
               {current === 3 && (
                 <div>
-                  <h4>Confirmation</h4>
-                  <p><strong>Type :</strong> {formData.bikeType}</p>
-                  <p><strong>Besoin :</strong> {formData.problem}</p>
-                  <p><strong>Détails :</strong> {formData.details || '—'}</p>
-                  <p><strong>Adresse :</strong> {formData.locationAddress || formData.precise || '—'}</p>
+                  <h4>Résumé de la demande</h4>
+                  <div className="resume-card" style={{background:'#f8f9fa', borderRadius:8, padding:16, marginBottom:12}}>
+                    <div style={{display:'flex', alignItems:'center', gap:12}}>
+                      <span style={{fontSize:22}}>🚲</span>
+                      <span><strong>Vélo :</strong> {formData.bikeType || '—'}</span>
+                    </div>
+                    <div style={{display:'flex', alignItems:'center', gap:12, marginTop:8}}>
+                      <span style={{fontSize:22}}>🛠️</span>
+                      <span><strong>Besoin :</strong> {formData.problem || '—'}</span>
+                    </div>
+                    <div style={{display:'flex', alignItems:'center', gap:12, marginTop:8}}>
+                      <span style={{fontSize:22}}>📍</span>
+                      <span><strong>Adresse :</strong> {formData.locationAddress || formData.precise || '—'}</span>
+                    </div>
+                    {formData.details && (
+                      <div style={{display:'flex', alignItems:'center', gap:12, marginTop:8}}>
+                        <span style={{fontSize:22}}>📝</span>
+                        <span><strong>Détails :</strong> {formData.details}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{margin:'16px 0 0 0'}}>
+                    <label htmlFor="details-textarea" style={{fontWeight:600, display:'block', marginBottom:4}}>Détails complémentaires (optionnel)</label>
+                    <textarea
+                      id="details-textarea"
+                      value={formData.details || ''}
+                      onChange={e => setFormData(f => ({ ...f, details: e.target.value }))}
+                      placeholder="Ajoutez ici toute information utile pour le réparateur (ex : symptômes, contexte, contraintes...)"
+                      style={{width:'100%', minHeight:60, padding:10, borderRadius:8, border:'1px solid #dfecee', marginBottom:8}}
+                    />
+                  </div>
                   <div style={{marginTop:12}}>
                     <label style={{display:'flex', alignItems:'center', gap:8}}>
                       <input type="checkbox" checked={confirmChecked} onChange={(e) => setConfirmChecked(e.target.checked)} />
@@ -534,7 +576,7 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
             <div className="form-actions" style={{marginTop:16, display:'flex', justifyContent:'center'}}>
               <div style={{display:'flex', gap:12, justifyContent:'center', alignItems:'center'}}>
                 {current > 0 && <button type="button" className="btn secondary" onClick={() => setStep(s => Math.max(0, s - 1))}>Précédent</button>}
-                {current < total - 1 && <button type="button" className="btn primary" onClick={tryNext}>{'Suivant'}</button>}
+                {current < total - 1 && <button type="button" className="btn primary" onClick={tryNext} disabled={!canProceed(current)}>{'Suivant'}</button>}
                 {current === total - 1 && <button data-cy="repair-submit" type="button" className="btn primary" onClick={trySubmit} disabled={loading}>{loading ? 'Création...' : 'Valider'}</button>}
                 {onCancel && <button type="button" className="btn secondary" onClick={onCancel}>Annuler</button>}
               </div>
@@ -542,11 +584,7 @@ export default function RepairForm({ initial = {}, onSuccess, onCancel }) {
           </div>
         )}
       </StepForm>
-      {showBikeModal && (
-        <Suspense fallback={<div style={{padding:16}}>Chargement du formulaire vélo...</div>}>
-          <LazyAddBikePage conversational onClose={async () => { setShowBikeModal(false); const list = await loadBikes(); if (list && list.length) { const last = list[list.length - 1]; setFormData(f => ({ ...f, bikeId: last.id, bikeType: last.type || f.bikeType })); } }} />
-        </Suspense>
-      )}
+      {/* Suppression du modal vélo, tout est en ligne */}
     </div>
   );
 }

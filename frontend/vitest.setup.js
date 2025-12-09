@@ -1,3 +1,4 @@
+console.info('✅ Setup Vitest chargé');
 import React from 'react';
 import { vi, expect as vitestExpect } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';

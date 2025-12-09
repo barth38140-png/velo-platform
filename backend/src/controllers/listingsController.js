@@ -5,7 +5,7 @@ async function createListing(req, res) {
   const { repairer_id, title } = req.body || {};
   try {
     const { description, price, duration_min, visible = true } = req.body || {};
-    if (!repairer_id || !title) return res.status(400).json({ error: 'ID réparateur et titre requis' });
+    if (!repairer_id || !title) return res.status(400).json({ error: 'missing_repairer_or_title', message: 'ID réparateur et titre requis' });
 
     const q = `INSERT INTO listings (repairer_id, title, description, price, duration_min, visible)
                VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`;
@@ -13,7 +13,7 @@ async function createListing(req, res) {
     return res.status(201).json(rows[0]);
   } catch (err) {
     logger.error({ err, repairer_id, title }, 'createListing error');
-    return res.status(500).json({ error: 'Erreur serveur' });
+    return res.status(500).json({ error: 'internal_error', message: 'Erreur serveur' });
   }
 }
 
@@ -30,7 +30,7 @@ async function getListings(req, res) {
     return res.json(rows);
   } catch (err) {
     logger.error({ err }, 'getListings error');
-    return res.status(500).json({ error: 'Erreur serveur' });
+    return res.status(500).json({ error: 'internal_error', message: 'Erreur serveur' });
   }
 }
 

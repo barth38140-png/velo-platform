@@ -94,15 +94,6 @@
 ## Docker
 
 ### Conventions
-- Utiliser `docker-compose.dev.yml` pour le développement local
-- Minimiser la taille des images Docker
-- Utiliser des variables d'environnement pour la configuration
-- Documenter les ports exposés et les volumes
-
-## Git
-
-### Commits
-## Réponses et explications
 
 ### Format des réponses
 - Être **concis mais complet** et **direct**

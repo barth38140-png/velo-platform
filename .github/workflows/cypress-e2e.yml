@@ -1,0 +1,29 @@
+name: Cypress E2E Frontend
+on:
+  push:
+    paths:
+      - 'frontend/**'
+  pull_request:
+    paths:
+      - 'frontend/**'
+jobs:
+  cypress-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: cd frontend && npm ci
+      - name: Start frontend
+        run: npm run dev &
+        working-directory: frontend
+      - name: Wait for frontend
+        run: npx wait-on http://localhost:5173
+        working-directory: frontend
+      - name: Run Cypress tests
+        run: npm run e2e:run
+        working-directory: frontend

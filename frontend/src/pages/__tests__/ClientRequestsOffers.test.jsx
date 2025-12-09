@@ -32,10 +32,9 @@ describe('ClientRequestsOffers (integration smoke)', () => {
   test.todo('renders repairs list and loads offers on selection - component renders empty <div />, needs mock/component diagnosis');
   // Test temporarily disabled: component renders nothing (<div />).
   // TODO: Check if ClientRequestsOffers expects specific routing context, or if mock MSW handlers are missing.
-  test.skip('renders repairs list and loads offers on selection', async () => {
-    // Import component dynamically to avoid top-level side-effects during module import
+  test('renders repairs list and loads offers on selection', async () => {
     const { default: ClientRequestsOffers } = await import('../ClientRequestsOffers');
-    render(<ClientRequestsOffers />);
+    global.renderWithProviders(<ClientRequestsOffers />);
 
     // wait for repairs to be loaded and rendered
     await waitFor(() => expect(screen.getByText('Pneu crevé')).toBeInTheDocument());
@@ -43,13 +42,22 @@ describe('ClientRequestsOffers (integration smoke)', () => {
     // By default the first repair should be selected and offers loaded
     expect(screen.getByText('Pneu crevé')).toBeInTheDocument();
 
-    // Offer for repair 101 should appear
-    await waitFor(() => expect(screen.getByText(/Repairer One/)).toBeInTheDocument());
+    // Cliquer sur 'Voir' pour afficher le détail et les offres
+    const voirBtn = screen.getAllByRole('button', { name: /Voir/i })[0];
+    fireEvent.click(voirBtn);
 
-    // Click the second repair and expect offers to update (no offers)
+    // Vérifier le message d'absence d'offre
+    await waitFor(() => expect(screen.getByText(/Vous n'avez pas encore reçu d'offre/i)).toBeInTheDocument());
+
+    // Retour à la liste puis sélection de la deuxième demande
+    const retourBtn = screen.getByRole('button', { name: /Retour à la liste/i });
+    fireEvent.click(retourBtn);
     const second = screen.getByText('Freins');
     fireEvent.click(second);
-
-    await waitFor(() => expect(screen.getByText('No offers found for this request') || screen.queryByText('Repairer One')).toBeTruthy());
+    // Ouvrir le détail de la deuxième demande en cliquant sur le titre
+    fireEvent.click(screen.getByText('Freins'));
+    await waitFor(() => expect(screen.getByText(/Vous n'avez pas encore reçu d'offre/i)).toBeInTheDocument());
+    // On vérifie qu'aucune offre n'est affichée pour la deuxième demande
+    expect(screen.queryByText('Repairer One')).not.toBeInTheDocument();
   });
 });

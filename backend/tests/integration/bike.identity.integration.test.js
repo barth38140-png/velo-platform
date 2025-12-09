@@ -1,5 +1,5 @@
 const pool = require('../../config/db');
-const { createBike, updateBike, getBikeById } = require('../../models/bikeModel');
+const { createBike, updateBike } = require('../../models/bikeModel'); // Suppression de 'getBikeById' non utilisé
 
 /**
  * This integration test exercises DB <-> model for bike identity fields:
@@ -43,7 +43,7 @@ describe('Integration: bike identity fields', () => {
           userId = ins.rows[0].id;
         }
       }
-    } catch (e) {
+    } catch {
       // ignore; userId may remain null and tests will skip
     }
   });
@@ -81,7 +81,7 @@ describe('Integration: bike identity fields', () => {
     try {
       if (bikeA?.id) await pool.query('DELETE FROM bikes WHERE id = $1', [bikeA.id]);
       if (bikeB?.id) await pool.query('DELETE FROM bikes WHERE id = $1', [bikeB.id]);
-    } catch (e) {}
-    try { if (pool && typeof pool.end === 'function') await pool.end(); } catch (e) {}
+    } catch {}
+    try { if (pool && typeof pool.end === 'function') await pool.end(); } catch {}
   });
 });

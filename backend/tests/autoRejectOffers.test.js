@@ -8,11 +8,20 @@ jest.mock('../models/repairModel');
 
 describe('Auto-reject concurrent offers', () => {
   let app;
-  let server;
 
   beforeAll(async () => {
     server = await start(0);
     app = require('../src/index').app;
+    // Injection du middleware mocké
+    const mockAuth = (req, res, next) => {
+      req.user = { id: 1, role: 'client' };
+      next();
+    };
+    app._router.stack.forEach((layer) => {
+      if (layer.name === 'bound dispatch' && layer.handle.name === 'auth') {
+        layer.handle = mockAuth;
+      }
+    });
   });
 
   afterAll(async () => {
@@ -53,7 +62,7 @@ describe('Auto-reject concurrent offers', () => {
 
     const token = 'valid-test-token';
     // Mock l'utilisateur authentifié
-    jest.spyOn(require('../middlewares/auth'), 'default').mockImplementation((req, res, next) => {
+    jest.mock('../middlewares/auth', () => (req, res, next) => {
       req.user = { id: 1, role: 'client' };
       next();
     });
@@ -109,7 +118,7 @@ describe('Auto-reject concurrent offers', () => {
     );
     repairModel.updateRepairRequestStatus.mockResolvedValue({ ...mockRepair, status: 'assignée' });
 
-    jest.spyOn(require('../middlewares/auth'), 'default').mockImplementation((req, res, next) => {
+    jest.mock('../middlewares/auth', () => (req, res, next) => {
       req.user = { id: 1, role: 'client' };
       next();
     });

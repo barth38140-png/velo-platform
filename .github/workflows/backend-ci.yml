@@ -1,0 +1,37 @@
+name: Backend CI
+on:
+  push:
+    paths:
+      - 'backend/**'
+  pull_request:
+    paths:
+      - 'backend/**'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: cd backend && npm ci
+      - name: Run tests
+        run: npm run test
+        working-directory: backend
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: cd backend && npm ci
+      - name: Build backend
+        run: echo "Aucune étape de build spécifique pour le backend Node.js. Ajoutez ici si besoin."
+        working-directory: backend

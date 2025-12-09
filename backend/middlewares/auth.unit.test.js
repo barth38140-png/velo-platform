@@ -5,10 +5,18 @@ jest.mock('jsonwebtoken');
 
 describe('auth middleware', () => {
   let req, res, next;
+
+  let originalEnv;
   beforeEach(() => {
+    originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'dev'; // Force le mode non-test pour tester le vrai middleware
     req = { headers: {} };
     res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
     next = jest.fn();
+  });
+
+  afterEach(() => {
+    process.env.NODE_ENV = originalEnv;
   });
 
   it('returns 401 if no token', () => {

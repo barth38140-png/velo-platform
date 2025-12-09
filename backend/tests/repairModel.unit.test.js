@@ -4,13 +4,18 @@ const model = require('../models/repairModel');
 jest.mock('../config/db', () => ({ query: jest.fn() }));
 
 describe('repairModel', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     db.query.mockReset();
+    // Nettoyage des demandes de réparation de test
+    const dbReal = require('../config/db');
+    if (dbReal && dbReal.query) {
+      await dbReal.query('DELETE FROM repair_requests WHERE title = $1', ['Fix bike']);
+    }
   });
 
   test('createRepairRequest returns created row', async () => {
     const fake = { id: 42, title: 'Fix bike' };
-    db.query.mockResolvedValueOnce({ rows: [fake] });
+    db.query.mockResolvedValueOnce({ rows: [fake] }); // format garanti
     const out = await model.createRepairRequest(1, 'Fix bike', 'desc');
     expect(db.query).toHaveBeenCalled();
     expect(out).toEqual(fake);

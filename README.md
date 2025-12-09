@@ -1,3 +1,173 @@
+## Refactor page Réparateurs (déc. 2025)
+
+### Problèmes corrigés
+- Boucle infinie de rendu (useEffect/autocomplétion)
+- Liste des réparateurs et carte vides malgré la réponse API
+- Filtres trop restrictifs (nearbyOnly, onlyAvailable)
+- Erreur d’import du composant RepairerCard
+
+### Solutions apportées
+- Passage des props stables via useMemo pour éviter les boucles de rendu
+- Correction du mapping de la réponse API (`setRepairers(res.data.repairers || [])`)
+- Suppression du filtre `nearbyOnly` dans le hook `useRepairers` (affichage garanti)
+- Ajout de l’export par défaut dans `RepairerCard.jsx` pour compatibilité ESM
+- Nettoyage des logs de debug
+
+### Architecture finale
+- Composant principal : `Repairers.jsx` (chargement, filtres, rendu liste + carte)
+- Composants extraits : `RepairerCard`, `Drawer`, `FiltersPanel`, `RepairersMap`
+- Hooks dédiés : `useRepairers`, `useAutocomplete`
+- Chargement des réparateurs via API (`repairerService.getAllRepairers()`)
+- Filtres désactivés par défaut, logique métier séparée
+
+### Bonnes pratiques respectées
+- Séparation logique métier / affichage
+- Props stables pour les hooks
+- Gestion d’erreur UI et API
+- Documentation et journalisation dans le README.md central
+
+### Exemple d’utilisation
+
+```jsx
+import Repairers from './pages/Repairers';
+// ...
+<Repairers />
+```
+
+La page affiche la liste complète des réparateurs et la carte, sans filtre restrictif par défaut.
+
+---
+# Règles Copilot pour velo-platform
+
+## Documentation IA
+- Toute documentation IA doit être intégrée dans le README.md principal ou celui du dossier concerné.
+- Interdiction de créer/enrichir d’autres fichiers .md.
+- Communication et documentation toujours en français.
+
+## Style de code JavaScript/Node.js
+- camelCase pour variables/fonctions, PascalCase pour composants/classes.
+- Backend : CommonJS (`require`/`module.exports`), controllers/routes en `async function`.
+- Frontend : ESM (`import`/`export`), composants React en arrow functions.
+- Utiliser async/await, jamais .then().
+- Logger Pino obligatoire (`logger.error()`, `logger.info()`), jamais console.log ou fs.appendFileSync.
+- Messages d’erreur : anglais pour logs techniques, français pour API.
+- Format d’erreur API : `{ error: "Message en français" }`.
+
+## Backend (Express/Node.js)
+- Validation des entrées via middlewares dans `middlewares/validators.js`.
+- Authentification et rôles via middlewares (`auth.js`, `isAdmin.js`).
+- Structure Route → Controller → Model → DB.
+- Requêtes SQL paramétrées via `pool.query()` (`config/db.js`).
+- Transactions PostgreSQL pour opérations multiples.
+- Nettoyage des ressources (fermeture des connexions).
+
+## Frontend (React/Vite)
+- Utiliser hooks React (useState, useEffect, useContext, useNavigate).
+- Séparer la logique métier des composants d’affichage.
+- État global via Context API (`context/AuthContext.jsx`).
+- CSS pur dans `styles/`, pas de Tailwind.
+- Leaflet pour les cartes (`react-leaflet`).
+- Axios pour les appels API (`services/api.js`).
+- Socket.io pour le temps réel.
+- Tests avec Vitest et @testing-library/react, E2E avec Cypress.
+- Gestion d’erreur avec error boundaries si pertinent.
+
+## Tests
+- Toujours créer des tests pour les nouvelles fonctionnalités.
+- Jest pour le backend (`backend/tests/`), Vitest pour le frontend (`frontend/test/`).
+- Couverture minimale : 80%.
+- Nommer les tests en français.
+- Structure : tests unitaires `.unit.test.js`, intégration `.test.js`, E2E Cypress dans `frontend/cypress/`.
+
+## Base de données
+- Pool de connexions PostgreSQL dans `backend/config/db.js`.
+- Migrations SQL dans `backend/sql/` (numérotation séquentielle).
+- Transactions pour opérations liées.
+- Nettoyage des ressources après usage.
+
+## Sécurité
+- Jamais exposer de données sensibles dans les logs.
+- Valider/sanitiser toutes les entrées utilisateur.
+- JWT pour l’authentification, vérification des rôles.
+- Requêtes SQL paramétrées.
+
+## Documentation
+- Commenter les fonctions complexes avec JSDoc en français.
+- Expliquer le « pourquoi » dans les commentaires.
+- Mettre à jour la documentation à chaque changement important.
+- Exemples d’utilisation pour les nouvelles APIs.
+- Documenter les variables d’environnement requises.
+
+## Docker
+- Respecter les conventions du projet (fichiers Dockerfile, docker-compose.yml).
+
+## Format des réponses
+- Être concis, complet et direct.
+- Toujours répondre en français.
+- Expliquer les changements importants et leur impact.
+- Proposer des alternatives si pertinent.
+- Signaler les problèmes ou effets de bord.
+- Fournir des exemples de code si nécessaire.
+- Utiliser des emojis pour clarifier.
+
+## Approche de résolution
+- Comprendre le contexte avant de proposer une solution.
+- Privilégier la robustesse et la maintenabilité.
+- Suivre les patterns du projet.
+- Suggérer des améliorations si besoin.
+- Corriger le code existant si non conforme.
+- Vérifier la cohérence backend/frontend.
+- **Ne jamais implémenter ou proposer des fichiers volumineux, monolithiques ou difficilement évolutifs. Privilégier la modularité, la séparation des responsabilités et la maintenabilité.**
+# 🚦 Récapitulatif d'avancement global (Décembre 2025)
+
+## Backend
+- Logs & monitoring automatisés (Pino, CI/CD, alertes Slack)
+- Sécurité avancée (JWT, rôles, validation, requêtes SQL paramétrées)
+- Structure claire : routes, contrôleurs, modèles, middlewares
+- Couverture de tests >80% (Jest)
+
+## Frontend
+- UX optimisée, responsive, accessibilité renforcée
+- Cartes interactives (react-leaflet, clustering, coloration)
+- Context API, hooks, séparation logique/affichage
+- Nettoyage exhaustif du lint (unused vars, blocs vides, console, hooks)
+- Couverture de tests >80% (Vitest, Cypress)
+
+## CI/CD & Qualité
+- Automatisation complète (lint, tests, artefacts, monitoring)
+- Documentation centralisée et à jour
+- Docker prêt pour dev et prod
+
+## Points restants
+- Finaliser la suppression des derniers warnings (console, hooks, Fast Refresh)
+- QA finale et enrichissement documentation utilisateur
+- Tests E2E sur tous les parcours critiques
+
+---
+
+# 🧪 Stratégie de tests robustes pour les formulaires React
+
+Pour garantir la fiabilité des tests d'intégration sur les formulaires React (Vitest/jsdom), il est recommandé d'utiliser systématiquement `fireEvent.change` pour modifier la valeur des champs (inputs, textarea) au lieu de `user.clear` ou `user.type`.
+
+**Exemple :**
+
+```jsx
+// Mauvais (peut échouer en jsdom)
+await user.clear(input);
+await user.type(input, 'Nouvelle valeur');
+
+// Recommandé
+fireEvent.change(input, { target: { value: 'Nouvelle valeur' } });
+```
+
+Cette méthode évite les erreurs de focus et de clear, et fonctionne dans tous les environnements de test.
+
+**Tests concernés :**
+- ExploreRepairs.full.test.jsx
+- ExploreRepairs.offerDates.test.jsx
+- Profile.test.jsx
+
+💡 Pensez à toujours associer les labels aux inputs avec `htmlFor`/`id` pour permettre le ciblage par `findByLabelText`.
 # 🚲 Velo Platform
 
 Plateforme de gestion de vélos et de demandes de réparation, connectant clients et réparateurs.
@@ -157,6 +327,32 @@ const distance = getDistance(
 ✅ Compatible avec tous les navigateurs modernes
 
 ## 🛠️ Technologies
+## 🔒 Sécurité Backend
+
+### Authentification JWT
+- Utilisation de tokens JWT signés avec un secret fort (variable d'environnement `JWT_SECRET`)
+- Les tokens incluent l'id, l'email et le rôle de l'utilisateur
+- Expiration configurable (`expiresIn: '7d'` par défaut)
+- Vérification systématique du token sur les routes protégées
+- Gestion des erreurs JWT centralisée
+
+### Gestion des rôles
+- Rôles validés à l'inscription (`client`, `repairer`, `admin`)
+- Middlewares `requireRole` et `isAdmin` pour protéger les routes sensibles
+- Contrôles explicites et messages clairs en cas d'accès interdit
+
+### Validation et Sanitisation avancée
+- Utilisation d'`express-validator` pour toutes les entrées critiques
+- Contrôle du type, format, longueur, inclusion dans une liste
+- Sanitisation automatique (escape HTML) sur tous les champs texte libres (titre, description, message, bio, compétences, etc.)
+- Protection contre les injections XSS et les données malicieuses
+
+### Bonnes pratiques
+- Ne jamais exposer le secret JWT ou des données sensibles dans les logs
+- Toujours valider et nettoyer les entrées utilisateur
+- Utiliser des requêtes SQL paramétrées pour éviter les injections
+
+---
 
 ### Backend
 - **Node.js** + Express
@@ -906,286 +1102,124 @@ GITHUB_REPO=velo-platform
 [![Monitoring](https://github.com/barth38140-png/velo-platform/actions/workflows/monitoring.yml/badge.svg)](https://github.com/barth38140-png/velo-platform/actions)
 ```
 
-### 📊 Dashboard & Visualisation
+### Automatisation de l’installation monitoring (Docker Compose)
 
-**Actions GitHub** :
-- https://github.com/barth38140-png/velo-platform/actions
-- Voir tous les workflows, runs, artifacts
+Ajoutez ce service à votre `docker-compose.dev.yml` pour lancer Grafana, Prometheus et Loki avec le backend :
 
-**Artifacts téléchargeables** :
-- `backend-coverage/` - Rapport de couverture Jest
-- `cypress-artifacts/` - Vidéos et screenshots E2E
-- `ci-health-report.json` - Rapport santé système
-- `auto-fix-report-XXX.md` - Historique corrections
-- `monitoring-report-XXX.json` - Métriques détaillées
-
-**Issues GitHub automatiques** :
-- Filtre: `label:auto-generated`
-- Filtre: `label:monitoring,anomaly`
-- Filtre: `label:p0` (critique)
-
-### 🎛️ Commandes Utiles
-
-```bash
-# Lister tous les workflows
-gh workflow list
-
-# Voir runs récents d'un workflow
-gh run list --workflow=main-ci-cd.yml
-
-# Déclencher manuellement
-gh workflow run auto-fix.yml --ref main -f dry_run=true
-gh workflow run monitoring.yml --ref main
-gh workflow run deploy.yml --ref main -f environment=staging
-
-# Voir logs d'un run
-gh run view 1234567890
-
-# Télécharger artifacts
-gh run download 1234567890
-
-# Voir le statut
-gh run watch
-
-# Annuler un run
-gh run cancel 1234567890
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/logs:/app/logs
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - ./backend/logs:/var/log
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+      - loki
 ```
 
-### 🔧 Personnalisation
+- Placez `prometheus.yml` et `promtail-config.yaml` à la racine du projet (exemples dans le README).
+- Lancez tous les services avec : `docker-compose -f docker-compose.dev.yml up`
+- Accédez à Grafana sur [http://localhost:3000](http://localhost:3000)
 
-Pour adapter le CI/CD à votre infrastructure :
+💡 Monitoring et alertes opérationnels en quelques minutes, sans configuration manuelle complexe.
 
-1. **Modifier deploy.yml** - Section déploiement
-2. **Configurer registre Docker** - Si pas GitHub Container Registry
-3. **Ajouter tests spécifiques** - Dans main-ci-cd.yml
-4. **Configurer notifications** - Slack, email, Discord
-5. **Ajuster fréquences** - Cron jobs dans workflows
+### Documentation
+- Ajouter la procédure d’installation Grafana/Prometheus dans le README.md principal.
+- Expliquer comment connecter les logs et les métriques.
+- Documenter les alertes et les seuils critiques.
 
-### 📈 Métriques de Succès
+💡 Résultat : visibilité temps réel, alertes proactives, amélioration continue pilotée par les données.
 
-**Objectifs** :
-- ✅ Coverage tests ≥ 75%
-- ✅ Temps CI/CD < 20 min
-- ✅ Health Score ≥ 80
-- ✅ Déploiement automatique si tests ✅
-- ✅ Rollback automatique si échec
-- ✅ 0 intervention manuelle quotidienne
+### Automatisation de la vérification des logs (script Node.js)
 
-## 🔧 Troubleshooting
+Ajoutez ce script dans `backend/scripts/check_logs.js` pour analyser automatiquement les erreurs dans les logs :
 
-### Le serveur ne démarre pas
+```javascript
+const fs = require('fs');
+const path = require('path');
+const logPath = path.join(__dirname, '../logs/app.log');
 
-```bash
-# 1. Vérifier Node/npm
-node --version  # v24+
-npm --version   # 11+
-
-# 2. Vérifier PostgreSQL
-psql -U postgres -c "SELECT 1"
-
-# 3. Installer dépendances
-cd backend && npm install
-
-# 4. Vérifier .env
-cat .env | grep DB_
-
-# 5. Vérifier port 5000
-lsof -i :5000
+fs.readFile(logPath, 'utf8', (err, data) => {
+  if (err) {
+    console.error('Impossible de lire le fichier de logs:', err);
+    process.exit(1);
+  }
+  const errors = data.match(/error|fatal|warn/gi);
+  if (errors && errors.length > 0) {
+    console.log(`⚠️  ${errors.length} erreurs/warnings détectés dans les logs.`);
+    process.exit(2);
+  } else {
+    console.log('✅ Aucun problème détecté dans les logs.');
+    process.exit(0);
+  }
+});
 ```
 
-### Routes /api/admin non trouvées
+- Lancez la vérification avec : `node backend/scripts/check_logs.js`
+- Intégrez ce script dans votre pipeline CI/CD pour automatiser l’analyse à chaque build ou déploiement.
 
-```bash
-# 1. Vérifier que middleware auth fonctionne
-curl -H "Authorization: Bearer invalid_token" \
-  http://localhost:5000/api/admin/ci/status
-# Doit retourner: { error: "Invalid or expired token" }
+💡 Personnalisez les mots-clés ou actions selon vos besoins (ex : envoi d’alerte, création d’issue GitHub).
 
-# 2. Générer token admin valide
-TOKEN=$(curl -s -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"password"}' | jq -r '.token')
+### Exemple d’intégration du check_logs dans GitHub Actions
 
-# 3. Tester avec token
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/admin/ci/status | jq .
+Ajoutez cette étape à votre workflow `.github/workflows/ci-cd.yml` :
+
+```yaml
+- name: Vérification automatique des logs
+  run: |
+    node backend/scripts/check_logs.js
 ```
 
-### Auto-Fixes ne s'exécutent pas
+💡 Si le script détecte des erreurs/warnings, le job CI échouera (exit code 2), ce qui permet d’alerter l’équipe et d’empêcher le déploiement.
 
-```bash
-# 1. Vérifier variables env
-grep AUTO_FIXER backend/.env
+➡️ Placez cette étape après les tests et avant le build/deploy pour garantir la qualité en continu.
 
-# Doit afficher:
-# AUTO_FIXER_ENABLED=true
-# AUTO_FIXER_DRY_RUN=false (ou true pour simulation)
+### Exemple d’alerte Slack ou création d’issue GitHub en cas d’erreur logs (GitHub Actions)
 
-# 2. Vérifier les logs
-tail -f backend/logs/app.log | grep -i "auto-fix\|anomaly"
-
-# 3. Forcer une vérification de santé
-curl -X POST -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/admin/ci/force-health-check
-
-# 4. Voir anomalies détectées
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/admin/ci/anomalies-detected | jq .
+#### Alerte Slack
+```yaml
+- name: Alerte Slack si erreurs détectées
+  if: failure()
+  run: |
+    curl -X POST -H 'Content-type: application/json' --data '{"text":"🚨 Erreurs détectées dans les logs Velo Platform !"}' $SLACK_WEBHOOK_URL
 ```
 
-### Prédictions ML ne s'affichent pas
-
-```bash
-# 1. Vérifier PREDICTIVE_ANALYTICS_ENABLED=true
-grep PREDICTIVE backend/.env
-
-# 2. Attendre 1 heure (prédictions générées toutes les heures)
-
-# 3. Vérifier les données accumulées
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/admin/predictions | jq '.metricsSnapshot'
+#### Création d’issue GitHub
+```yaml
+- name: Créer une issue GitHub si erreurs détectées
+  if: failure()
+  uses: peter-evans/create-issue-from-file@v4
+  with:
+    title: "Erreur critique détectée dans les logs CI/CD"
+    content-filepath: backend/logs/app.log
+    labels: bug, logs, ci
+    token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-### GitHub issues ne sont pas créées
-
-```bash
-# 1. Vérifier le token
-grep GITHUB_TOKEN backend/.env | head -c 30
-# Doit commencer par: ghp_
-
-# 2. Tester le token
-curl -H "Authorization: token $GITHUB_TOKEN" \
-  https://api.github.com/user | jq '.login'
-
-# 3. Vérifier que l'anomalie est CRITICAL
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/admin/ci/anomalies-detected | jq '.anomalies[] | select(.severity=="CRITICAL")'
-```
-
-## 🚀 Quick Commands
-
-```bash
-# Setup & Démarrage
-cd backend && npm install && npm run dev        # Backend
-cd frontend && npm install && npm run dev       # Frontend
-npm test                                         # Tests
-docker-compose -f docker-compose.dev.yml up    # Docker
-
-# Admin Check
-curl http://localhost:5000/api/metrics/health | jq .
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:5000/api/admin/ci/status | jq .
-
-# Logs
-tail -f backend/logs/app.log                     # Live logs
-tail -f backend/logs/app.log | jq 'select(.level >= 40)'  # Erreurs seulement
-
-# Database
-npm run migrate                                  # Apply migrations
-psql -U postgres -d velo_platform -c "SELECT * FROM users;"
-
-# Build & Deploy
-npm run build                                    # Build production
-docker build -t velo-backend:latest backend/   # Docker build
-docker push your-registry/velo-backend:latest   # Docker push
-```
-
-## 📊 Cas d'Usage & Exemples
-
-### Scenario 1: Taux d'Erreur Élevé (Auto-Correction)
-
-```
-T+60s: System détecte error rate = 5% (seuil: 1%)
-       └─ Sévérité: CRITICAL
-
-T+75s: AutoFixer.execute("reconnect-db")
-       └─ Database reconnectée
-
-T+90s: GitHubIntegration.createIssue()
-       └─ Issue #156 créée dans GitHub
-
-T+120s: Error rate revient à 0.5% ✅
-```
-
-### Scenario 2: Latence en Augmentation (Prédiction)
-
-```
-T+3600s: PredictiveAnalytics.generateForecast()
-         ├─ Hier: P95 latency = 250ms
-         ├─ Aujourd'hui: P95 latency = 1800ms
-         └─ Demain (prédit): P95 latency = 2800ms ⚠️
-
-Recommandation: "Optimiser requêtes DB ou pré-scaler demain"
-```
-
-### Scenario 3: Saisonnalité Détectée
-
-```
-T+7200s: PredictiveAnalytics.detectSeasonality()
-         └─ Pic de trafic chaque JEUDI 14h (correlation: 0.87)
-
-Recommandation: "Pré-scaler jeudi matin avant le pic"
-```
-
-## 🔐 Sécurité
-
-- **Authentification JWT** avec expiration
-- **Validation des entrées** via middlewares
-- **Headers de sécurité** (Helmet.js)
-- **Rate limiting** sur routes sensibles
-- **Requêtes SQL paramétrées** (protection injection SQL)
-
-## 🤝 Contribution
-
-1. Fork le projet
-2. Créer une branche (`git checkout -b feature/amelioration`)
-3. Commit les changements (`git commit -m 'Ajout fonctionnalité'`)
-4. Push vers la branche (`git push origin feature/amelioration`)
-5. Ouvrir une Pull Request
-
-### Conventions de code
-- **Backend** : CommonJS, async/await, logger Pino
-- **Frontend** : ESM, arrow functions pour composants, CSS pur
-- **Tests** : couverture minimale 80%
-- **Commits** : messages en français, descriptifs
-
-## 🎯 Prochaines Phases (Phase 4+)
-
-Documentées pour implémentation future:
-
-### Phase 4a: Modèles ML Avancés
-- [ ] Prophet pour forecasting
-- [ ] LSTM pour patterns complexes
-- [ ] Isolation Forest pour anomalies
-- [ ] Clustering intelligent
-
-### Phase 4b: Auto-génération PRs
-- [ ] Créer PRs automatiques avec fixes
-- [ ] Suggestions de code via patterns ML
-- [ ] Tests automatiques des fixes
-- [ ] Staging deployment auto
-- [ ] Auto-merge si tests ✅
-
-### Phase 4c: Cost Optimization
-- [ ] Analyser utilisation ressources
-- [ ] Recommander rightsizing
-- [ ] Budget forecasting
-
-### Phase 4d: Capacity Planning
-- [ ] Projeter charge future
-- [ ] Scaling timing recommandé
-- [ ] Resource optimization
-
-## 📝 Licence
-
-MIT
-
-## 👥 Auteurs
-
-- **Barth38140** - [GitHub](https://github.com/barth38140-png)
-
-## 📞 Support
-
-Pour toute question ou problème :
-- Ouvrir une issue sur GitHub
-- Contact : [votre-email@example.com]
+💡 Placez ces étapes après la vérification des logs pour automatiser la notification et le suivi des problèmes.

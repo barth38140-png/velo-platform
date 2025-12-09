@@ -6,13 +6,22 @@ const logger = require('../src/logger');
  * Crée une conversation entre client et réparateur pour une demande
  */
 async function createConversation(req, res) {
-  const { repairerId, repairRequestId } = req.body;
-  const clientId = req.user.id;
-  if (!repairerId || !repairRequestId) {
-    return res.status(400).json({ error: 'Réparateur et demande requis' });
+  // Log de debug du body reçu
+  console.log('[DEBUG] createConversation body:', req.body);
+  // On attend maintenant que le frontend envoie le vrai clientId lié à la demande
+  const { repairerId, repairRequestId, clientId } = req.body;
+  if (!clientId) {
+    return res.status(400).json({ error: 'Client requis' });
+  }
+  if (!repairerId) {
+    return res.status(400).json({ error: 'Réparateur requis' });
   }
   try {
-    const conv = await conversationModel.createConversation(clientId, repairerId, repairRequestId);
+    // Vérifier si une conversation existe déjà
+    let conv = await conversationModel.findConversation(clientId, repairerId, repairRequestId);
+    if (!conv) {
+      conv = await conversationModel.createConversation(clientId, repairerId, repairRequestId);
+    }
     res.status(201).json({ success: true, conversation: conv });
   } catch (err) {
     logger.error({ err, clientId, repairerId }, 'createConversation error');

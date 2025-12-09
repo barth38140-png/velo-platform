@@ -33,6 +33,7 @@ export function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="username"
             />
           </div>
           <div className="form-group">
@@ -42,6 +43,7 @@ export function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
           {error && <div className="error">{error}</div>}
@@ -56,3 +58,4 @@ export function Login() {
     </div>
   );
 }
+export default Login;

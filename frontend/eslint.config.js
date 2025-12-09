@@ -1,18 +1,24 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import { defineConfig, globalIgnores } from 'eslint/config'
+import js from '@eslint/js';
+import globals from 'globals';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import { defineConfig } from 'eslint/config';
 
+// Configuration ESLint pour le frontend React
 export default defineConfig([
-  globalIgnores(['dist']),
+  {
+    ignores: ['dist'],
+  },
   {
     files: ['**/*.{js,jsx}'],
-    extends: [
-      js.configs.recommended,
-      reactHooks.configs.flat.recommended,
-      reactRefresh.configs.vite,
-    ],
+    plugins: {
+      react: reactPlugin,
+      'react-hooks': reactHooks,
+      'jsx-a11y': jsxA11y,
+      'react-refresh': reactRefresh,
+    },
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -28,10 +34,26 @@ export default defineConfig([
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       'react-hooks/set-state-in-effect': 'warn',
+      'react/prop-types': 'off',
+      'react/jsx-uses-react': 'off',
+      'react/react-in-jsx-scope': 'off',
+      'jsx-a11y/alt-text': 'warn',
+      'jsx-a11y/no-autofocus': 'warn',
+      'react-refresh/only-export-components': 'warn',
+      'no-console': 'warn',
+      'semi': ['error', 'always'],
+      'quotes': ['error', 'single'],
+      'indent': ['error', 2],
     },
   },
   {
-    files: ['src/__tests__/**/*.jsx', 'src/**/*.test.jsx', 'src/**/*.test.js', '**/__tests__/**/*', 'src/pages/__tests__/**/*'],
+    files: [
+      'src/__tests__/**/*.jsx',
+      'src/**/*.test.jsx',
+      'src/**/*.test.js',
+      '**/__tests__/**/*',
+      'src/pages/__tests__/**/*',
+    ],
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -59,7 +81,11 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/context/**/*.jsx', 'src/components/**/*.jsx', 'src/pages/**/*.jsx'],
+    files: [
+      'src/context/**/*.jsx',
+      'src/components/**/*.jsx',
+      'src/pages/**/*.jsx',
+    ],
     rules: {
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
@@ -68,4 +94,4 @@ export default defineConfig([
       'no-empty': 'warn',
     },
   },
-])
+]);

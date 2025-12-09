@@ -10,7 +10,8 @@
     "e2e:open": "cypress open",
     "e2e:run": "cypress run",
     "e2e:orchestrate": "powershell -NoProfile -ExecutionPolicy Bypass -File ./frontend/scripts/run-e2e.ps1",
-    "lint": "eslint \"src/**/*.{js,jsx}\"",
+    "lint": "eslint \"src/**/*.{js,jsx}\" --cache --ignore-pattern coverage --ignore-pattern logs --ignore-pattern node_modules",
+    "lint:fix": "eslint \"src/**/*.{js,jsx}\" --fix --cache --ignore-pattern coverage --ignore-pattern logs --ignore-pattern node_modules",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest --watch",
@@ -19,6 +20,7 @@
     "test:ci": "vitest run --threads=false --reporter=dot"
   },
   "dependencies": {
+    "@changey/react-leaflet-markercluster": "^4.0.0-rc1",
     "@iconify/react": "^6.0.2",
     "axios": "^1.13.2",
     "leaflet": "^1.9.4",
@@ -29,6 +31,7 @@
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
+    "@eslint/compat": "^2.0.0",
     "@eslint/js": "^9.39.1",
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
@@ -38,8 +41,12 @@
     "@vitejs/plugin-react": "^5.1.0",
     "cypress": "^12.17.0",
     "eslint": "^9.39.1",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^16.5.0",
     "jsdom": "^22.1.0",
     "msw": "^2.12.2",

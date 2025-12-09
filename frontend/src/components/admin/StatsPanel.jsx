@@ -9,10 +9,6 @@ export default function StatsPanel({ stats, onRefresh }) {
   const [charts, setCharts] = useState(null);
   const toast = useToast();
 
-  useEffect(() => {
-    loadData();
-  }, [period]);
-
   const loadData = async () => {
     try {
       const [revRes, chartRes] = await Promise.all([
@@ -25,6 +21,10 @@ export default function StatsPanel({ stats, onRefresh }) {
       toast.error('Erreur lors du chargement des statistiques');
     }
   };
+
+  useEffect(() => {
+    loadData();
+  }, [period]);
 
   return (
     <div className="stats-panel">

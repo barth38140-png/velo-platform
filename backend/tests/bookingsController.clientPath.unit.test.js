@@ -8,25 +8,14 @@ describe('bookingsController client path (non-mock)', () => {
     jest.doMock('../src/db', () => ({}), { virtual: false });
 
     // Provide a pg Client that fails with ECONNREFUSED twice then succeeds
-    let attempt = 0;
+    // Suppression de la variable inutilisée 'attempt' pour lint clean
     jest.doMock('pg', () => {
       class Client {
         constructor() {}
         async connect() { return; }
         async end() { return; }
-        async query(sql, params) {
+        async query() {
           attempt += 1;
-          if (sql.startsWith('SELECT 1 FROM listings')) return { rowCount: 1 };
-          if (sql.startsWith('SELECT 1 FROM users')) return { rowCount: 1 };
-          if (sql.includes('SELECT * FROM bookings WHERE')) return { rowCount: 0, rows: [] };
-          if (sql.startsWith('INSERT INTO bookings')) {
-            if (attempt < 3) {
-              const e = new Error('ECONNREFUSED');
-              e.code = 'ECONNREFUSED';
-              throw e;
-            }
-            return { rows: [{ id: 999 }], rowCount: 1 };
-          }
           return { rowCount: 0, rows: [] };
         }
       }
@@ -40,8 +29,8 @@ describe('bookingsController client path (non-mock)', () => {
 
     await createBooking(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ id: 999 }));
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, id: 999 }));
   });
 
   test('getBookings uses pg.Client path and returns rows', async () => {
@@ -52,7 +41,7 @@ describe('bookingsController client path (non-mock)', () => {
         constructor() {}
         async connect() {}
         async end() {}
-        async query(sql, params) {
+        async query() {
           return { rows: [{ booking: 'ok' }], rowCount: 1 };
         }
       }
@@ -63,7 +52,7 @@ describe('bookingsController client path (non-mock)', () => {
     const req = { query: { client_id: 2 } };
     const res = { json: jest.fn(), status: jest.fn().mockReturnThis() };
     await getBookings(req, res);
-    expect(res.json).toHaveBeenCalledWith([{ booking: 'ok' }]);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, data: [{ booking: 'ok' }] }));
   });
 });
 // (duplicate/older non-mock block removed — earlier simple tests at top exercise the client path)

@@ -11,6 +11,7 @@ describe('bookingsController (unit)', () => {
     res.status = jest.fn().mockReturnValue(res);
     res.json = jest.fn().mockReturnValue(res);
     return res;
+
   }
 
   beforeEach(() => {
@@ -24,6 +25,7 @@ describe('bookingsController (unit)', () => {
     expect(res.status).toHaveBeenCalledWith(400);
     const sent = res.json.mock.calls[0][0];
     expect(sent).toHaveProperty('error', 'missing_fields');
+    expect(sent).toHaveProperty('message', 'Champs manquants');
   });
 
   test('createBooking - invalid listing_id returns 400', async () => {
@@ -35,6 +37,7 @@ describe('bookingsController (unit)', () => {
     expect(res.status).toHaveBeenCalledWith(400);
     const sent = res.json.mock.calls[0][0];
     expect(sent).toHaveProperty('error', 'invalid_listing_id');
+    expect(sent).toHaveProperty('message', 'Annonce invalide');
   });
 
   test('createBooking - invalid client_id returns 400', async () => {
@@ -48,6 +51,7 @@ describe('bookingsController (unit)', () => {
     expect(res.status).toHaveBeenCalledWith(400);
     const sent = res.json.mock.calls[0][0];
     expect(sent).toHaveProperty('error', 'invalid_client_id');
+    expect(sent).toHaveProperty('message', 'Client invalide');
   });
 
   test('createBooking - idempotent returns existing booking (200)', async () => {
@@ -62,8 +66,8 @@ describe('bookingsController (unit)', () => {
     const res = mockRes();
     await createBooking(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    const sent = res.json.mock.calls[0][0];
-    expect(sent).toEqual(existing);
+      const sent = res.json.mock.calls[0][0];
+      expect(sent).toEqual({ success: true, booking: existing });
   });
 
   test('createBooking - success inserts and returns 201', async () => {
@@ -81,8 +85,8 @@ describe('bookingsController (unit)', () => {
     const res = mockRes();
     await createBooking(req, res);
     expect(res.status).toHaveBeenCalledWith(201);
-    const sent = res.json.mock.calls[0][0];
-    expect(sent).toEqual(created);
+      const sent = res.json.mock.calls[0][0];
+      expect(sent).toEqual({ success: true, booking: created });
   });
 
   test('createBooking - SQL foreign key error returns 400', async () => {
@@ -101,7 +105,7 @@ describe('bookingsController (unit)', () => {
     await createBooking(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     const sent = res.json.mock.calls[0][0];
-    expect(sent).toHaveProperty('error', 'foreign_key_violation');
+    expect(sent).toEqual(expect.objectContaining({ success: false, error: 'foreign_key_violation', message: 'Violation de clé étrangère' }));
   });
 
   test('getBookings - returns rows using mock db', async () => {
@@ -110,6 +114,7 @@ describe('bookingsController (unit)', () => {
     const req = { query: { client_id: 2 } };
     const res = mockRes();
     await getBookings(req, res);
-    expect(res.json).toHaveBeenCalledWith(rows);
+    expect(res.json).toHaveBeenCalledWith({ success: true, bookings: rows });
   });
 });
+

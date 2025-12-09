@@ -26,7 +26,6 @@ beforeEach(() => {
 
 test('pool error with single err.code ECONNREFUSED triggers reinit and creates new pool', async () => {
   process.env.DB_HOST = 'will-fail';
-  const db = require('../src/db');
   const { Pool } = require('pg');
   expect(Pool).toHaveBeenCalledTimes(1);
   const firstPool = poolInstances[0];

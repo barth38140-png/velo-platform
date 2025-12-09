@@ -1,5 +1,4 @@
 /* tests/bookingsController.errors.unit.test.js */
-const util = require('util');
 beforeEach(() => {
   jest.resetModules();
   jest.clearAllMocks();

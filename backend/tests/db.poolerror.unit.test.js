@@ -26,7 +26,7 @@ beforeEach(() => {
 
 test('pool error with errors[] triggers reinit and creates new pool', async () => {
   process.env.DB_HOST = 'orig-host';
-  const db = require('../src/db');
+  require('../src/db'); // Suppression de la variable inutilisée 'db'
   const { Pool } = require('pg');
   expect(Pool).toHaveBeenCalledTimes(1);
   const firstPool = poolInstances[0];

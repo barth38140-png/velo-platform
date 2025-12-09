@@ -9,14 +9,14 @@ export default function PartPopover({ part, options = {}, values = {}, onSelect,
   // Map part -> primary display options
   const list = (() => {
     switch (part) {
-      case 'frame': return options.frame_sizes || [];
-      case 'wheels': return options.wheels || [];
-      case 'handlebar': return options.handlebar || [];
-      case 'saddle': return options.saddle || [];
-      case 'pedals': return options.pedals || [];
-      case 'transmission': return options.transmission || [];
-      case 'brakes': return options.brakes || [];
-      default: return [];
+    case 'frame': return options.frame_sizes || [];
+    case 'wheels': return options.wheels || [];
+    case 'handlebar': return options.handlebar || [];
+    case 'saddle': return options.saddle || [];
+    case 'pedals': return options.pedals || [];
+    case 'transmission': return options.transmission || [];
+    case 'brakes': return options.brakes || [];
+    default: return [];
     }
   })();
   const wheelSizes = part === 'wheels' ? (options.wheel_sizes || []) : [];

@@ -15,7 +15,7 @@ test('repairController basic flows (create/get/update/pending)', async () => {
   // mock model functions
   jest.doMock('../models/repairModel', () => ({
     createRepairRequest: jest.fn(async () => ({ id: 1 })),
-    getRepairRequestsByUser: jest.fn(async (userId) => ([{ id: 2, photos: [{ id: 7, filename: 'p.jpg' }] }])),
+    getRepairRequestsByUser: jest.fn(async () => ([{ id: 2, photos: [{ id: 7, filename: 'p.jpg' }] }])), // Suppression de 'userId' non utilisé
     getRepairRequestById: jest.fn(async (id) => (id === 'notfound' ? null : { id, photos: [] , user_id: 99 })),
     updateRepairRequestStatus: jest.fn(async () => ({ id: 3 })),
     getAllRepairRequests: jest.fn(async () => ([]))

@@ -1,7 +1,25 @@
+// Mapping statut (base sans accent → affichage avec accent)
+const statutLibelle = {
+  cree: 'Créée',
+  en_attente: 'En attente',
+  acceptee: 'Acceptée',
+  refusee: 'Refusée',
+  terminee: 'Terminée',
+  annulee: 'Annulée',
+  proposed: 'Proposée',
+  accepted: 'Acceptée',
+  rejected: 'Rejetée',
+  // fallback pour anciens statuts
+  pending: 'Créée',
+  assigned: 'En attente',
+  cancelled: 'Annulée',
+  'créée': 'Créée',
+  'annulée': 'Annulée'
+};
 import { useState, useEffect, useCallback } from 'react';
+import { repairOfferService } from '../services/api';
 import { socket } from '../services/socket';
 import { useAuth } from '../context/AuthContext';
-import { repairOfferService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import '../styles/MyOffers.css';
 import DateNegotiationModal from '../components/DateNegotiationModal';
@@ -14,7 +32,7 @@ export function MyOffers() {
   const [info, setInfo] = useState('');
   const [showDateModal, setShowDateModal] = useState(null);
   const toast = useToast();
-  // processing state removed (unused)
+  // L'état 'processing' a été retiré, commentaire supprimé pour le lint
   const [filter, setFilter] = useState('all'); // all, proposed, accepted, rejected
 
   const loadMyOffers = useCallback(async () => {
@@ -102,7 +120,7 @@ export function MyOffers() {
               <div className="offer-header">
                 <h3>{offer.repair_title}</h3>
                 <span className={`status-badge ${offer.status}`}>
-                  {offer.status.toUpperCase()}
+                  {statutLibelle[offer.status] || offer.status}
                 </span>
               </div>
               

@@ -16,8 +16,8 @@ vi.mock('../../services/api', async () => {
   };
 });
 
-describe("OffresList affiche la date d'intervention", () => {
-  it("rend 'Date d'intervention' quand scheduled_from est fourni", async () => {
+describe('OffresList affiche la date d\'intervention', () => {
+  it('rend \'Date d\'intervention\' quand scheduled_from est fourni', async () => {
     const selectedRepair = { id: 1, bike_type: 'VTT' };
     renderWithProviders(<OffresList selectedRepair={selectedRepair} />);
 

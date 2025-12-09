@@ -51,9 +51,9 @@ describe('bookingsController.createBooking', () => {
       .mockImplementationOnce(() => ({ rowCount: 1, rows: [{ id: 42 }] })); // booking exists
     const req = { body: { listing_id: 1, client_id: 2, start_date: '2025-01-01', end_date: '2025-01-02' } };
     const res = mockRes();
-    await createBooking(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ id: 42 }));
+      await createBooking(req, res);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, booking: expect.objectContaining({ id: 42 }) }));
   });
 
   it('should return 201 and booking if creation succeeds', async () => {
@@ -64,9 +64,9 @@ describe('bookingsController.createBooking', () => {
       .mockImplementationOnce(() => ({ rows: [{ id: 99 }] })); // insert
     const req = { body: { listing_id: 1, client_id: 2, start_date: '2025-01-01', end_date: '2025-01-02' } };
     const res = mockRes();
-    await createBooking(req, res);
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ id: 99 }));
+      await createBooking(req, res);
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, booking: expect.objectContaining({ id: 99 }) }));
   });
 
   it('should return 500 on SQL error', async () => {
@@ -76,9 +76,9 @@ describe('bookingsController.createBooking', () => {
       .mockImplementationOnce(() => { throw new Error('SQL fail'); });
     const req = { body: { listing_id: 1, client_id: 2, start_date: '2025-01-01', end_date: '2025-01-02' } };
     const res = mockRes();
-    await createBooking(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'internal_error' }));
+      await createBooking(req, res);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, error: 'internal_error', message: expect.any(String) }));
   });
 });
 
@@ -89,8 +89,8 @@ describe('bookingsController.getBookings', () => {
     db.query.mockResolvedValueOnce({ rows: [{ id: 1 }, { id: 2 }] });
     const req = { query: { client_id: 2 } };
     const res = mockRes();
-    await getBookings(req, res);
-    expect(res.json).toHaveBeenCalledWith([{ id: 1 }, { id: 2 }]);
+     await getBookings(req, res);
+     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, bookings: [{ id: 1 }, { id: 2 }] }));
   });
 
   it('should handle SQL error in getBookings', async () => {
@@ -98,7 +98,7 @@ describe('bookingsController.getBookings', () => {
     const req = { query: {} };
     const res = mockRes();
     await getBookings(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'internal_error' }));
+     expect(res.status).toHaveBeenCalledWith(500);
+     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, error: 'internal_error', message: expect.any(String) }));
   });
 });

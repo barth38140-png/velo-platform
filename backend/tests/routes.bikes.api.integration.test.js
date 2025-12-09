@@ -13,7 +13,6 @@ async function getToken() {
 }
 
 describe('API Integration: /api/bikes', () => {
-  let server;
   let token;
   let createdId;
 

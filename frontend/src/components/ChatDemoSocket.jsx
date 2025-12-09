@@ -9,6 +9,7 @@ const ChatDemoSocket = ({ conversationId, token, userId }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const hasJoinedRef = useRef(false);
 
   useEffect(() => {
@@ -17,10 +18,17 @@ const ChatDemoSocket = ({ conversationId, token, userId }) => {
       try {
         const res = await conversationService.getMessages(conversationId);
         setMessages(res.data?.messages || []);
+        setError('');
       } catch (e) {
+        if (e?.response?.status === 429) {
+          setError('Trop de requêtes, veuillez patienter avant de recharger la conversation.');
+        } else {
+          setError('Erreur lors du chargement des messages.');
+        }
         setMessages([]);
       }
     };
+    // Appel unique à l'ouverture de la conversation
     fetchMessages();
   }, [conversationId, token]);
 
@@ -65,13 +73,14 @@ const ChatDemoSocket = ({ conversationId, token, userId }) => {
   return (
     <div style={{ border: '1px solid #ccc', padding: 16, maxWidth: 400 }}>
       <h3>Messagerie temps réel (Socket.io)</h3>
+      {error && <div style={{color:'#c33',background:'#fee',padding:8,borderRadius:6,marginBottom:8}}>{error}</div>}
       <div style={{ minHeight: 120, marginBottom: 8, background: '#f9f9f9', padding: 8 }}>
         {messages.map(msg => (
           <div key={msg.id} style={{ marginBottom: 4 }}>
             <b>{msg.sender_id === userId ? 'Moi' : 'Autre'} :</b> {msg.content}
           </div>
         ))}
-        {messages.length === 0 && <span>Aucun message</span>}
+        {messages.length === 0 && !error && <span>Aucun message</span>}
       </div>
       <form onSubmit={sendMessage} style={{ display: 'flex', gap: 8 }}>
         <input

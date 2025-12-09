@@ -24,7 +24,6 @@ describe('backend/db/db.js env handling', () => {
 
     const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
-    const pool = require('../db/db'); // module side-effect creates Pool
 
     expect(mockPoolCtor).toHaveBeenCalled();
     const calledWith = mockPoolCtor.mock.calls[0][0];
@@ -42,7 +41,8 @@ describe('backend/db/db.js env handling', () => {
     process.env.DB_PASSWORD = 'only-db-pass';
     delete process.env.DB_PORT;
 
-    const pool = require('../db/db');
+    // Suppression de la variable inutilisée 'pool' pour lint clean
+    require('../db/db');
     const calledWith = mockPoolCtor.mock.calls[0][0];
     expect(calledWith.port).toBe(5432);
     expect(calledWith.password).toBe('only-db-pass');

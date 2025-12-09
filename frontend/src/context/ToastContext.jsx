@@ -32,21 +32,21 @@ export function ToastProvider({ children }) {
 
   const getIcon = (type) => {
     switch(type) {
-      case 'success': return '✅';
-      case 'error': return '❌';
-      case 'warning': return '⚠️';
-      case 'loading': return '⏳';
-      default: return 'ℹ️';
+    case 'success': return '✅';
+    case 'error': return '❌';
+    case 'warning': return '⚠️';
+    case 'loading': return '⏳';
+    default: return 'ℹ️';
     }
   };
 
   const getColor = (type) => {
     switch(type) {
-      case 'success': return '#4caf50';
-      case 'error': return '#f44336';
-      case 'warning': return '#ff9800';
-      case 'loading': return '#2196f3';
-      default: return '#2196f3';
+    case 'success': return '#4caf50';
+    case 'error': return '#f44336';
+    case 'warning': return '#ff9800';
+    case 'loading': return '#2196f3';
+    default: return '#2196f3';
     }
   };
 

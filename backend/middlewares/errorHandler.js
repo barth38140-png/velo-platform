@@ -58,8 +58,20 @@ function errorHandler(err, req, res) {
     url: req.url,
     userId: req.user?.id,
     code: err.code,
-    statusCode: err.statusCode
-  }, 'Request error');
+    statusCode: err.statusCode,
+    resType: typeof res,
+    resProto: Object.getPrototypeOf(res),
+    resKeys: Object.keys(res || {})
+  }, 'Request error [DEBUG res]');
+
+  // Vérification de l'objet res
+  if (!res || typeof res.status !== 'function' || typeof res.json !== 'function') {
+    // Fallback log et réponse simple
+    logger.error('Le paramètre res n\'est pas un objet Express valide');
+    return typeof res.send === 'function'
+      ? res.send('Erreur serveur (res mal formé)')
+      : undefined;
+  }
 
   // Erreurs PostgreSQL
   if (err.code && err.code.startsWith('23')) {

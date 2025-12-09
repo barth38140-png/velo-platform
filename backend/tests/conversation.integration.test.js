@@ -50,6 +50,7 @@ describe('Messagerie client ↔ réparateur', () => {
       .send({ repairerId: 2, repairRequestId: repairRequestId });
     expect(res.body.success).toBe(true);
     expect(res.body.conversation).toBeDefined();
+    expect(res.body.conversation.id).toBeDefined();
     conversationId = res.body.conversation.id;
   });
 
@@ -59,6 +60,7 @@ describe('Messagerie client ↔ réparateur', () => {
       .set('Authorization', `Bearer ${clientToken}`)
       .send({ content: 'Bonjour, pouvez-vous intervenir ?' });
     expect(res.body.success).toBe(true);
+    expect(res.body.message).toBeDefined();
     expect(res.body.message.content).toBe('Bonjour, pouvez-vous intervenir ?');
   });
 
@@ -68,6 +70,7 @@ describe('Messagerie client ↔ réparateur', () => {
       .set('Authorization', `Bearer ${repairerToken}`)
       .send({ content: 'Oui, je suis disponible demain.' });
     expect(res.body.success).toBe(true);
+    expect(res.body.message).toBeDefined();
     expect(res.body.message.content).toBe('Oui, je suis disponible demain.');
   });
 
@@ -76,6 +79,7 @@ describe('Messagerie client ↔ réparateur', () => {
       .get(`/api/conversations/${conversationId}/messages`)
       .set('Authorization', `Bearer ${clientToken}`);
     expect(res.body.success).toBe(true);
+    expect(res.body.messages).toBeDefined();
     expect(res.body.messages.length).toBeGreaterThanOrEqual(2);
     expect(res.body.messages[0].content).toBe('Bonjour, pouvez-vous intervenir ?');
     expect(res.body.messages[1].content).toBe('Oui, je suis disponible demain.');

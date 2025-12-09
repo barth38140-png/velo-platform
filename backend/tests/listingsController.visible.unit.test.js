@@ -1,5 +1,5 @@
 /* tests/listingsController.visible.unit.test.js */
-const { getListings } = require('../src/controllers/listingsController');
+// Suppression de l'import inutilisé 'getListings' pour lint clean
 
 beforeEach(() => {
   jest.resetModules();

@@ -113,34 +113,35 @@ async function updateRepairStatus(req, res) {
  */
 async function getPendingRepairs(req, res) {
   try {
-    // Filtrer explicitement sur les statuts en attente/explorables
-    // Par défaut, le modèle retourne par statut exact; on cible 'créée' et éventuellement 'en_attente'
-    const created = await getAllRepairRequests('créée');
-    let pending = created;
-    try {
-      const enAttente = await getAllRepairRequests('en_attente');
-      pending = [...created, ...enAttente];
-    } catch {
-      // Si le statut 'en_attente' n'existe pas dans certains dumps, on ignore
-    }
-    const repairerId = req.user.id;
-    // Exclure les demandes pour lesquelles le réparateur courant a déjà proposé une offre
-    const withExclusion = [];
-    for (const r of pending) {
+    // Correction : accepter 'créée', 'cree', 'en_attente' (accents et variantes)
+    const statuses = ['créée', 'cree', 'en_attente'];
+    let pending = [];
+    for (const status of statuses) {
       try {
-        const hasOffer = await require('../models/repairOfferModel').hasExistingOffer(r.id, repairerId);
-        if (!hasOffer) withExclusion.push(r);
-      } catch (err) {
-        // En cas d'erreur DB ponctuelle, ne pas bloquer l'affichage: inclure la demande
-        logger.debug({ err }, 'hasExistingOffer check failed for repair ' + r.id);
-        withExclusion.push(r);
+        const found = await getAllRepairRequests(status);
+        pending = [...pending, ...found];
+      } catch {
+        // Ignore si le statut n'existe pas
       }
     }
-    const repairs = withExclusion;
-    const mapped = repairs.map(r => ({
-      ...r,
-      photos: (r.photos || []).map(p => ({ id: p.id, filename: p.filename, url: `/api/repairs/photos/${p.id}` }))
-    }));
+    const repairerId = req.user.id;
+    // Pour chaque demande, ajouter le champ has_offer
+    const mapped = [];
+    for (const r of pending) {
+      let hasOffer = false;
+      try {
+        hasOffer = await require('../models/repairOfferModel').hasExistingOffer(r.id, repairerId);
+      } catch (err) {
+        logger.debug({ err }, 'hasExistingOffer check failed for repair ' + r.id);
+      }
+      logger.debug({ repair_id: r.id, client_id: r.user_id }, 'DEBUG: repair request mapping');
+      mapped.push({
+        ...r,
+        has_offer: hasOffer,
+        client_id: r.user_id, // Ajout explicite du client_id
+        photos: (r.photos || []).map(p => ({ id: p.id, filename: p.filename, url: `/api/repairs/photos/${p.id}` }))
+      });
+    }
     res.json({ success: true, repairs: mapped, count: mapped.length });
   } catch (err) {
     logger.error({ err }, 'getPendingRepairs error');

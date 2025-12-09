@@ -6,13 +6,30 @@ const api = '/api';
 export const handlers = [
   // Profile
   http.get(new RegExp(`.*${api}/users/profile$`), (req, res, ctx) => {
+    console.info('🟢 MSW: /api/users/profile appelé');
     return res(ctx.status(200), ctx.json({ user: { id: 1, name: 'Alice', email: 'alice@example.com', phone: '0123456789', role: 'repairer' } }));
   }),
 
   // Repairer profile GET
-  http.get(new RegExp(`.*${api}/repairers/(\d+)$`), (req, res, ctx) => {
-    const id = req.params[0] || '1';
-    return res(ctx.status(200), ctx.json({ profile: { skills: 'Wheel repair', bio: 'I fix bikes', rating: 4.2, service_radius_km: 20, is_available: true, id } }));
+  http.get('/api/repairers/:id', (req, res, ctx) => {
+    const { id } = req.params;
+    return res(
+      ctx.status(200),
+      ctx.json({
+        profile: {
+          id,
+          name: 'Alice',
+          email: 'alice@example.com',
+          phone: '0123456789',
+          role: 'repairer',
+          skills: 'Wheel repair',
+          bio: 'I fix bikes',
+          rating: 4.2,
+          service_radius_km: 20,
+          is_available: true
+        }
+      })
+    );
   }),
 
   // Repairer profile POST

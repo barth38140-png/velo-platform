@@ -27,7 +27,6 @@ describe('backend/config/db.js loader and debug branches', () => {
 
     const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
-    const pool = require('../config/db');
 
     expect(mockPoolCtor).toHaveBeenCalled();
     const calledWith = mockPoolCtor.mock.calls[0][0];
@@ -48,7 +47,8 @@ describe('backend/config/db.js loader and debug branches', () => {
     // ensure DEBUG_DB not set to avoid log
     delete process.env.DEBUG_DB;
 
-    const pool = require('../config/db');
+    // Suppression de la variable inutilisée 'pool' pour lint clean
+    require('../config/db');
     expect(mockPoolCtor).toHaveBeenCalled();
   });
 });

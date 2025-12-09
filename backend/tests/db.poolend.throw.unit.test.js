@@ -5,9 +5,9 @@ jest.mock('pg', () => ({
   Pool: jest.fn((cfg) => {
     const p = {
       cfg,
-      on: jest.fn((ev, cb) => {}),
+      on: jest.fn(() => {}), // Suppression des variables inutilisées 'ev', 'cb'
       end: jest.fn(async () => { throw new Error('end failed'); }),
-      query: jest.fn(async (text, params) => ({ rows: [] }))
+      query: jest.fn(async () => ({ rows: [] })), // Suppression des variables inutilisées 'text', 'params'
     };
     poolInstances.push(p);
     return p;

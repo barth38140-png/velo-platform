@@ -33,8 +33,8 @@ describe('Integration: DB <-> Model <-> FS', () => {
           userId = existing.rows[0].id;
           return;
         }
-      } catch (e) {
-        // ignore - we'll try to insert
+      } catch {
+        // ignore - suppression variable inutilisée
       }
 
       // Build insert dynamically based on available columns
@@ -117,14 +117,12 @@ describe('Integration: DB <-> Model <-> FS', () => {
         const absolute = path.resolve(__dirname, '..', '..', photoRow.filepath);
         if (fs.existsSync(absolute)) fs.unlinkSync(absolute);
       }
-    } catch (e) {
+    } catch {
       // ignore cleanup errors
-       
-      console.error('cleanup error', e && e.stack ? e.stack : e);
     }
     try {
       if (pool && typeof pool.end === 'function') await pool.end();
-    } catch (e) {
+    } catch {
       // ignore pool shutdown errors
     }
   });

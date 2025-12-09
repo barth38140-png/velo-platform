@@ -55,7 +55,7 @@ function readStoredBrands() {
     if (!Array.isArray(parsed)) return DEFAULT_BRANDS.slice();
     const merged = Array.from(new Set([...DEFAULT_BRANDS, ...parsed]));
     return merged;
-  } catch (e) {
+  } catch {
     return DEFAULT_BRANDS.slice();
   }
 }
@@ -69,7 +69,7 @@ function readStoredModelsFor(brand) {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return base.slice();
     return Array.from(new Set([...base, ...parsed]));
-  } catch (e) {
+  } catch {
     return DEFAULT_MODELS[brand] ? DEFAULT_MODELS[brand].slice() : [];
   }
 }
@@ -81,7 +81,7 @@ function saveBrand(brand) {
       const next = [...cur, brand];
       localStorage.setItem('bike_brands', JSON.stringify(next));
     }
-  } catch (e) { }
+  } catch { }
 }
 
 function saveModelFor(brand, model) {
@@ -94,7 +94,7 @@ function saveModelFor(brand, model) {
       cur.push(model);
       localStorage.setItem(key, JSON.stringify(cur));
     }
-  } catch (e) { }
+  } catch { }
 }
 
 export default function BikeModal({ bike, onClose }) {
@@ -116,7 +116,7 @@ export default function BikeModal({ bike, onClose }) {
 
   const [type, setType] = useState(bike?.type || '');
   const [frameSize, setFrameSize] = useState(bike?.frame_size || '');
-  const [color, setColor] = useState(bike?.color || '');
+  // color non utilisé, suppression
   // allow multiple colors
   const [colorsSelected, setColorsSelected] = useState(bike?.colors || (bike?.color ? [bike.color] : []));
   const [handlebar, setHandlebar] = useState(bike?.handlebar || '');
@@ -160,7 +160,8 @@ export default function BikeModal({ bike, onClose }) {
       setSelectedModel(bike.model || '');
       setType(bike.type || '');
       setFrameSize(bike.frame_size || '');
-      setColor(bike.color || '');
+      // setColor supprimé, utiliser colorsSelected
+      setColorsSelected(bike.colors || (bike.color ? [bike.color] : []));
       setPurchaseDate(bike.purchase_date || '');
       setNotes(bike.notes || '');
     }
@@ -208,7 +209,7 @@ export default function BikeModal({ bike, onClose }) {
         localStorage.setItem(storageKey, JSON.stringify(cur));
       }
       setPartOptions(prev => ({ ...prev, [key]: readStoredPartOptions(key, DEFAULT_PART_OPTIONS[key]) }));
-    } catch (e) { console.error('savePartOption', e); }
+    } catch (e) { /* Utiliser le logger Pino côté backend pour les erreurs d'option de pièce */ }
   }
 
   function togglePart(part) {
@@ -267,7 +268,7 @@ export default function BikeModal({ bike, onClose }) {
       setErrorMsg('');
       // keep modal open to show the summary; caller can close
     } catch (err) {
-      console.error('BikeModal save', err);
+      // Utiliser le logger Pino côté backend pour les erreurs d'enregistrement de vélo
       setErrorMsg('Erreur lors de l enregistrement');
     } finally {
       setSaving(false);
@@ -299,16 +300,16 @@ export default function BikeModal({ bike, onClose }) {
   // small icon helper (simple inline SVGs)
   const Icon = ({ name }) => {
     switch (name) {
-      case 'route':
-        return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M3 13c4-2 8-2 12 0" stroke="#0f172a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 17c4-2 8-2 12 0" stroke="#0f172a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-      case 'vtt':
-        return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="6" cy="17" r="3" stroke="#0f172a" strokeWidth="1.3"/><circle cx="18" cy="17" r="3" stroke="#0f172a" strokeWidth="1.3"/><path d="M6 17 L10 11 L14 11 L18 17" stroke="#0f172a" strokeWidth="1.3" strokeLinecap="round"/></svg>;
-      case 'urbain':
-        return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><rect x="3" y="9" width="18" height="6" rx="3" stroke="#0f172a" strokeWidth="1.3"/></svg>;
-      case 'electrique':
-        return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M13 2 L7 12h4l-1 8 6-10h-4l1-8z" stroke="#0f172a" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round"/></svg>;
-      default:
-        return null;
+    case 'route':
+      return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M3 13c4-2 8-2 12 0" stroke="#0f172a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 17c4-2 8-2 12 0" stroke="#0f172a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+    case 'vtt':
+      return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="6" cy="17" r="3" stroke="#0f172a" strokeWidth="1.3"/><circle cx="18" cy="17" r="3" stroke="#0f172a" strokeWidth="1.3"/><path d="M6 17 L10 11 L14 11 L18 17" stroke="#0f172a" strokeWidth="1.3" strokeLinecap="round"/></svg>;
+    case 'urbain':
+      return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><rect x="3" y="9" width="18" height="6" rx="3" stroke="#0f172a" strokeWidth="1.3"/></svg>;
+    case 'electrique':
+      return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M13 2 L7 12h4l-1 8 6-10h-4l1-8z" stroke="#0f172a" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round"/></svg>;
+    default:
+      return null;
     }
   };
 

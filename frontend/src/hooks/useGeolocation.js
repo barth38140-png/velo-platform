@@ -11,14 +11,17 @@ export function useGeolocation() {
   const [error, setError] = useState(null);
   const toast = useToast();
 
-  const requestLocation = useCallback(async () => {
+  function requestLocation() {
     setLoading(true);
     setError(null);
 
     if (!navigator.geolocation) {
       const err = 'La géolocalisation n\'est pas supportée par votre navigateur';
       setError(err);
-      toast.error(err);
+      toast.error(err, 4000, {
+        actionLabel: 'Réessayer',
+        action: retryLocation
+      });
       setLoading(false);
       return null;
     }
@@ -38,7 +41,6 @@ export function useGeolocation() {
         (err) => {
           setLoading(false);
           let errorMsg = 'Erreur lors de la géolocalisation';
-          
           if (err.code === err.PERMISSION_DENIED) {
             errorMsg = 'Accès à la géolocalisation refusé. Vérifiez vos paramètres.';
           } else if (err.code === err.POSITION_UNAVAILABLE) {
@@ -46,11 +48,10 @@ export function useGeolocation() {
           } else if (err.code === err.TIMEOUT) {
             errorMsg = 'La géolocalisation a expiré';
           }
-          
           setError(errorMsg);
           toast.error(errorMsg, 4000, {
             actionLabel: 'Réessayer',
-            action: requestLocation
+            action: retryLocation
           });
           resolve(null);
         },
@@ -61,7 +62,11 @@ export function useGeolocation() {
         }
       );
     });
-  }, [toast]);
+  }
+
+  const retryLocation = () => {
+    requestLocation();
+  };
 
   const clearLocation = useCallback(() => {
     setLocation(null);

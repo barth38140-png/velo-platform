@@ -18,6 +18,6 @@ describe('bookingsController getBookings params', () => {
     const req = { query: { client_id: '2', repairer_id: '5' } };
     const res = { json: jest.fn(), status: jest.fn().mockReturnThis() };
     await getBookings(req, res);
-    expect(res.json).toHaveBeenCalledWith([{ ok: true }]);
+    expect(res.json).toHaveBeenCalledWith({ success: true, bookings: [{ ok: true }] });
   });
 });

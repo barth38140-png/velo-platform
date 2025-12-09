@@ -33,10 +33,8 @@ const DEFAULT_PART_OPTIONS = {
 
 export default function AddBikePage({ onClose, bike, conversational = false, startEditing = false }) {
   const { addToast } = useToast();
-  const [brands, setBrands] = useState(['Trek','Giant','Specialized']);
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
-  const [selectedPart, setSelectedPart] = useState(null);
   const [partOptions, setPartOptions] = useState(DEFAULT_PART_OPTIONS);
   const [config, setConfig] = useState({});
   const [saving, setSaving] = useState(false);
@@ -176,26 +174,23 @@ export default function AddBikePage({ onClose, bike, conversational = false, sta
 
   useEffect(() => { if (successMsg && summaryRef.current) summaryRef.current.focus(); }, [successMsg]);
 
-  const handlePartClick = (part) => {
-    if (bike && !editing) return; // read-only view: ignore part clicks
-    setSelectedPart(prev => prev === part ? null : part);
-  };
+  // Fonction handlePartClick supprimée car inutilisée
 
   const handleSelect = (part, value) => {
     // map selection into config
     setConfig(prev => {
       const next = { ...prev };
       if (part === 'frame' || part === 'frame_sizes') next.frame_size = value;
-        else if (part === 'frame_colors') {
-          const current = Array.isArray(prev.colors) ? prev.colors : [];
-          if (current.includes(value)) {
-            next.colors = current.filter(c => c !== value);
-          } else {
-            const candidate = [...current, value];
-            // Limit to last 3 selections for readability
-            next.colors = candidate.length > 3 ? candidate.slice(candidate.length - 3) : candidate;
-          }
+      else if (part === 'frame_colors') {
+        const current = Array.isArray(prev.colors) ? prev.colors : [];
+        if (current.includes(value)) {
+          next.colors = current.filter(c => c !== value);
+        } else {
+          const candidate = [...current, value];
+          // Limit to last 3 selections for readability
+          next.colors = candidate.length > 3 ? candidate.slice(candidate.length - 3) : candidate;
         }
+      }
       else if (part === 'wheels') next.type = value;
       else if (part === 'wheel_sizes') next.wheel_size = value;
       else if (part === 'handlebar') next.handlebar = value;
@@ -207,10 +202,7 @@ export default function AddBikePage({ onClose, bike, conversational = false, sta
     });
   };
 
-  const handleAddOption = (part, text) => {
-    const key = part === 'frame' ? 'frame_sizes' : (part === 'frame_colors' ? 'frame_colors' : part);
-    setPartOptions(prev => ({ ...prev, [key]: [...(prev[key]||[]), text] }));
-  };
+  // Fonction handleAddOption supprimée car inutilisée
 
   const handleSave = async (e) => {
     e && e.preventDefault();
@@ -240,7 +232,7 @@ export default function AddBikePage({ onClose, bike, conversational = false, sta
               wheel_size: config.wheel_size,
               colors: Array.isArray(config.colors) ? config.colors.filter(c => c !== UNKNOWN) : []
             }, unknowns);
-          } catch (err) { /* silent fail */ }
+          } catch {} // suppression de la variable err
         }
         setSuccessMsg('Modifications enregistrées.');
         setErrorMsg('');
@@ -250,9 +242,9 @@ export default function AddBikePage({ onClose, bike, conversational = false, sta
       } else {
         const payload = { name, brand, model, ...config };
         const created = await bikeService.createBike(payload);
-        try { if (brand) await bikeService.addBrand(brand); } catch {}
-        try { if (brand && model) await bikeService.addModel(brand, model); } catch {}
-        try { if (config.wheel_size) await bikeService.addWheelSize(config.wheel_size); } catch {}
+        try { if (brand) await bikeService.addBrand(brand); } catch {} // suppression de la variable err
+        try { if (brand && model) await bikeService.addModel(brand, model); } catch {} // suppression de la variable err
+        try { if (config.wheel_size) await bikeService.addWheelSize(config.wheel_size); } catch {} // suppression de la variable err
         setSuccessMsg('Votre vélo a été enregistré avec succès.');
         setErrorMsg('');
         // After creation, update tech/confidence if unknowns present
@@ -272,17 +264,17 @@ export default function AddBikePage({ onClose, bike, conversational = false, sta
               wheel_size: config.wheel_size,
               colors: Array.isArray(config.colors) ? config.colors.filter(c => c !== UNKNOWN) : []
             }, unknowns);
-          } catch (err) { /* ignore tech update errors */ }
+          } catch {} // suppression de la variable err
         }
         setConfig(enriched || created || payload);
         if (typeof onClose === 'function') onClose();
       }
     } catch (err) {
-      console.error(err);
+      // logger.error('Erreur lors de l\'enregistrement', err);
       const status = err?.response?.status;
       const code = err?.response?.data?.error;
       if (status === 409 && code === 'duplicate_serial') {
-        setErrorMsg('N° de série déjà utilisé pour votre compte');
+        setErrorMsg('Numéro de série déjà utilisé');
         setSaving(false);
         return;
       }
@@ -362,7 +354,7 @@ export default function AddBikePage({ onClose, bike, conversational = false, sta
             <label htmlFor="brand-ta-conv" className="sr-only">Marque</label>
             <input id="brand-ta-conv" list="brands-conv" value={brand} placeholder="ex: Trek" onChange={e => setBrand(e.target.value)} />
             <datalist id="brands-conv">
-              {(["Trek","Specialized","Giant","Cannondale","Decathlon",...serverBrands]).filter((v,i,self)=>self.indexOf(v)===i).slice(0,20).map(b => (<option key={b} value={b} />))}
+              {(['Trek','Specialized','Giant','Cannondale','Decathlon',...serverBrands]).filter((v,i,self)=>self.indexOf(v)===i).slice(0,20).map(b => (<option key={b} value={b} />))}
             </datalist>
             <div className="suggestions-row" style={{ marginTop: 8 }}>
               <button type="button" className={`suggestion-chip ${brand===UNKNOWN ? 'selected' : ''}`} onClick={() => setBrand(UNKNOWN)}>Je ne sais pas</button>
@@ -464,7 +456,7 @@ export default function AddBikePage({ onClose, bike, conversational = false, sta
             frame_size: config.frame_size===UNKNOWN,
             type: !config.type
           }}
-            onClose={() => setShowGuide(false)}
+          onClose={() => setShowGuide(false)}
         />
       )}
     </div>
@@ -473,224 +465,230 @@ export default function AddBikePage({ onClose, bike, conversational = false, sta
   return (
     <div className={`add-bike-page ${conversational && !bike ? 'conversation-mode' : ''}`}>
       {conversationContent || (
-      <>
-      <div className="top-close" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div className="save-indicator" aria-live="polite" style={{color:'#6b7280'}}>
-          {(bike && editing && isAutoSaving) ? 'Enregistrement…' : (bike && editing && justSaved ? 'Enregistré ✓' : '')}
-        </div>
-        <button className="btn secondary" onClick={onClose}>Fermer</button>
-      </div>
-      <header className="page-header">
-        <h2>{bike ? (editing ? 'Éditer le vélo' : 'Détails du vélo') : 'Ajouter un vélo'}</h2>
-        <p className="subtitle">Configurez votre vélo en cliquant sur les parties.</p>
-      </header>
-
-      <section className="top-bar">
-        <div className="input-row">
-          <div className="input-col">
-            <label htmlFor="brand-ta">Marque</label>
-            {/* Typeahead léger pour la marque */}
-            <div className="typeahead" id="brand-ta-wrap">
-              <input
-                id="brand-ta"
-                name="brand"
-                placeholder="Saisir une marque…"
-                autoComplete="off"
-                aria-autocomplete="list"
-                aria-expanded="false"
-                aria-controls="brand-ta-list"
-                value={brand}
-                onChange={e => setBrand(e.target.value)}
-                onFocus={() => setShowBrandList(true)}
-                onBlur={() => setTimeout(() => setShowBrandList(false), 120)}
-                onKeyDown={handleBrandKey}
-                disabled={bike && !editing}
-              />
-              <div id="brand-ta-list" className="typeahead-list" role="listbox" aria-label="Suggestions de marques">
-                {brandSuggestions.map((b, i) => (
-                  <button
-                    key={b}
-                    type="button"
-                    className="typeahead-item"
-                    role="option"
-                    aria-selected={i === brandIndex ? 'true' : 'false'}
-                    onMouseDown={(e) => { e.preventDefault(); setBrand(b); setShowBrandList(false); }}
-                  >{b}</button>
-                ))}
-              </div>
+        <>
+          <div className="top-close" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div className="save-indicator" aria-live="polite" style={{color:'#6b7280'}}>
+              {(bike && editing && isAutoSaving) ? 'Enregistrement…' : (bike && editing && justSaved ? 'Enregistré ✓' : '')}
             </div>
+            <button className="btn secondary" onClick={onClose}>Fermer</button>
           </div>
-          <div className="input-col">
-            <label>Modèle</label>
-            <div className="typeahead" id="model-ta-wrap">
-              <input
-                id="model-ta"
-                name="model"
-                placeholder="Saisir un modèle…"
-                autoComplete="off"
-                aria-autocomplete="list"
-                aria-expanded="false"
-                aria-controls="model-ta-list"
-                value={model}
-                onChange={e => setModel(e.target.value)}
-                onFocus={() => setShowModelList(true)}
-                onBlur={() => setTimeout(() => setShowModelList(false), 120)}
-                onKeyDown={handleModelKey}
-                disabled={bike && !editing}
-              />
-              <div id="model-ta-list" className="typeahead-list" role="listbox" aria-label="Suggestions de modèles">
-                {modelSuggestions.map((m, i) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className="typeahead-item"
-                    role="option"
-                    aria-selected={i === modelIndex ? 'true' : 'false'}
-                    onMouseDown={(e) => { e.preventDefault(); setModel(m); setShowModelList(false); }}
-                  >{m}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="input-row" style={{ marginTop: 8 }}>
-          <div className="input-col">
-            <label>Année</label>
-            <input
-              list="years-main"
-              type="number"
-              placeholder="ex: 2023"
-              value={config.year || ''}
-              onChange={e => setConfig(prev => ({ ...prev, year: e.target.value }))}
-              disabled={bike && !editing}
-            />
-            <datalist id="years-main">
-              {Array.from({ length: 40 }, (_, i) => new Date().getFullYear() - i).map(y => (<option key={y} value={y} />))}
-            </datalist>
-          </div>
-          <div className="input-col">
-            <label>Numéro de série</label>
-            <input
-              type="text"
-              placeholder="ex: SN12345ABC"
-              value={config.serial_number || ''}
-              onChange={e => setConfig(prev => ({ ...prev, serial_number: e.target.value }))}
-              disabled={bike && !editing}
-            />
-          </div>
-        </div>
+          <header className="page-header">
+            <h2>{bike ? (editing ? 'Éditer le vélo' : 'Détails du vélo') : 'Ajouter un vélo'}</h2>
+            <p className="subtitle">Configurez votre vélo en cliquant sur les parties.</p>
+          </header>
 
-        {/* Suggestions pour taille de cadre, taille de roue et couleurs principales */}
-        {(!bike || editing) && (
-          <div className="input-row" style={{ marginTop: 12 }}>
+          <section className="top-bar">
+            {errorMsg && (
+              <div className="error-msg" style={{ marginBottom: 12, color: '#b71c1c', fontWeight: 600 }} data-testid="main-error">
+                {errorMsg}
+              </div>
+            )}
+            <div className="input-row">
               <div className="input-col">
-                <label>Type de vélo</label>
-                <div className="suggestions-row">
-                  {(partOptions.wheels||[]).map(opt => (
-                    <button key={opt} type="button" className={`suggestion-chip ${config.type===opt ? 'selected' : ''}`} onClick={() => handleSelect('wheels', opt)}>{opt}</button>
-                  ))}
+                <label htmlFor="brand-ta">Marque</label>
+                {/* Typeahead léger pour la marque */}
+                <div className="typeahead" id="brand-ta-wrap">
+                  <input
+                    id="brand-ta"
+                    name="brand"
+                    placeholder="Saisir une marque…"
+                    autoComplete="off"
+                    aria-autocomplete="list"
+                    aria-expanded="false"
+                    aria-controls="brand-ta-list"
+                    value={brand}
+                    onChange={e => setBrand(e.target.value)}
+                    onFocus={() => setShowBrandList(true)}
+                    onBlur={() => setTimeout(() => setShowBrandList(false), 120)}
+                    onKeyDown={handleBrandKey}
+                    disabled={bike && !editing}
+                  />
+                  <div id="brand-ta-list" className="typeahead-list" role="listbox" aria-label="Suggestions de marques">
+                    {brandSuggestions.map((b, i) => (
+                      <button
+                        key={b}
+                        type="button"
+                        className="typeahead-item"
+                        role="option"
+                        aria-selected={i === brandIndex ? 'true' : 'false'}
+                        onMouseDown={(e) => { e.preventDefault(); setBrand(b); setShowBrandList(false); }}
+                      >{b}</button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            <div className="input-col">
-              <label>Tailles de cadre</label>
-              <div className="suggestions-row">
-                {(partOptions.frame_sizes||[]).map(opt => (
-                  <button key={opt} type="button" className={`suggestion-chip ${config.frame_size===opt ? 'selected' : ''}`} onClick={() => handleSelect('frame_sizes', opt)}>{opt}</button>
-                ))}
-              </div>
-            </div>
-            <div className="input-col">
-              <label>Tailles de roues</label>
-              <div className="suggestions-row">
-                {(partOptions.wheel_sizes||[]).map(opt => (
-                  <button key={opt} type="button" className={`suggestion-chip ${config.wheel_size===opt ? 'selected' : ''}`} onClick={() => handleSelect('wheel_sizes', opt)}>{opt}</button>
-                ))}
-              </div>
-              <input
-                list="wheel-sizes-main"
-                placeholder="ex: 700C / 29"
-                value={config.wheel_size || ''}
-                onChange={e => setConfig(prev => ({ ...prev, wheel_size: e.target.value }))}
-                disabled={bike && !editing}
-                style={{ marginTop: 4 }}
-              />
-              <datalist id="wheel-sizes-main">
-                {(partOptions.wheel_sizes||['700C','29"','27.5"','650B','26"','24"','20"']).map(sz => (<option key={sz} value={sz} />))}
-              </datalist>
-            </div>
-          </div>
-        )}
-      </section>
-
-      <section className="center-canvas">
-      {/* Représentation du vélo supprimée selon demande */}
-      </section>
-
-      <footer className="bottom-bar">
-        <div className="summary-wrap">
-          {/* SummaryCard retirée */}
-          {/* Suggestions de couleurs courantes */}
-          {(!bike || editing) && (
-            <div style={{ marginTop: 8 }}>
-              <div className="suggestions-row">
-                {COLOR_PALETTE.map(c => (
-                  <button
-                    key={c.name}
-                    type="button"
-                    className={`suggestion-chip ${Array.isArray(config.colors) && config.colors.includes(c.name) ? 'selected' : ''}`}
-                    onClick={() => handleSelect('frame_colors', c.name)}
+              <div className="input-col">
+                <label>Modèle</label>
+                <div className="typeahead" id="model-ta-wrap">
+                  <input
+                    id="model-ta"
+                    name="model"
+                    placeholder="Saisir un modèle…"
+                    autoComplete="off"
+                    aria-autocomplete="list"
+                    aria-expanded="false"
+                    aria-controls="model-ta-list"
+                    value={model}
+                    onChange={e => setModel(e.target.value)}
+                    onFocus={() => setShowModelList(true)}
+                    onBlur={() => setTimeout(() => setShowModelList(false), 120)}
+                    onKeyDown={handleModelKey}
                     disabled={bike && !editing}
-                  >{c.name}</button>
-                ))}
+                  />
+                  <div id="model-ta-list" className="typeahead-list" role="listbox" aria-label="Suggestions de modèles">
+                    {modelSuggestions.map((m, i) => (
+                      <button
+                        key={m}
+                        type="button"
+                        className="typeahead-item"
+                        role="option"
+                        aria-selected={i === modelIndex ? 'true' : 'false'}
+                        onMouseDown={(e) => { e.preventDefault(); setModel(m); setShowModelList(false); }}
+                      >{m}</button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          )}
-          {/* Détails & composants visibles en mode lecture; en édition on affiche une zone composants avec ajout */}
-          {bike && !editing && (
-            <div style={{ marginTop: 12 }}>
-              <BikeDetailView bike={bike} />
+            <div className="input-row" style={{ marginTop: 8 }}>
+              <div className="input-col">
+                <label>Année</label>
+                <input
+                  list="years-main"
+                  type="number"
+                  placeholder="ex: 2023"
+                  value={config.year || ''}
+                  onChange={e => setConfig(prev => ({ ...prev, year: e.target.value }))}
+                  disabled={bike && !editing}
+                />
+                <datalist id="years-main">
+                  {Array.from({ length: 40 }, (_, i) => new Date().getFullYear() - i).map(y => (<option key={y} value={y} />))}
+                </datalist>
+              </div>
+              <div className="input-col">
+                <label>Numéro de série</label>
+                <input
+                  type="text"
+                  placeholder="ex: SN12345ABC"
+                  value={config.serial_number || ''}
+                  onChange={e => setConfig(prev => ({ ...prev, serial_number: e.target.value }))}
+                  disabled={bike && !editing}
+                  data-testid="serial-input"
+                />
+              </div>
             </div>
-          )}
-          {bike && editing && (
-            <div style={{ marginTop: 12 }}>
-              <section className="components-area" aria-live="polite">
-                <header className="components-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                  <h3 style={{margin:0}}>Composants du vélo</h3>
-                  <AddComponentInline bikeId={bike.id} onAdded={async () => {
-                    try {
-                      const fresh = await bikeService.getBike(bike.id);
-                      setCurrentBike(fresh);
-                    } catch {}
-                  }} />
-                </header>
-                <BikeDetailView bike={currentBike || bike} showSummary={false} showHeader={false} />
-              </section>
+
+            {/* Suggestions pour taille de cadre, taille de roue et couleurs principales */}
+            {(!bike || editing) && (
+              <div className="input-row" style={{ marginTop: 12 }}>
+                <div className="input-col">
+                  <label>Type de vélo</label>
+                  <div className="suggestions-row">
+                    {(partOptions.wheels||[]).map(opt => (
+                      <button key={opt} type="button" className={`suggestion-chip ${config.type===opt ? 'selected' : ''}`} onClick={() => handleSelect('wheels', opt)}>{opt}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="input-col">
+                  <label>Tailles de cadre</label>
+                  <div className="suggestions-row">
+                    {(partOptions.frame_sizes||[]).map(opt => (
+                      <button key={opt} type="button" className={`suggestion-chip ${config.frame_size===opt ? 'selected' : ''}`} onClick={() => handleSelect('frame_sizes', opt)}>{opt}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="input-col">
+                  <label>Tailles de roues</label>
+                  <div className="suggestions-row">
+                    {(partOptions.wheel_sizes||[]).map(opt => (
+                      <button key={opt} type="button" className={`suggestion-chip ${config.wheel_size===opt ? 'selected' : ''}`} onClick={() => handleSelect('wheel_sizes', opt)}>{opt}</button>
+                    ))}
+                  </div>
+                  <input
+                    list="wheel-sizes-main"
+                    placeholder="ex: 700C / 29"
+                    value={config.wheel_size || ''}
+                    onChange={e => setConfig(prev => ({ ...prev, wheel_size: e.target.value }))}
+                    disabled={bike && !editing}
+                    style={{ marginTop: 4 }}
+                  />
+                  <datalist id="wheel-sizes-main">
+                    {(partOptions.wheel_sizes||['700C','29"','27.5"','650B','26"','24"','20"']).map(sz => (<option key={sz} value={sz} />))}
+                  </datalist>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section className="center-canvas">
+            {/* Représentation du vélo supprimée selon demande */}
+          </section>
+
+          <footer className="bottom-bar">
+            <div className="summary-wrap">
+              {/* SummaryCard retirée */}
+              {/* Suggestions de couleurs courantes */}
+              {(!bike || editing) && (
+                <div style={{ marginTop: 8 }}>
+                  <div className="suggestions-row">
+                    {COLOR_PALETTE.map(c => (
+                      <button
+                        key={c.name}
+                        type="button"
+                        className={`suggestion-chip ${Array.isArray(config.colors) && config.colors.includes(c.name) ? 'selected' : ''}`}
+                        onClick={() => handleSelect('frame_colors', c.name)}
+                        disabled={bike && !editing}
+                      >{c.name}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Détails & composants visibles en mode lecture; en édition on affiche une zone composants avec ajout */}
+              {bike && !editing && (
+                <div style={{ marginTop: 12 }}>
+                  <BikeDetailView bike={bike} />
+                </div>
+              )}
+              {bike && editing && (
+                <div style={{ marginTop: 12 }}>
+                  <section className="components-area" aria-live="polite">
+                    <header className="components-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                      <h3 style={{margin:0}}>Composants du vélo</h3>
+                      <AddComponentInline bikeId={bike.id} onAdded={async () => {
+                        try {
+                          const fresh = await bikeService.getBike(bike.id);
+                          setCurrentBike(fresh);
+                        } catch {}
+                      }} />
+                    </header>
+                    <BikeDetailView bike={currentBike || bike} showSummary={false} showHeader={false} />
+                  </section>
+                </div>
+              )}
+              {errorMsg && <div className="error-msg">{errorMsg}</div>}
+              {successMsg && <div className="success-msg" role="status" aria-live="polite" ref={summaryRef}>{successMsg}</div>}
             </div>
-          )}
-          {errorMsg && <div className="error-msg">{errorMsg}</div>}
-          {successMsg && <div className="success-msg" role="status" aria-live="polite" ref={summaryRef}>{successMsg}</div>}
-        </div>
-        <div className="actions">
-          {bike ? (
-            editing ? (
-              <>
-                {/* Autosave enabled: no bottom close button; use top-right Fermer */}
-              </>
-            ) : (
-              <>
-                <button className="btn" onClick={() => setEditing(true)}>Modifier</button>
-                {/* No bottom close button in read-only; use top-right Fermer */}
-              </>
-            )
-          ) : (
-            <>
-              <button className="btn secondary" onClick={onClose}>Annuler</button>
-              <button className="btn primary" onClick={handleSave} disabled={saving}>{saving ? 'Enregistrement...' : 'Enregistrer'}</button>
-            </>
-          )}
-        </div>
-      </footer>
-      </>
+            <div className="actions">
+              {bike ? (
+                editing ? (
+                  <>
+                    {/* Autosave enabled: no bottom close button; use top-right Fermer */}
+                  </>
+                ) : (
+                  <>
+                    <button className="btn" onClick={() => setEditing(true)}>Modifier</button>
+                    {/* No bottom close button in read-only; use top-right Fermer */}
+                  </>
+                )
+              ) : (
+                <>
+                  <button className="btn secondary" onClick={onClose}>Annuler</button>
+                  <button className="btn primary" onClick={handleSave} disabled={saving}>{saving ? 'Enregistrement...' : 'Enregistrer'}</button>
+                </>
+              )}
+            </div>
+          </footer>
+        </>
       )}
     </div>
   );

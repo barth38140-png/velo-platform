@@ -4,13 +4,18 @@ const model = require('../models/repairOfferModel');
 jest.mock('../config/db', () => ({ query: jest.fn() }));
 
 describe('repairOfferModel', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     db.query.mockReset();
+    // Nettoyage des offres de réparation de test
+    const dbReal = require('../config/db');
+    if (dbReal && dbReal.query) {
+      await dbReal.query('DELETE FROM repair_offers WHERE repair_request_id = $1 OR repairer_id = $2', [2, 3]);
+    }
   });
 
   test('createRepairOffer returns inserted row', async () => {
     const fakeRow = { id: 1, repair_request_id: 2, repairer_id: 3 };
-    db.query.mockResolvedValueOnce({ rows: [fakeRow] });
+    db.query.mockResolvedValueOnce({ rows: [fakeRow] }); // format garanti
 
     const res = await model.createRepairOffer(2, 3, 50, 2, 'msg');
     expect(db.query).toHaveBeenCalled();

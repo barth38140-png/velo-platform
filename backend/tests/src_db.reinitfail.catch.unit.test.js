@@ -20,7 +20,7 @@ describe('src/db reinitPool error catch path', () => {
 
     const spyErr = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    const db = require('../src/db');
+    require('../src/db'); // Suppression de la variable inutilisée 'db'
 
     // trigger the 'error' handler with ECONNREFUSED to call reinitPool().catch(...)
     expect(typeof handlers.error).toBe('function');

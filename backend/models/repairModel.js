@@ -21,7 +21,7 @@ async function createRepairRequest(userId, title, description, bikeType = null, 
     'INSERT INTO repair_requests (user_id, title, description, bike_type, location_lat, location_lng, location_address, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
     [userId, title, description, bikeType, locationLat, locationLng, locationAddress, 'créée']
   );
-  return res2.rows[0];
+  return res2 && res2.rows && res2.rows.length > 0 ? res2.rows[0] : null;
 }
 
 async function getRepairRequestsByUser(userId) {

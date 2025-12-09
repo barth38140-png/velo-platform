@@ -9,33 +9,33 @@ export default function StatusBadge({ status, type = 'repair' }) {
   const getStatusInfo = () => {
     if (type === 'repair') {
       switch (status) {
-        case 'créée':
-          return { label: 'Créée', icon: '📝', className: 'created' };
-        case 'en_attente':
-          return { label: 'En attente', icon: '⏳', className: 'pending' };
-        case 'assignée':
-          return { label: 'Assignée', icon: '👤', className: 'assigned' };
-        case 'en_cours':
-          return { label: 'En cours', icon: '🔧', className: 'in-progress' };
-        case 'terminée':
-          return { label: 'Terminée', icon: '✅', className: 'completed' };
-        case 'annulée':
-          return { label: 'Annulée', icon: '❌', className: 'cancelled' };
-        default:
-          return { label: status, icon: '•', className: 'unknown' };
+      case 'créée':
+        return { label: 'Créée', icon: '📝', className: 'created' };
+      case 'en_attente':
+        return { label: 'En attente', icon: '⏳', className: 'pending' };
+      case 'assignée':
+        return { label: 'Assignée', icon: '👤', className: 'assigned' };
+      case 'en_cours':
+        return { label: 'En cours', icon: '🔧', className: 'in-progress' };
+      case 'terminée':
+        return { label: 'Terminée', icon: '✅', className: 'completed' };
+      case 'annulée':
+        return { label: 'Annulée', icon: '❌', className: 'cancelled' };
+      default:
+        return { label: status, icon: '•', className: 'unknown' };
       }
     } else if (type === 'offer') {
       switch (status) {
-        case 'proposée':
-          return { label: 'Proposée', icon: '💼', className: 'proposed' };
-        case 'acceptée':
-          return { label: 'Acceptée', icon: '✅', className: 'accepted' };
-        case 'rejetée':
-          return { label: 'Rejetée', icon: '❌', className: 'rejected' };
-        case 'annulée':
-          return { label: 'Annulée', icon: '🚫', className: 'cancelled' };
-        default:
-          return { label: status, icon: '•', className: 'unknown' };
+      case 'proposée':
+        return { label: 'Proposée', icon: '💼', className: 'proposed' };
+      case 'acceptée':
+        return { label: 'Acceptée', icon: '✅', className: 'accepted' };
+      case 'rejetée':
+        return { label: 'Rejetée', icon: '❌', className: 'rejected' };
+      case 'annulée':
+        return { label: 'Annulée', icon: '🚫', className: 'cancelled' };
+      default:
+        return { label: status, icon: '•', className: 'unknown' };
       }
     }
     return { label: status, icon: '•', className: 'unknown' };

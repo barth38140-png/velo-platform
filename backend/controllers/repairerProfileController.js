@@ -5,7 +5,8 @@ const logger = require('../src/logger');
  * Créer ou mettre à jour un profil de réparateur
  */
 async function createRepaireProfile(req, res) {
-  const { skills, bio, service_radius_km, is_available } = req.body;
+    logger.debug({ body: req.body, userId }, 'Profil réparateur - payload reçu');
+  const { skills, bio, service_radius_km, is_available, location_lat, location_lng, location_address } = req.body;
   const userId = req.user.id;
 
   try {
@@ -19,8 +20,19 @@ async function createRepaireProfile(req, res) {
     const profileResult = await pool.query('SELECT id FROM repairer_profiles WHERE user_id = $1', [userId]);
 
     let profile;
+    // Mettre à jour la position dans la table users uniquement si les valeurs sont valides
+    if (
+      typeof location_lat === 'number' && !isNaN(location_lat) &&
+      typeof location_lng === 'number' && !isNaN(location_lng) &&
+      location_address && location_address.length > 0
+    ) {
+      await pool.query(
+        `UPDATE users SET location_lat = $1, location_lng = $2, location_address = $3 WHERE id = $4`,
+        [location_lat, location_lng, location_address, userId]
+      );
+    }
     if (profileResult.rows.length > 0) {
-      // Mettre à jour
+      // Mettre à jour le profil réparateur
       const updateResult = await pool.query(
         `UPDATE repairer_profiles 
          SET skills = $1, bio = $2, service_radius_km = $3, is_available = $4, updated_at = CURRENT_TIMESTAMP
@@ -29,7 +41,7 @@ async function createRepaireProfile(req, res) {
       );
       profile = updateResult.rows[0];
     } else {
-      // Créer
+      // Créer le profil réparateur
       const insertResult = await pool.query(
         `INSERT INTO repairer_profiles (user_id, skills, bio, service_radius_km, is_available)
          VALUES ($1, $2, $3, $4, $5) RETURNING *`,
@@ -53,11 +65,12 @@ async function getRepairerProfile(req, res) {
 
   try {
     const result = await pool.query(
-      `SELECT u.id, u.email, u.name, u.phone, u.created_at,
+            `SELECT u.id, u.email, u.name, u.phone, u.created_at,
+              u.location_lat, u.location_lng, u.location_address,
               rp.skills, rp.bio, rp.rating, rp.service_radius_km, rp.is_available, rp.updated_at
-       FROM users u
-       LEFT JOIN repairer_profiles rp ON u.id = rp.user_id
-       WHERE u.id = $1 AND u.role = 'repairer'`,
+             FROM users u
+             LEFT JOIN repairer_profiles rp ON u.id = rp.user_id
+             WHERE u.id = $1 AND u.role = 'repairer'`,
       [userId]
     );
 
@@ -78,12 +91,13 @@ async function getRepairerProfile(req, res) {
 async function getAllRepairers(req, res) {
   try {
     const result = await pool.query(
-      `SELECT u.id, u.email, u.name, u.phone,
+            `SELECT u.id, u.email, u.name, u.phone,
+              u.location_lat, u.location_lng, u.location_address,
               rp.skills, rp.bio, rp.rating, rp.service_radius_km, rp.is_available
-       FROM users u
-       LEFT JOIN repairer_profiles rp ON u.id = rp.user_id
-       WHERE u.role = 'repairer'
-       ORDER BY rp.rating DESC NULLS LAST`
+             FROM users u
+             LEFT JOIN repairer_profiles rp ON u.id = rp.user_id
+             WHERE u.role = 'repairer'
+             ORDER BY rp.rating DESC NULLS LAST`
     );
 
     res.json({ success: true, repairers: result.rows, count: result.rows.length });

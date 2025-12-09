@@ -23,10 +23,10 @@ export async function registerServiceWorker() {
 
   try {
     const registration = await navigator.serviceWorker.register('/service-worker.js');
-    console.log('Service Worker registered:', registration);
+    // logger.info('Service Worker registered:', registration);
     return registration;
   } catch (error) {
-    console.error('Service Worker registration failed:', error);
+    // logger.error('Service Worker registration failed:', error);
     throw error;
   }
 }
@@ -43,7 +43,7 @@ async function getVapidPublicKey() {
     vapidPublicKey = data.publicKey;
     return vapidPublicKey;
   } catch (error) {
-    console.error('Failed to get VAPID public key:', error);
+    // logger.error('Failed to get VAPID public key:', error);
     throw error;
   }
 }
@@ -124,10 +124,10 @@ export async function subscribeToPushNotifications() {
       throw new Error('Failed to save subscription');
     }
 
-    console.log('Successfully subscribed to push notifications');
+    // logger.info('Successfully subscribed to push notifications');
     return subscription;
   } catch (error) {
-    console.error('Error subscribing to push notifications:', error);
+    // logger.error('Error subscribing to push notifications:', error);
     throw error;
   }
 }
@@ -153,10 +153,10 @@ export async function unsubscribeFromPushNotifications() {
         body: JSON.stringify({ endpoint: subscription.endpoint })
       });
 
-      console.log('Successfully unsubscribed from push notifications');
+      // logger.info('Successfully unsubscribed from push notifications');
     }
   } catch (error) {
-    console.error('Error unsubscribing from push notifications:', error);
+    // logger.error('Error unsubscribing from push notifications:', error);
     throw error;
   }
 }
@@ -180,7 +180,7 @@ export async function getPushNotificationStatus() {
       permission
     };
   } catch (error) {
-    console.error('Error getting push notification status:', error);
+    // logger.error('Error getting push notification status:', error);
     return { supported: false, subscribed: false, permission: 'default' };
   }
 }

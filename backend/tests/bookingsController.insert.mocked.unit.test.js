@@ -19,5 +19,5 @@ test('createBooking uses mocked db insert path and returns 201', async () => {
   await createBooking(req, res);
 
   expect(res.status).toHaveBeenCalledWith(201);
-  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ id: 777 }));
+  expect(res.json).toHaveBeenCalledWith({ success: true, booking: { id: 777 } });
 });

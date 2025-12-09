@@ -64,16 +64,30 @@ async function withClient(fn) {
 }
 async function seedTestData() {
   await withClient(async (c) => {
+    // Supprime explicitement les utilisateurs test par email pour éviter les doublons
+    await c.query(`DELETE FROM users WHERE email IN ('test@example.com', 'repairer@example.com');`);
     // Ajoute l'utilisateur test (id 10001)
     await c.query(`
       INSERT INTO users (id, email, password_hash, role)
       VALUES (10001, 'test@example.com', '$2b$10$testhash', 'client')
       ON CONFLICT (id) DO NOTHING;
     `);
-    // Ajoute la listing de test
+    // Ajoute un réparateur fictif (id 10002)
+    await c.query(`
+      INSERT INTO users (id, email, password_hash, role)
+      VALUES (10002, 'repairer@example.com', '$2b$10$testhash', 'repairer')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    // Ajoute le réparateur dans la table repairers
+    await c.query(`
+      INSERT INTO repairers (id, user_id)
+      VALUES (10002, 10002)
+      ON CONFLICT (id) DO NOTHING;
+    `);
+    // Ajoute la listing de test avec un réparateur valide
     await c.query(`
       INSERT INTO listings (id, owner_id, title, repairer_id)
-      VALUES (20001, 10001, 'Test Listing', NULL)
+      VALUES (20001, 10001, 'Test Listing', 10002)
       ON CONFLICT (id) DO NOTHING;
     `);
   });
@@ -105,14 +119,48 @@ async function waitForDb(retries = 10, delay = 500) {
 
 async function teardownTestData() {
   await withClient(async (c) => {
-    // Supprime d'abord les bookings liés à l'utilisateur et à la listing
-    await c.query(`DELETE FROM bookings WHERE listing_id = 20001 OR client_id = 10001;`);
+    // Supprime les offres de réparation liées
+    try {
+      await c.query(`DELETE FROM repair_offers WHERE repairer_id = 10002 OR repair_request_id IN (SELECT id FROM repair_requests WHERE client_id = 10001);`);
+    } catch (err) {
+      if (err.message && err.message.includes('client_id')) {
+        await c.query(`DELETE FROM repair_offers WHERE repairer_id = 10002 OR repair_request_id IN (SELECT id FROM repair_requests WHERE user_id = 10001);`);
+      } else {
+        throw err;
+      }
+    }
+    // Supprime les demandes de réparation liées
+    try {
+      await c.query(`DELETE FROM repair_requests WHERE client_id = 10001;`);
+    } catch (err) {
+      if (err.message && err.message.includes('client_id')) {
+        await c.query(`DELETE FROM repair_requests WHERE user_id = 10001;`);
+      } else {
+        throw err;
+      }
+    }
+    // Supprime les bookings liés à l'utilisateur (client ou réparateur)
+    try {
+      await c.query(`DELETE FROM bookings WHERE client_id = 10001 OR repairer_id = 10002;`);
+    } catch (err) {
+      if (err.message && err.message.includes('client_id')) {
+        await c.query(`DELETE FROM bookings WHERE user_id = 10001 OR repairer_id = 10002;`);
+      } else {
+        throw err;
+      }
+    }
     // Supprime les reviews éventuelles
-    await c.query("DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='reviews') THEN EXECUTE 'DELETE FROM reviews WHERE listing_id = 20001 OR author_id = 10001'; END IF; END $$;");
+    try {
+      await c.query("DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='reviews') THEN EXECUTE 'DELETE FROM reviews WHERE client_id = 10001 OR repairer_id = 10002 OR booking_id IN (SELECT id FROM bookings WHERE client_id = 10001 OR repairer_id = 10002)'; END IF; END $$;");
+    } catch {
+      await c.query("DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='reviews') THEN EXECUTE 'DELETE FROM reviews WHERE user_id = 10001 OR repairer_id = 10002 OR booking_id IN (SELECT id FROM bookings WHERE user_id = 10001 OR repairer_id = 10002)'; END IF; END $$;");
+    }
     // Supprime la listing de test
     await c.query(`DELETE FROM listings WHERE id = 20001;`);
-    // Supprime l'utilisateur test
-    await c.query(`DELETE FROM users WHERE id = 10001;`);
+    // Supprime le réparateur dans la table repairers
+    await c.query(`DELETE FROM repairers WHERE id = 10002 OR user_id = 10002;`);
+    // Supprime les utilisateurs test et réparateur par id et email
+    await c.query(`DELETE FROM users WHERE id IN (10001, 10002) OR email IN ('test@example.com', 'repairer@example.com');`);
   });
 }
 
@@ -134,6 +182,10 @@ afterAll(async () => {
   await stop();
   await teardownTestData();
 }, 20000);
+  beforeEach(async () => {
+    await teardownTestData();
+    await seedTestData();
+  });
 
 test("POST /bookings creates booking and is idempotent", async () => {
   // first create
@@ -143,10 +195,10 @@ test("POST /bookings creates booking and is idempotent", async () => {
     .set("Accept", "application/json")
     .set("Authorization", `Bearer ${TEST_TOKEN}`);
   if (![200,201].includes(res1.status)) console.error('DEBUG res1 body:', res1.body);
-  // ...existing code...
   expect([200,201]).toContain(res1.status);
-  expect(res1.body).toBeDefined();
-  const firstId = res1.body.bookingId || res1.body.id;
+  expect(res1.body.success).toBe(true);
+  expect(res1.body.booking).toBeDefined();
+  const firstId = res1.body.booking.id;
   expect(firstId).toBeDefined();
 
   // second create with same payload should return same id (idempotence)
@@ -156,7 +208,9 @@ test("POST /bookings creates booking and is idempotent", async () => {
     .set("Accept", "application/json")
     .set("Authorization", `Bearer ${TEST_TOKEN}`);
   expect([200,201]).toContain(res2.status);
-  const secondId = res2.body.bookingId || res2.body.id;
+  expect(res2.body.success).toBe(true);
+  expect(res2.body.booking).toBeDefined();
+  const secondId = res2.body.booking.id;
   expect(secondId).toBeDefined();
   expect(secondId).toEqual(firstId);
 
@@ -166,7 +220,8 @@ test("POST /bookings creates booking and is idempotent", async () => {
     .set("Accept", "application/json")
     .set("Authorization", `Bearer ${TEST_TOKEN}`);
   expect(getRes.status).toBe(200);
-  expect(getRes.body).toMatchObject({
+  expect(getRes.body.success).toBe(true);
+  expect(getRes.body.booking).toMatchObject({
     id: firstId,
     listing_id: 20001,
     client_id: 10001

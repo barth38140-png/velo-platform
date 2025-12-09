@@ -7,7 +7,7 @@ describe('bookingsController foreign key handling', () => {
   test('createBooking returns 400 on foreign key violation (23503)', async () => {
     // Mock db: listings and users exist, but insert throws with code 23503
     jest.doMock('../src/db', () => ({
-      query: jest.fn((sql, params) => {
+      query: jest.fn((sql) => {
         if (sql.startsWith('SELECT 1 FROM listings')) return Promise.resolve({ rowCount: 1 });
         if (sql.startsWith('SELECT 1 FROM users')) return Promise.resolve({ rowCount: 1 });
         if (sql.startsWith('SELECT * FROM bookings WHERE')) return Promise.resolve({ rowCount: 0, rows: [] });

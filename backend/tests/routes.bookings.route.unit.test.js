@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../src/db');
 const { Client } = require('pg');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';
+// Suppression de la variable inutilisée 'JWT_SECRET' pour lint clean
 let TEST_LISTING_ID = 999001;
 let TEST_USER_ID = 999002;
 
@@ -24,23 +24,23 @@ beforeEach(async () => {
     // ensure bookings table exists locally for tests that create rows directly
     try {
       await client.query('CREATE TABLE IF NOT EXISTS bookings (id SERIAL PRIMARY KEY, listing_id INTEGER, client_id INTEGER, start_date DATE, end_date DATE, status VARCHAR(30), scheduled_from TIMESTAMP, scheduled_to TIMESTAMP)');
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
     // Clean up any leftover test bookings
     try {
       await client.query("DELETE FROM bookings WHERE listing_id >= 999000");
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
 
     // Ensure a test user exists (insert with ON CONFLICT)
     try {
       await client.query(`INSERT INTO users (id, email, password_hash, role) VALUES ($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING`, [TEST_USER_ID, 'it_user_seed3@example.com', '$2b$10$hash', 'client']);
-    } catch (e) {
+    } catch {
       // If users table doesn't match, ignore and try to select an existing user below
     }
 
     // Ensure a listing exists that satisfies FK constraints: try to insert with explicit owner_id
     try {
       await client.query(`INSERT INTO listings (id, owner_id, title, repairer_id) VALUES ($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING`, [TEST_LISTING_ID, TEST_USER_ID, 'Test Listing', null]);
-    } catch (e) {
+    } catch {
       // If insert fails due to schema mismatch (different columns/constraints), ignore
     }
 
@@ -48,13 +48,13 @@ beforeEach(async () => {
     try {
       const r = await client.query('SELECT id FROM listings LIMIT 1');
       if (r && r.rowCount > 0) TEST_LISTING_ID = r.rows[0].id;
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
     try {
       const ru = await client.query('SELECT id FROM users LIMIT 1');
       if (ru && ru.rowCount > 0) TEST_USER_ID = ru.rows[0].id;
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
   } finally {
-    try { await client.end(); } catch (e) { /* ignore */ }
+    try { await client.end(); } catch { /* ignore */ }
   }
 });
 
@@ -66,11 +66,11 @@ test('GET /bookings/:id returns 200 when booking exists', async () => {
       try {
         const newL = await db.query('INSERT INTO listings DEFAULT VALUES RETURNING id');
         if (newL && newL.rowCount > 0) TEST_LISTING_ID = newL.rows[0].id;
-      } catch (e) {
+      } catch {
         // ignore creating default listing
       }
     }
-  } catch (e) {
+  } catch {
     // ignore
   }
   const insert = await db.query('INSERT INTO bookings (listing_id, client_id, start_date, end_date, status) VALUES ($1,$2,$3,$4,$5) RETURNING *', [TEST_LISTING_ID, TEST_USER_ID, '2025-01-01', '2025-01-02', 'pending']);
@@ -94,7 +94,7 @@ afterAll(async () => {
   // Close shared pool to avoid Jest open-handle warnings when running this file directly
   try {
     if (db && db.pool && typeof db.pool.end === 'function') await db.pool.end();
-  } catch (e) {
+  } catch {
     // ignore
   }
 });

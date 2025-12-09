@@ -15,8 +15,10 @@ async function list(req, res) {
 
 async function create(req, res) {
   try {
-    const repairerId = req.user.id;
+    const repairerId = req.user && req.user.id;
     const { startsAt, endsAt } = req.body;
+    // Log technique pour debug
+    logger.debug({ repairerId, startsAt, endsAt }, 'Payload création disponibilité');
     const slot = await availabilityModel.createSlot(repairerId, startsAt, endsAt);
     res.status(201).json(slot);
   } catch (e) {

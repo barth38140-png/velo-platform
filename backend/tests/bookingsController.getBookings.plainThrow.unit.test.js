@@ -15,7 +15,7 @@ describe('bookingsController getBookings plain throw', () => {
 
     await getBookings(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'internal_error' });
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ success: false, error: 'internal_error', message: 'Erreur interne du serveur' });
   });
 });

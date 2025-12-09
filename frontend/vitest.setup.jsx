@@ -1,7 +1,9 @@
+console.info('✅ Setup Vitest chargé');
+console.info('✅ Setup Vitest chargé');
 import React from 'react';
 import { vi, expect as vitestExpect } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
-import { render } from '@testing-library/react';
+import { renderWithRouter } from './src/test/utils/renderWithRouter.jsx';
+import { renderWithProviders } from './src/test/testUtils.jsx';
 
 // Ensure vitest's expect is available for libraries that reference it at import time
 globalThis.expect = vitestExpect;
@@ -12,10 +14,9 @@ import '@testing-library/jest-dom';
 // Expose React globally for modules that expect it
 globalThis.React = React;
 
-// Provide a small helper to render components with router context
-globalThis.renderWithRouter = (ui, options) => {
-  return render(ui, { wrapper: ({ children }) => <MemoryRouter>{children}</MemoryRouter>, ...options });
-};
+// Expose the tested utility globally for all test files
+globalThis.renderWithRouter = renderWithRouter;
+globalThis.renderWithProviders = renderWithProviders;
 
 // Stub localStorage.getItem to return a test token by default so MSW/auth flows don't 401
 const ORIGINAL_LOCALSTORAGE = globalThis.localStorage;
@@ -44,18 +45,6 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// MSW is now started lazily by importing `frontend/test/msw/setup.js` from
-// individual test suites that need network interception. This reduces the
-// global setup cost. Example import from a test file:
-//   import '../../../test/msw/setup';
-
-// For fully-lazy MSW we attach tiny wrappers that start MSW automatically
-// on the first network call (fetch/XHR). The module is cheap to import and
-// only performs small runtime monkey-patching.
-try {
-  // eslint-disable-next-line no-unused-expressions
-  await import('./test/msw/lazy.js');
-} catch (e) {
-  // ignore if msw not installed or import fails — tests will still run
-}
+// MSW est maintenant activé globalement pour tous les tests Vitest
+import './test/msw/setup';
 

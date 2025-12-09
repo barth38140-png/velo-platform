@@ -61,5 +61,5 @@ export default function BikeIcons({
 }
 
 // Exemple d'usage:
-// <BikeIcons onSelect={(type) => console.log('Choisi:', type)} />
+// <BikeIcons onSelect={(type) => {/* Utiliser le logger Pino côté backend pour le debug */}} />
 // <BikeIcons types={['road','city']} size={48} labels={false} />
